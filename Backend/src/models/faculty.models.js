@@ -2,7 +2,7 @@ import mongoose, { model, Schema } from "mongoose";
 
 const facultySchema = new Schema(
   {
-    faculty_id: { type: String, required: true, unique: true, index: true },
+    faculty_id: { type: String, required: true, uppercase: true, unique: true },
 
     faculty_name: {
       type: String,
@@ -43,7 +43,7 @@ const facultySchema = new Schema(
     years_of_Experience: {
       type: Number,
       required: true,
-      trime: true,
+      trim: true,
     },
 
     gender: { type: String, required: true, lowercase: true, trim: true },
@@ -51,16 +51,14 @@ const facultySchema = new Schema(
     date_of_joining: {
       type: Date,
       required: true,
-      lowercase: true,
       trim: true,
     },
 
-    date_of_birth: { type: Date, required: true, lowercase: true, trim: true },
+    date_of_birth: { type: Date, required: true, trim: true },
 
     address: {
       type: String,
       required: true,
-      // lowercase: true,
       trim: true,
     },
 

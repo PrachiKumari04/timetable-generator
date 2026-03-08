@@ -5,13 +5,43 @@ import { Student } from "../models/student.models.js";
 
 //Register a new student
 export const registerStudent = asyncHandler(async (req, res) => {
-  //recieve array of object
+  //gating data from clint side(Array of Objects [{}])
+
   const students = req.body;
   console.log("Body -->", req.body);
 
   if (!Array.isArray(students) || students.length === 0) {
-    throw new ApiError(400, "Student data is required");
+    throw new ApiError(400, "Student data is required and must be an array");
   }
+
+  //write validation for each required fields in arrey of object
+  students.forEach((student) => {
+    if (!student.student_id) {
+      throw new ApiError(400, "Student ID is required");
+    }
+    if (!student.student_name) {
+      throw new ApiError(400, "Student Name is required");
+    }
+    if (!student.email) {
+      throw new ApiError(400, "Email is required");
+    }
+    if (!student.father_name) {
+      throw new ApiError(400, "Father Name is required");
+    }
+    if (!student.class_code) {
+      throw new ApiError(400, "Class Code is required");
+    }
+    if (!student.batch) {
+      throw new ApiError(400, "Batch is required");
+    }
+
+    if (!student.date_of_birth) {
+      throw new ApiError(400, "Date of Birth is required");
+    }
+    if (!student.specialization) {
+      throw new ApiError(400, "Specialization is required");
+    }
+  });
 
   const arr = [];
 
@@ -26,6 +56,7 @@ export const registerStudent = asyncHandler(async (req, res) => {
   const existingStudentIds = new Set(existingStudents.map((s) => s.student_id));
   const existingEmails = new Set(existingStudents.map((s) => s.email));
 
+  //Filter out unique recored
   const uniqueStudentRecords = students.filter(
     (student) =>
       !existingStudentIds.has(student.student_id) &&
@@ -41,9 +72,7 @@ export const registerStudent = asyncHandler(async (req, res) => {
   }
 
   // save in database
-  const studentRecords = await Student.insertMany(uniqueStudentRecords, {
-    ordered: false,
-  });
+  const studentRecords = await Student.insertMany(uniqueStudentRecords);
   const studentRecordsInArray = Array.from(studentRecords);
 
   if (studentRecordsInArray.length === 0) {
@@ -52,12 +81,15 @@ export const registerStudent = asyncHandler(async (req, res) => {
 
   console.log("Student -->", studentRecordsInArray);
 
-  throw new ApiResponse(
-    res,
-    201,
-    "Student registered successfully",
-    studentRecordsInArray,
-  );
+  res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        "Student registered successfully",
+        studentRecordsInArray,
+      ),
+    );
 });
 
 //  Get all students
@@ -69,12 +101,16 @@ export const getAllStudents = asyncHandler(async (req, res) => {
     throw new ApiError(404, "No students found");
   }
 
-  return new ApiResponse(res, 200, "Students fetched successfully", students);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Students fetched successfully", students));
 });
 
 //  Get student by id
 export const getStudentById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  console.log("Student Id --> ", id);
 
   if (!id) {
     throw new ApiError(404, "Student Id is required");
@@ -82,11 +118,15 @@ export const getStudentById = asyncHandler(async (req, res) => {
 
   const student = await Student.findById(id);
 
+  console.log("Student -->", student);
+
   if (!student) {
     throw new ApiError(404, "Student not found");
   }
 
-  return new ApiResponse(res, 200, "Student fetched successfully", student);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Student fetched successfully", student));
 });
 
 //  Update student
@@ -98,13 +138,28 @@ export const updateStudent = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student Id is required");
   }
 
+  if (!id) {
+    throw new ApiError(404, "Student Id is required");
+  }
+
+  const student = await Student.findById(id);
+  console.log("Student -->", student);
+
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  if (!req.body) {
+    throw new ApiError(404, "Student data is required");
+  }
+
   const {
     student_name,
     email,
     father_name,
     class_code,
     batch,
-    DOB,
+    date_of_birth,
     specialization,
     // gender,
     // address,
@@ -113,7 +168,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
 
   console.log("Body -->", req.body);
 
-  const student = await Student.findByIdAndUpdate(
+  const updatedStudent = await Student.findByIdAndUpdate(
     id,
     {
       student_id: id,
@@ -122,7 +177,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
       father_name,
       class_code,
       batch,
-      DOB,
+      date_of_birth,
       specialization,
       // gender,
       // address,
@@ -131,9 +186,11 @@ export const updateStudent = asyncHandler(async (req, res) => {
     { new: true },
   );
 
-  console.log("Updated Student -->", student);
+  console.log("Updated Student -->", updatedStudent);
 
-  return new ApiResponse(res, 200, "Student updated successfully", student);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Student updated successfully", updatedStudent));
 });
 
 //  Delete student
@@ -150,5 +207,7 @@ export const deleteStudent = asyncHandler(async (req, res) => {
 
   console.log("Deleted Student -->", student);
 
-  return new ApiResponse(res, 200, "Student deleted successfully", student);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Student deleted successfully", student));
 });

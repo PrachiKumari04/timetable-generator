@@ -48,7 +48,7 @@ const studentSchema = new Schema(
       trim: true,
     },
 
-    DOB: {
+    date_of_birth: {
       type: String,
       required: true,
       lowercase: true,
