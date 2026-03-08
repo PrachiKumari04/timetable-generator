@@ -138,10 +138,6 @@ export const updateStudent = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student Id is required");
   }
 
-  if (!id) {
-    throw new ApiError(404, "Student Id is required");
-  }
-
   const student = await Student.findById(id);
   console.log("Student -->", student);
 

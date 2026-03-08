@@ -114,9 +114,7 @@ export const getAllFaculties = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(
-      new ApiResponse(res, 200, "Faculties fetched successfully", faculties),
-    );
+    .json(new ApiResponse(200, "Faculties fetched successfully", faculties));
 });
 
 // Get faculty by ID
@@ -126,12 +124,12 @@ export const getFacultyById = asyncHandler(async (req, res) => {
   console.log("Faculty Id -->", id);
 
   if (!id) {
-    throw new ApiError(404, "Faculty Id is required");
+    throw new ApiError(404, "Faculty Id is not found in Url");
   }
 
   const faculty = await Faculty.findById(id);
 
-  console.table("Faculty -->", faculty);
+  console.log("Faculty -->", faculty);
 
   if (!faculty) {
     throw new ApiError(404, "Faculty not found");
@@ -139,28 +137,28 @@ export const getFacultyById = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(res, 200, "Faculty fetched successfully", faculty));
+    .json(new ApiResponse(200, "Faculty fetched successfully", faculty));
 });
 
 // Update faculty
 export const updateFaculty = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  conaole.log("Faculty Id -->", id);
+  console.log("Faculty Id -->", id);
 
   if (!id) {
-    throw new ApiError(404, "Faculty Id is required");
+    throw new ApiError(404, "Faculty Id is not found in Url");
   }
 
-  const faculty = await findById(id);
-  console.table("Faculty -->", faculty);
+  const faculty = await Faculty.findById(id);
+  console.log("Faculty -->", faculty);
 
   if (!faculty) {
-    throw new ApiError(404, "Faculty not found");
+    throw new ApiError(404, "Faculty is not found");
   }
 
   if (!req.body) {
-    throw new ApiError(404, "Faculty data is required");
+    throw new ApiError(404, "Faculty data is not found in body");
   }
 
   const {
@@ -177,7 +175,7 @@ export const updateFaculty = asyncHandler(async (req, res) => {
     isActive,
   } = req.body;
 
-  console.table("Body -->", req.body);
+  console.log("Body -->", req.body);
 
   const updatedFaculty = await Faculty.findByIdAndUpdate(
     id,
@@ -197,7 +195,7 @@ export const updateFaculty = asyncHandler(async (req, res) => {
     { new: true },
   );
 
-  console.table("Updated Faculty -->", updatedFaculty);
+  console.log("Updated Faculty -->", updatedFaculty);
 
   if (!updatedFaculty) {
     throw new ApiError(404, "Faculty not found");
@@ -205,9 +203,7 @@ export const updateFaculty = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(
-      new ApiResponse(res, 200, "Faculty updated successfully", updatedFaculty),
-    );
+    .json(new ApiResponse(200, "Faculty updated successfully", updatedFaculty));
 });
 
 // Delete faculty
@@ -217,7 +213,7 @@ export const deleteFaculty = asyncHandler(async (req, res) => {
   console.log("Faculty ID -->", id);
 
   if (!id) {
-    throw new ApiError(404, "Faculty Id is required");
+    throw new ApiError(404, "Faculty Id is not found in Url");
   }
 
   const faculty = await Faculty.findByIdAndDelete(id);
@@ -228,5 +224,5 @@ export const deleteFaculty = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(res, 200, "Faculty deleted successfully", faculty));
+    .json(new ApiResponse(200, "Faculty deleted successfully", faculty));
 });

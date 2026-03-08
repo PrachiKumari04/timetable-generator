@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-router.route("/").post(registerFaculty);
+router.route("/").post(registerFaculty).get(getAllFaculties);
 router
   .route("/:id")
   .get(getFacultyById)
