@@ -2,7 +2,7 @@ import mongoose, { model, Schema } from "mongoose";
 
 const facultySchema = new Schema(
   {
-    faculty_id: { type: String, required: true, uppercase: true, unique: true },
+    faculty_id: { type: String, required: true, uppercase: true },
 
     faculty_name: {
       type: String,

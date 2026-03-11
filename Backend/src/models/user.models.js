@@ -2,7 +2,13 @@ import mongoose, { model, Schema } from "mongoose";
 
 const userSchema = new Schema(
   {
-    
+    // user_id: {
+    //   type: String,
+    //   required: [true, "User ID is required"],
+    //   unique: true,
+    //   uppercase: true,
+    //   trim: true,
+    // },
 
     password: {
       type: String,
@@ -22,14 +28,12 @@ const userSchema = new Schema(
     },
 
     student_id: {
-      type: Schema.Types.ObjectId,
-      ref: "Student",
+      type: String,
       default: null,
     },
 
     faculty_id: {
-      type: Schema.Types.ObjectId,
-      ref: "Faculty",
+      type:String,
       default: null,
     },
 
