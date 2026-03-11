@@ -13,9 +13,9 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
   //validate
   users.forEach((user) => {
-    if (!user.user_id) {
-      throw new ApiError(400, "User ID is required");
-    }
+    // if (!user.user_id) {
+    //   throw new ApiError(400, "User ID is required");
+    // }
     if (!user.password) {
       throw new ApiError(400, "Password is required");
     }
@@ -24,6 +24,9 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
     if (!user.createdBy) {
       throw new ApiError(400, "Created By is required");
+    }
+    if(!user.student_id||!user.faculty_id){
+      throw new ApiError(400, "Student ID or Faculty ID is required");
     }
   });
 
@@ -36,7 +39,10 @@ export const registerUser = asyncHandler(async (req, res) => {
   if (uniqueUserRecords.length === 0) {
     throw new ApiError(408, "All provided users already exist in the database");
   }
-  const userRecords = await User.insertMany(uniqueUserRecords);
+  const userRecords = await User.insertMany(uniqueUserRecords, {
+    ordered: false,
+  });
+  console.log("User -->", userRecords);
   if (userRecords.length === 0) {
     throw new ApiError(500, "Failed to register users");
   }
@@ -59,14 +65,11 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, "Users fetched successfully", usersWithDetails),
-    );
+    .json(new ApiResponse(200, "Users fetched successfully", usersWithDetails));
 });
 
 //Get all users (Original implementation placeholder)
 export const getAllUsersOld = asyncHandler(async (req, res) => {
-  
   const users = await User.find();
   if (!users || users.length === 0) {
     throw new ApiError(404, "No users found");

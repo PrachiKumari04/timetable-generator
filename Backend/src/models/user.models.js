@@ -2,26 +2,52 @@ import mongoose, { model, Schema } from "mongoose";
 
 const userSchema = new Schema(
   {
-    user_id: {
-      type: Schema.Types.ObjectId,
-      unique: true,
-      refPath: "role",
-    },
-    user_data: {
-      type: Schema.Types.ObjectId,
-      unique: true,
-      refPath: "role",
-    },
+    
+
     password: {
       type: String,
-      required: true,
+      required: [true, "Password is required"],
       trim: true,
     },
+
     role: {
-      type: Schema.Types.ObjectId,
-      ref: "Role",
-      required: true,
+      type: String,
+      required: [true, "Role is required"],
+      lowercase: true,
+      enum: {
+        values: ["admin", "faculty", "student", "cordinater", "hod"],
+        message: "{VALUE} role is not supported",
+      },
       trim: true,
+    },
+
+    student_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Student",
+      default: null,
+    },
+
+    faculty_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Faculty",
+      default: null,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    created_by: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    updated_by: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   { timestamps: true },

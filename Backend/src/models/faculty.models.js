@@ -6,7 +6,7 @@ const facultySchema = new Schema(
 
     faculty_name: {
       type: String,
-      required: true,
+      required: [true, "Faculty name is required"],
       lowercase: true,
       trim: true,
       index: true,
@@ -14,7 +14,7 @@ const facultySchema = new Schema(
 
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
@@ -22,43 +22,49 @@ const facultySchema = new Schema(
 
     phone: {
       type: Number,
-      required: true,
+      required: [true, "phone number must be a number and exactly 10 digits"],
       unique: true,
     },
 
     specialization: {
       type: String,
-      required: true,
+      required: [true, "specialization is required"],
       lowercase: true,
       trim: true,
     },
 
     higher_education: {
       type: String,
-      required: true,
+      required: [true, "higher education is required"],
       lowercase: true,
       trim: true,
     },
 
     years_of_Experience: {
       type: Number,
-      required: true,
+      required: [true, "years of experience is required"],
       trim: true,
     },
 
-    gender: { type: String, required: true, lowercase: true, trim: true },
+    gender: {
+      type: String,
+      required: [true, "gender is required"],
+      lowercase: true,
+      trim: true,
+    },
 
     date_of_joining: {
       type: Date,
-      required: true,
-      trim: true,
+      default: Date.now,
     },
 
-    date_of_birth: { type: Date, required: true, trim: true },
+    date_of_birth: {
+      type: Date,
+    },
 
     address: {
       type: String,
-      required: true,
+      required: [true, "address is required"],
       trim: true,
     },
 
