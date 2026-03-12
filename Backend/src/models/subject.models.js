@@ -16,7 +16,7 @@ const subjectSchema = new Schema(
       trim: true,
       index: true,
     },
-    subjectCredit: {
+    credit: {
       type: Number,
       required: true,
       trim: true,

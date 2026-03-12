@@ -2,13 +2,13 @@ import { Schema, model } from "mongoose";
 
 const specilizationSchema = new Schema(
   {
-    specilization_id: {
-      type: String,
-      required: true,
-      unique: true,
-      uppercase: true,
-      trim: true,
-    },
+    // specilization_id: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    //   uppercase: true,
+    //   trim: true,
+    // },
     specilization_name: {
       type: String,
       required: true,

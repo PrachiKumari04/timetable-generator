@@ -1,13 +1,13 @@
 import {Schema,model  } from "mongoose";
 
 const sectionSchema = new Schema({
-    section_id:{
-        type:String,
-        required:true,
-        unique:true,
-        uppercase:true,
-        trim:true
-    },
+    // section_id:{
+    //     type:String,
+    //     required:true,
+    //     unique:true,
+    //     uppercase:true,
+    //     trim:true
+    // },
     section_name:{
         type:String,
         required:true,
@@ -18,10 +18,14 @@ const sectionSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:"Class"
     },
-    isActive:{
-        type:Boolean,
-        default:true
-    }
+    discraption:{
+        type:String,
+        required:true,
+        lowercase:true,
+        trim:true
+    },
+    
+ 
 },{timestamps:true})
 
 export const Section = model("Section",sectionSchema)
