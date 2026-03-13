@@ -26,11 +26,13 @@ app.use(express.static("public"));
 import userRouter from "./routes/user.routers.js";
 import studentRouter from "./routes/student,routers.js";
 import facultyRouter from "./routes/faculty.routers.js";
+import classRouter from "./routes/class.routers.js";
 
 //route diclarations
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/students", studentRouter);
 app.use("/api/v1/faculties", facultyRouter);
+app.use("/api/v1/classes", classRouter);
 
 // http://localhost:5000/api/v1/users
 export { app };
