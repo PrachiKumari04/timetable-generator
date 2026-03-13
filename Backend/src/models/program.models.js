@@ -9,7 +9,7 @@ const programSchema = new Schema(
       uppercase: true,
       trim: true,
     },
-    program_type: {
+    program_name: {
       type: String,
       enum: [Under_Graduate, Post_Graduate, Diploma, Post_Diploma],
       required: true,
@@ -19,3 +19,5 @@ const programSchema = new Schema(
   },
   { timestamps: true },
 );
+
+export const Program = model("Program", programSchema);

@@ -98,7 +98,7 @@ export const registerFaculty = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(
-      new ApiResponse(201, "Faculty registered successfully", facultyRecords),
+      new ApiResponse(201, facultyRecords, "Faculty registered successfully"),
     );
 });
 
@@ -114,7 +114,7 @@ export const getAllFaculties = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Faculties fetched successfully", faculties));
+    .json(new ApiResponse(200, faculties, "Faculties fetched successfully"));
 });
 
 // Get faculty by ID
@@ -137,7 +137,7 @@ export const getFacultyById = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Faculty fetched successfully", faculty));
+    .json(new ApiResponse(200, faculty, "Faculty fetched successfully"));
 });
 
 // Update faculty
@@ -203,7 +203,7 @@ export const updateFaculty = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Faculty updated successfully", updatedFaculty));
+    .json(new ApiResponse(200, updatedFaculty, "Faculty updated successfully"));
 });
 
 // Delete faculty
@@ -224,5 +224,5 @@ export const deleteFaculty = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Faculty deleted successfully", faculty));
+    .json(new ApiResponse(200, faculty, "Faculty deleted successfully"));
 });
