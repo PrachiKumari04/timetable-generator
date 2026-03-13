@@ -10,12 +10,13 @@ const semesterSchema = new Schema(
     //   trim: true,
     // },
     semester_name: {
-      type: String,
+      type: Number,
       required: true,
-      lowercase: true,
+      unique: true,
+      uppercase: true,
       trim: true,
     },
-    semester_type: {
+    isEven: {
       type: Boolean,
       default: false,
     },
