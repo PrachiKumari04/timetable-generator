@@ -353,20 +353,20 @@ const createEmptyMasterData = () =>
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const PERIODS = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
-const createEmptyGrid = () => {
-  const grid = {};
-  DAYS.forEach((day) => {
-    grid[day] = {};
-    PERIODS.forEach((period) => {
-      grid[day][period] = {
-        subjectCode: "",
-        facultyId: "",
-        room: "",
-      };
-    });
-  });
-  return grid;
-};
+// const createEmptyGrid = () => {
+//   const grid = {};
+//   DAYS.forEach((day) => {
+//     grid[day] = {};
+//     PERIODS.forEach((period) => {
+//       grid[day][period] = {
+//         subjectCode: "",
+//         facultyId: "",
+//         room: "",
+//       };
+//     });
+//   });
+//   return grid;
+// };
 
 const generateId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -375,399 +375,400 @@ export default function Admin() {
   const [activeEntity, setActiveEntity] = useState("program");
 
   // All master data is stored here, purely on frontend (no backend yet)
-  const [masterData, setMasterData] = useState(() => {
-    if (typeof window === "undefined") return createEmptyMasterData();
-    try {
-      const stored = window.localStorage.getItem("tt_masterData");
-      if (!stored) return createEmptyMasterData();
-      const parsed = JSON.parse(stored);
-      return { ...createEmptyMasterData(), ...(parsed || {}) };
-    } catch {
-      return createEmptyMasterData();
-    }
-  });
+  // const [masterData, setMasterData] = useState(() => {
+  //   if (typeof window === "undefined") return createEmptyMasterData();
+  //   try {
+  //     const stored = window.localStorage.getItem("tt_masterData");
+  //     if (!stored) return createEmptyMasterData();
+  //     const parsed = JSON.parse(stored);
+  //     return { ...createEmptyMasterData(), ...(parsed || {}) };
+  //   } catch {
+  //     return createEmptyMasterData();
+  //   }
+  // });
 
   const [entityForm, setEntityForm] = useState({});
   const [editingEntityId, setEditingEntityId] = useState(null);
 
-  const [timetables, setTimetables] = useState(() => {
-    if (typeof window === "undefined") return {};
-    try {
-      const stored = window.localStorage.getItem("tt_timetables");
-      return stored ? JSON.parse(stored) || {} : {};
-    } catch {
-      return {};
-    }
-  });
+  // const [timetables, setTimetables] = useState(() => {
+  //   if (typeof window === "undefined") return {};
+  //   try {
+  //     const stored = window.localStorage.getItem("tt_timetables");
+  //     return stored ? JSON.parse(stored) || {} : {};
+  //   } catch {
+  //     return {};
+  //   }
+  // });
+
 
   // key: classCode, value: { classCode, grid }
-  const [selectedClassForTT, setSelectedClassForTT] = useState("");
-  const [ttGrid, setTtGrid] = useState(createEmptyGrid());
+  // const [selectedClassForTT, setSelectedClassForTT] = useState("");
+  // const [ttGrid, setTtGrid] = useState(createEmptyGrid());
 
-  // ---- Helpers for entity form ----
-  const currentEntityConfig = ENTITY_CONFIG[activeEntity];
+  // // ---- Helpers for entity form ----
+  // const currentEntityConfig = ENTITY_CONFIG[activeEntity];
 
-  const ensureFormInitialized = () => {
-    if (!entityForm[activeEntity]) {
-      const empty = {};
-      currentEntityConfig.fields.forEach((f) => {
-        empty[f.name] = "";
-      });
-      setEntityForm((prev) => ({ ...prev, [activeEntity]: empty }));
-    }
-  };
+  // const ensureFormInitialized = () => {
+  //   if (!entityForm[activeEntity]) {
+  //     const empty = {};
+  //     currentEntityConfig.fields.forEach((f) => {
+  //       empty[f.name] = "";
+  //     });
+  //     setEntityForm((prev) => ({ ...prev, [activeEntity]: empty }));
+  //   }
+  // };
 
-  useEffect(() => {
-    ensureFormInitialized();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeEntity]);
+  // useEffect(() => {
+  //   ensureFormInitialized();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [activeEntity]);
 
-  // Seed dummy MCA data and timetable when everything is empty (first run)
-  useEffect(() => {
-    const isMasterEmpty = MASTER_ENTITY_KEYS.every(
-      (key) => !masterData[key] || masterData[key].length === 0,
-    );
-    const hasNoTimetables = !timetables || Object.keys(timetables).length === 0;
+  // // Seed dummy MCA data and timetable when everything is empty (first run)
+  // useEffect(() => {
+  //   const isMasterEmpty = MASTER_ENTITY_KEYS.every(
+  //     (key) => !masterData[key] || masterData[key].length === 0,
+  //   );
+  //   const hasNoTimetables = !timetables || Object.keys(timetables).length === 0;
 
-    if (!isMasterEmpty || !hasNoTimetables) {
-      return;
-    }
+  //   if (!isMasterEmpty || !hasNoTimetables) {
+  //     return;
+  //   }
 
-    const mcaProgramId = generateId();
-    const mcaBatchId = generateId();
-    const mcaClassId = generateId();
-    const faculty1Id = generateId();
-    const faculty2Id = generateId();
-    const faculty3Id = generateId();
+  //   const mcaProgramId = generateId();
+  //   const mcaBatchId = generateId();
+  //   const mcaClassId = generateId();
+  //   const faculty1Id = generateId();
+  //   const faculty2Id = generateId();
+  //   const faculty3Id = generateId();
 
-    const seededMaster = {
-      ...createEmptyMasterData(),
-      program: [
-        {
-          id: mcaProgramId,
-          code: "MCA",
-          name: "Master of Computer Applications",
-        },
-      ],
-      batch: [
-        {
-          id: mcaBatchId,
-          name: "2024-2026",
-          programCode: "MCA",
-        },
-      ],
-      class: [
-        {
-          id: mcaClassId,
-          code: "MCA-1",
-          batchName: "2024-2026",
-          programCode: "MCA",
-        },
-      ],
-      section: [],
-      subject: [
-        {
-          id: generateId(),
-          code: "MCA101",
-          name: "Data Structures",
-          programCode: "MCA",
-        },
-        {
-          id: generateId(),
-          code: "MCA102",
-          name: "Database Management Systems",
-          programCode: "MCA",
-        },
-        {
-          id: generateId(),
-          code: "MCA103",
-          name: "Operating Systems",
-          programCode: "MCA",
-        },
-        {
-          id: generateId(),
-          code: "MCA104",
-          name: "Computer Networks",
-          programCode: "MCA",
-        },
-        {
-          id: generateId(),
-          code: "MCA105",
-          name: "Discrete Mathematics",
-          programCode: "MCA",
-        },
-      ],
-      faculty: [
-        {
-          id: faculty1Id,
-          employeeId: "F-MCA01",
-          name: "Dr. Rohan Singh",
-          email: "rohan.mca@college.edu",
-        },
-        {
-          id: faculty2Id,
-          employeeId: "F-MCA02",
-          name: "Prof. Meera Sharma",
-          email: "meera.mca@college.edu",
-        },
-        {
-          id: faculty3Id,
-          employeeId: "F-MCA03",
-          name: "Dr. Arjun Verma",
-          email: "arjun.mca@college.edu",
-        },
-      ],
-      student: [],
-    };
+  //   const seededMaster = {
+  //     ...createEmptyMasterData(),
+  //     program: [
+  //       {
+  //         id: mcaProgramId,
+  //         code: "MCA",
+  //         name: "Master of Computer Applications",
+  //       },
+  //     ],
+  //     batch: [
+  //       {
+  //         id: mcaBatchId,
+  //         name: "2024-2026",
+  //         programCode: "MCA",
+  //       },
+  //     ],
+  //     class: [
+  //       {
+  //         id: mcaClassId,
+  //         code: "MCA-1",
+  //         batchName: "2024-2026",
+  //         programCode: "MCA",
+  //       },
+  //     ],
+  //     section: [],
+  //     subject: [
+  //       {
+  //         id: generateId(),
+  //         code: "MCA101",
+  //         name: "Data Structures",
+  //         programCode: "MCA",
+  //       },
+  //       {
+  //         id: generateId(),
+  //         code: "MCA102",
+  //         name: "Database Management Systems",
+  //         programCode: "MCA",
+  //       },
+  //       {
+  //         id: generateId(),
+  //         code: "MCA103",
+  //         name: "Operating Systems",
+  //         programCode: "MCA",
+  //       },
+  //       {
+  //         id: generateId(),
+  //         code: "MCA104",
+  //         name: "Computer Networks",
+  //         programCode: "MCA",
+  //       },
+  //       {
+  //         id: generateId(),
+  //         code: "MCA105",
+  //         name: "Discrete Mathematics",
+  //         programCode: "MCA",
+  //       },
+  //     ],
+  //     faculty: [
+  //       {
+  //         id: faculty1Id,
+  //         employeeId: "F-MCA01",
+  //         name: "Dr. Rohan Singh",
+  //         email: "rohan.mca@college.edu",
+  //       },
+  //       {
+  //         id: faculty2Id,
+  //         employeeId: "F-MCA02",
+  //         name: "Prof. Meera Sharma",
+  //         email: "meera.mca@college.edu",
+  //       },
+  //       {
+  //         id: faculty3Id,
+  //         employeeId: "F-MCA03",
+  //         name: "Dr. Arjun Verma",
+  //         email: "arjun.mca@college.edu",
+  //       },
+  //     ],
+  //     student: [],
+  //   };
 
-    const grid = createEmptyGrid();
+  //   const grid = createEmptyGrid();
 
-    // Simple dummy pattern for MCA-1 timetable
-    const fill = (day, period, subjectCode, facultyEmpId, room) => {
-      if (!grid[day] || !grid[day][period]) return;
-      grid[day][period] = {
-        subjectCode,
-        facultyId: facultyEmpId,
-        room,
-      };
-    };
+  //   // Simple dummy pattern for MCA-1 timetable
+  //   const fill = (day, period, subjectCode, facultyEmpId, room) => {
+  //     if (!grid[day] || !grid[day][period]) return;
+  //     grid[day][period] = {
+  //       subjectCode,
+  //       facultyId: facultyEmpId,
+  //       room,
+  //     };
+  //   };
 
-    // Monday
-    fill("Monday", "1", "MCA101", "F-MCA01", "Lab-1");
-    fill("Monday", "2", "MCA101", "F-MCA01", "Lab-1");
-    fill("Monday", "3", "MCA102", "F-MCA02", "Room-201");
-    fill("Monday", "4", "MCA102", "F-MCA02", "Room-201");
-    fill("Monday", "5", "MCA105", "F-MCA03", "Room-203");
+  //   // Monday
+  //   fill("Monday", "1", "MCA101", "F-MCA01", "Lab-1");
+  //   fill("Monday", "2", "MCA101", "F-MCA01", "Lab-1");
+  //   fill("Monday", "3", "MCA102", "F-MCA02", "Room-201");
+  //   fill("Monday", "4", "MCA102", "F-MCA02", "Room-201");
+  //   fill("Monday", "5", "MCA105", "F-MCA03", "Room-203");
 
-    // Tuesday
-    fill("Tuesday", "1", "MCA103", "F-MCA03", "Room-202");
-    fill("Tuesday", "2", "MCA103", "F-MCA03", "Room-202");
-    fill("Tuesday", "3", "MCA104", "F-MCA02", "Room-204");
-    fill("Tuesday", "4", "MCA104", "F-MCA02", "Room-204");
-    fill("Tuesday", "6", "MCA101", "F-MCA01", "Lab-1");
+  //   // Tuesday
+  //   fill("Tuesday", "1", "MCA103", "F-MCA03", "Room-202");
+  //   fill("Tuesday", "2", "MCA103", "F-MCA03", "Room-202");
+  //   fill("Tuesday", "3", "MCA104", "F-MCA02", "Room-204");
+  //   fill("Tuesday", "4", "MCA104", "F-MCA02", "Room-204");
+  //   fill("Tuesday", "6", "MCA101", "F-MCA01", "Lab-1");
 
-    // Wednesday
-    fill("Wednesday", "1", "MCA102", "F-MCA02", "Room-201");
-    fill("Wednesday", "2", "MCA102", "F-MCA02", "Room-201");
-    fill("Wednesday", "3", "MCA105", "F-MCA03", "Room-203");
-    fill("Wednesday", "4", "MCA105", "F-MCA03", "Room-203");
-    fill("Wednesday", "6", "MCA103", "F-MCA03", "Room-202");
+  //   // Wednesday
+  //   fill("Wednesday", "1", "MCA102", "F-MCA02", "Room-201");
+  //   fill("Wednesday", "2", "MCA102", "F-MCA02", "Room-201");
+  //   fill("Wednesday", "3", "MCA105", "F-MCA03", "Room-203");
+  //   fill("Wednesday", "4", "MCA105", "F-MCA03", "Room-203");
+  //   fill("Wednesday", "6", "MCA103", "F-MCA03", "Room-202");
 
-    // Thursday
-    fill("Thursday", "1", "MCA104", "F-MCA02", "Room-204");
-    fill("Thursday", "2", "MCA104", "F-MCA02", "Room-204");
-    fill("Thursday", "3", "MCA101", "F-MCA01", "Lab-1");
-    fill("Thursday", "4", "MCA101", "F-MCA01", "Lab-1");
-    fill("Thursday", "6", "MCA102", "F-MCA02", "Room-201");
+  //   // Thursday
+  //   fill("Thursday", "1", "MCA104", "F-MCA02", "Room-204");
+  //   fill("Thursday", "2", "MCA104", "F-MCA02", "Room-204");
+  //   fill("Thursday", "3", "MCA101", "F-MCA01", "Lab-1");
+  //   fill("Thursday", "4", "MCA101", "F-MCA01", "Lab-1");
+  //   fill("Thursday", "6", "MCA102", "F-MCA02", "Room-201");
 
-    // Friday
-    fill("Friday", "1", "MCA103", "F-MCA03", "Room-202");
-    fill("Friday", "2", "MCA103", "F-MCA03", "Room-202");
-    fill("Friday", "3", "MCA105", "F-MCA03", "Room-203");
-    fill("Friday", "4", "MCA104", "F-MCA02", "Room-204");
+  //   // Friday
+  //   fill("Friday", "1", "MCA103", "F-MCA03", "Room-202");
+  //   fill("Friday", "2", "MCA103", "F-MCA03", "Room-202");
+  //   fill("Friday", "3", "MCA105", "F-MCA03", "Room-203");
+  //   fill("Friday", "4", "MCA104", "F-MCA02", "Room-204");
 
-    const seededTimetables = {
-      "MCA-1": {
-        classCode: "MCA-1",
-        grid,
-      },
-    };
+  //   const seededTimetables = {
+  //     "MCA-1": {
+  //       classCode: "MCA-1",
+  //       grid,
+  //     },
+  //   };
 
-    setMasterData(seededMaster);
-    setTimetables(seededTimetables);
-  }, [masterData, timetables]);
+  //   setMasterData(seededMaster);
+  //   setTimetables(seededTimetables);
+  // }, [masterData, timetables]);
 
-  // Persist master data + timetables so Student/Faculty dashboards can read them
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("tt_masterData", JSON.stringify(masterData));
-    } catch {}
-  }, [masterData]);
+  // // Persist master data + timetables so Student/Faculty dashboards can read them
+  // useEffect(() => {
+  //   try {
+  //     window.localStorage.setItem("tt_masterData", JSON.stringify(masterData));
+  //   } catch {}
+  // }, [masterData]);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("tt_timetables", JSON.stringify(timetables));
-    } catch {}
-  }, [timetables]);
+  // useEffect(() => {
+  //   try {
+  //     window.localStorage.setItem("tt_timetables", JSON.stringify(timetables));
+  //   } catch {}
+  // }, [timetables]);
 
-  const handleEntityInputChange = (e) => {
-    const { name, value } = e.target;
-    setEntityForm((prev) => ({
-      ...prev,
-      [activeEntity]: {
-        ...(prev[activeEntity] || {}),
-        [name]: value,
-      },
-    }));
-  };
+  // const handleEntityInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setEntityForm((prev) => ({
+  //     ...prev,
+  //     [activeEntity]: {
+  //       ...(prev[activeEntity] || {}),
+  //       [name]: value,
+  //     },
+  //   }));
+  // };
 
-  const resetEntityForm = () => {
-    const empty = {};
-    currentEntityConfig.fields.forEach((f) => {
-      empty[f.name] = "";
-    });
-    setEntityForm((prev) => ({ ...prev, [activeEntity]: empty }));
-    setEditingEntityId(null);
-  };
+  // const resetEntityForm = () => {
+  //   const empty = {};
+  //   currentEntityConfig.fields.forEach((f) => {
+  //     empty[f.name] = "";
+  //   });
+  //   setEntityForm((prev) => ({ ...prev, [activeEntity]: empty }));
+  //   setEditingEntityId(null);
+  // };
 
-  const handleEntitySubmit = (e) => {
-    e.preventDefault();
-    const formData = entityForm[activeEntity] || {};
+  // const handleEntitySubmit = (e) => {
+  //   e.preventDefault();
+  //   const formData = entityForm[activeEntity] || {};
 
-    // Basic required validation
-    for (const field of currentEntityConfig.fields) {
-      if (field.required && !String(formData[field.name] || "").trim()) {
-        alert(`Please fill "${field.label}"`);
-        return;
-      }
-    }
+  //   // Basic required validation
+  //   for (const field of currentEntityConfig.fields) {
+  //     if (field.required && !String(formData[field.name] || "").trim()) {
+  //       alert(`Please fill "${field.label}"`);
+  //       return;
+  //     }
+  //   }
 
-    const withId = {
-      id: editingEntityId || generateId(),
-      ...formData,
-    };
+  //   const withId = {
+  //     id: editingEntityId || generateId(),
+  //     ...formData,
+  //   };
 
-    setMasterData((prev) => {
-      const list = prev[activeEntity] || [];
-      if (editingEntityId) {
-        return {
-          ...prev,
-          [activeEntity]: list.map((item) =>
-            item.id === editingEntityId ? withId : item,
-          ),
-        };
-      }
-      return {
-        ...prev,
-        [activeEntity]: [...list, withId],
-      };
-    });
+  //   setMasterData((prev) => {
+  //     const list = prev[activeEntity] || [];
+  //     if (editingEntityId) {
+  //       return {
+  //         ...prev,
+  //         [activeEntity]: list.map((item) =>
+  //           item.id === editingEntityId ? withId : item,
+  //         ),
+  //       };
+  //     }
+  //     return {
+  //       ...prev,
+  //       [activeEntity]: [...list, withId],
+  //     };
+  //   });
 
-    resetEntityForm();
-  };
+  //   resetEntityForm();
+  // };
 
-  const handleEntityEdit = (item) => {
-    setEditingEntityId(item.id);
-    const loaded = {};
-    currentEntityConfig.fields.forEach((f) => {
-      loaded[f.name] = item[f.name] ?? "";
-    });
-    setEntityForm((prev) => ({ ...prev, [activeEntity]: loaded }));
-  };
+  // const handleEntityEdit = (item) => {
+  //   setEditingEntityId(item.id);
+  //   const loaded = {};
+  //   currentEntityConfig.fields.forEach((f) => {
+  //     loaded[f.name] = item[f.name] ?? "";
+  //   });
+  //   setEntityForm((prev) => ({ ...prev, [activeEntity]: loaded }));
+  // };
 
-  const handleEntityDelete = (id) => {
-    if (!window.confirm("Delete this record?")) return;
-    setMasterData((prev) => ({
-      ...prev,
-      [activeEntity]: (prev[activeEntity] || []).filter(
-        (item) => item.id !== id,
-      ),
-    }));
-    if (editingEntityId === id) {
-      resetEntityForm();
-    }
-  };
+  // const handleEntityDelete = (id) => {
+  //   if (!window.confirm("Delete this record?")) return;
+  //   setMasterData((prev) => ({
+  //     ...prev,
+  //     [activeEntity]: (prev[activeEntity] || []).filter(
+  //       (item) => item.id !== id,
+  //     ),
+  //   }));
+  //   if (editingEntityId === id) {
+  //     resetEntityForm();
+  //   }
+  // };
 
-  // ---- CSV upload ----
-  const parseCsvText = (text, fields) => {
-    const lines = text.trim().split(/\r?\n/);
-    if (!lines.length) return [];
+  // // ---- CSV upload ----
+  // const parseCsvText = (text, fields) => {
+  //   const lines = text.trim().split(/\r?\n/);
+  //   if (!lines.length) return [];
 
-    const header = lines[0].split(",").map((h) => h.trim());
-    const isHeader =
-      fields.every((f) => header.includes(f.name)) ||
-      header.length === fields.length;
+  //   const header = lines[0].split(",").map((h) => h.trim());
+  //   const isHeader =
+  //     fields.every((f) => header.includes(f.name)) ||
+  //     header.length === fields.length;
 
-    const startIndex = isHeader ? 1 : 0;
+  //   const startIndex = isHeader ? 1 : 0;
 
-    const items = [];
-    for (let i = startIndex; i < lines.length; i += 1) {
-      const row = lines[i].trim();
-      if (!row) continue;
-      const cols = row.split(",").map((c) => c.trim());
-      const obj = { id: generateId() };
+  //   const items = [];
+  //   for (let i = startIndex; i < lines.length; i += 1) {
+  //     const row = lines[i].trim();
+  //     if (!row) continue;
+  //     const cols = row.split(",").map((c) => c.trim());
+  //     const obj = { id: generateId() };
 
-      fields.forEach((field, idx) => {
-        const colIndex = isHeader ? header.indexOf(field.name) : idx;
-        obj[field.name] = cols[colIndex] ?? "";
-      });
+  //     fields.forEach((field, idx) => {
+  //       const colIndex = isHeader ? header.indexOf(field.name) : idx;
+  //       obj[field.name] = cols[colIndex] ?? "";
+  //     });
 
-      items.push(obj);
-    }
-    return items;
-  };
+  //     items.push(obj);
+  //   }
+  //   return items;
+  // };
 
-  const handleCsvUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  // const handleCsvUpload = (event) => {
+  //   const file = event.target.files?.[0];
+  //   if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = String(e.target?.result || "");
-        const imported = parseCsvText(text, currentEntityConfig.fields);
-        if (!imported.length) {
-          alert("No valid rows found in CSV.");
-          return;
-        }
-        setMasterData((prev) => ({
-          ...prev,
-          [activeEntity]: [...(prev[activeEntity] || []), ...imported],
-        }));
-        event.target.value = "";
-        alert(
-          `Imported ${imported.length} ${currentEntityConfig.pluralLabel}.`,
-        );
-      } catch (err) {
-        console.error(err);
-        alert("Failed to parse CSV. Please check the format.");
-      }
-    };
-    reader.readAsText(file);
-  };
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     try {
+  //       const text = String(e.target?.result || "");
+  //       const imported = parseCsvText(text, currentEntityConfig.fields);
+  //       if (!imported.length) {
+  //         alert("No valid rows found in CSV.");
+  //         return;
+  //       }
+  //       setMasterData((prev) => ({
+  //         ...prev,
+  //         [activeEntity]: [...(prev[activeEntity] || []), ...imported],
+  //       }));
+  //       event.target.value = "";
+  //       alert(
+  //         `Imported ${imported.length} ${currentEntityConfig.pluralLabel}.`,
+  //       );
+  //     } catch (err) {
+  //       console.error(err);
+  //       alert("Failed to parse CSV. Please check the format.");
+  //     }
+  //   };
+  //   reader.readAsText(file);
+  // };
 
-  // ---- Timetable logic ----
-  const handleTtCellChange = (day, period, field, value) => {
-    setTtGrid((prev) => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [period]: {
-          ...prev[day][period],
-          [field]: value,
-        },
-      },
-    }));
-  };
+  // // ---- Timetable logic ----
+  // const handleTtCellChange = (day, period, field, value) => {
+  //   setTtGrid((prev) => ({
+  //     ...prev,
+  //     [day]: {
+  //       ...prev[day],
+  //       [period]: {
+  //         ...prev[day][period],
+  //         [field]: value,
+  //       },
+  //     },
+  //   }));
+  // };
 
-  const handleClassSelectChange = (e) => {
-    const classCode = e.target.value;
-    setSelectedClassForTT(classCode);
-    if (!classCode) return;
+  // const handleClassSelectChange = (e) => {
+  //   const classCode = e.target.value;
+  //   setSelectedClassForTT(classCode);
+  //   if (!classCode) return;
 
-    const existing = timetables[classCode];
-    if (existing) {
-      // Deep clone to avoid mutation
-      setTtGrid(JSON.parse(JSON.stringify(existing.grid)));
-    } else {
-      setTtGrid(createEmptyGrid());
-    }
-  };
+  //   const existing = timetables[classCode];
+  //   if (existing) {
+  //     // Deep clone to avoid mutation
+  //     setTtGrid(JSON.parse(JSON.stringify(existing.grid)));
+  //   } else {
+  //     setTtGrid(createEmptyGrid());
+  //   }
+  // };
 
-  const handleTtSave = () => {
-    if (!selectedClassForTT) {
-      alert("Please select a class first.");
-      return;
-    }
-    setTimetables((prev) => ({
-      ...prev,
-      [selectedClassForTT]: {
-        classCode: selectedClassForTT,
-        grid: JSON.parse(JSON.stringify(ttGrid)),
-      },
-    }));
-    alert("Timetable saved for class " + selectedClassForTT);
-  };
+  // const handleTtSave = () => {
+  //   if (!selectedClassForTT) {
+  //     alert("Please select a class first.");
+  //     return;
+  //   }
+  //   setTimetables((prev) => ({
+  //     ...prev,
+  //     [selectedClassForTT]: {
+  //       classCode: selectedClassForTT,
+  //       grid: JSON.parse(JSON.stringify(ttGrid)),
+  //     },
+  //   }));
+  //   alert("Timetable saved for class " + selectedClassForTT);
+  // };
 
   const classList = masterData.class || [];
   const subjectList = masterData.subject || [];
