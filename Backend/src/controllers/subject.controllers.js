@@ -1,6 +1,6 @@
-import { Subject } from "../models/subject.models";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Subject } from "../models/subject.models.js";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 //Add Subject
 export const addSubject = asyncHandler((req, res) => {

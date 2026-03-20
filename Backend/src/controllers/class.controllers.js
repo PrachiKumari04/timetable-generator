@@ -1,7 +1,7 @@
-import { Class } from "../models/class.models";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Class } from "../models/class.models.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const registerClass = asyncHandler(async (req, res) => {
   const classes = req.body;

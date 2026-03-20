@@ -1,6 +1,6 @@
-import { Specilization } from "../models/specialization.models";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Specilization } from "../models/specialization.models.js";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 //Add specialization
 export const addSpecialization = asyncHandler(async (req, res) => {

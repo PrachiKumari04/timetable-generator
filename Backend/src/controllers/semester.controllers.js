@@ -1,6 +1,6 @@
-import { Semester } from "../models/semester.models";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Semester } from "../models/semester.models.js";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 //Add semester
 export const addSemester = asyncHandler(async (req, res) => {

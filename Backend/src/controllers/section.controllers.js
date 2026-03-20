@@ -1,6 +1,6 @@
-import { Section } from "../models/section.models";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Section } from "../models/section.models.js";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Add section
 export const addSection = asyncHandler(async (req, res) => {

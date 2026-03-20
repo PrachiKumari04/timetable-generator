@@ -1,5 +1,5 @@
-import { Course } from "../models/course.models";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Course } from "../models/course.models.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Add courses
 export const addCourses = asyncHandler(async (req, res) => {

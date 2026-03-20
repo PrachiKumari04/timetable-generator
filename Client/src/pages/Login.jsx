@@ -1,13 +1,36 @@
 import React from 'react';
 import Container from '../components/Container';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../store/auth/authSlice';
 
 function Login() {
+
+
+  const dispatch = useDispatch()
+  const user = useSelector((state) => state.auth.userData);
+  console.log(user);
+
+
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    dispatch(login(data));
+  };
+
+
+
   return (
     // <div className="flex items-center justify-center h-screen bg-gray-200">
     <Container className="flex items-center justify-center h-screen bg-gray-200">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center text-gray-900">Login</h2>
-        <form className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6">
+
           <div>
             <label
               htmlFor="username"

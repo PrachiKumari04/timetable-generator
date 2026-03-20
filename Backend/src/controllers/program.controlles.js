@@ -1,5 +1,5 @@
-import { Program } from "../models/program.models";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Program } from "../models/program.models.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 //Add programs
 export const addPrograms = asyncHandler(async (req, res) => {

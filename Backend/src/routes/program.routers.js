@@ -6,7 +6,7 @@ import {
   getProgramById,
   getProgramByProgramId,
   updateProgram,
-} from "../controllers/program.controlles";
+} from "../controllers/program.controlles.js";
 
 const router = Router();
 

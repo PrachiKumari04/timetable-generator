@@ -1,21 +1,38 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isAuthenticated: false,
-  user: null,
+  userData: null,
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
-    login: (state, action) => {
-      state.isAuthenticated = true;
-      state.user = action.payload;
+    login:async (state, action) => {
+      // state.userData = action.payload;
+
+      //login theough API
+      const url = "/api/v1/users/login";
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(action.payload),
+      };
+
+      const response = await fetch(url, options);
+      const data = await response.json();
+
+      console.log("Responce data -->",data);
+      
+
+      
     },
     logout: (state) => {
       state.isAuthenticated = false;
-      state.user = null;
+      state.userData = null;
     },
   },
 });

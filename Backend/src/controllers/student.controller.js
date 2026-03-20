@@ -157,6 +157,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
     batch,
     date_of_birth,
     specialization,
+    student_id,
     // gender,
     // address,
     // isActive,
@@ -167,7 +168,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
   const updatedStudent = await Student.findByIdAndUpdate(
     id,
     {
-      student_id: id,
+      student_id: student_id ? student_id : student.student_id,
       student_name,
       email,
       father_name,

@@ -11,7 +11,7 @@ const programSchema = new Schema(
     },
     program_name: {
       type: String,
-      enum: [Under_Graduate, Post_Graduate, Diploma, Post_Diploma],
+      enum: ['Under_Graduate', 'Post_Graduate', 'Diploma', 'Post_Diploma'],
       required: true,
       lowercase: true,
       trim: true,
