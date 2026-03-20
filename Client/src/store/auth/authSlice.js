@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+// import { useNavigate } from "react-router";
 
 const initialState = {
   isAuthenticated: false,
@@ -9,24 +10,10 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    login:async (state, action) => {
+    login: (state, action) => {
+      // const navigate = useNavigate();
+
       // state.userData = action.payload;
-
-      //login theough API
-      const url = "/api/v1/users/login";
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(action.payload),
-      };
-
-      const response = await fetch(url, options);
-      const data = await response.json();
-
-      console.log("Responce data -->",data);
-      
 
       
     },
