@@ -3,11 +3,19 @@ import Container from "./Container";
 import { Link, NavLink, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../store/theme/themeSlice";
+import { logout } from "../store/auth/authSlice";
 
 export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.theme.theme);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+
+  const logoutHandler = (e) => {
+    e.preventDefault();
+    dispatch(logout());
+    navigate("/");
+  };
 
   const loginHandler = (e) => {
     e.preventDefault();
@@ -20,18 +28,14 @@ export default function Header() {
   };
 
   const navLinks = [
-    {
-      label: "Home",
-      href: "/",
-    },
-    {
-      label: "Admin",
-      href: "/admin",
-    },
+    { label: "Home", href: "/" },
+    // { label: "Admin", href: "/admin" },
+    // { label: "Student", href: "/student" },
+    // { label: "Faculty", href: "/faculty" },
     {
       label: theme === "light" ? "Dark" : "Light",
       onClick: (e) => themeHandler(e),
-    }
+    },
   ];
 
   return (
@@ -56,19 +60,20 @@ export default function Header() {
               {navLinks.map((link) => (
                 <NavLink
                   to={link?.href}
-                  key={link.label}
-                  // href={link.href}
-                  onClick={link.onClick}
+                  key={link?.label}
+                  onClick={link?.onClick}
                   className="hover:text-(--primary) font-boldtext-sm font-medium px-4 py-0.5 rounded-lg transition-all duration-200 no-underline"
                 >
                   {link.label}
                 </NavLink>
               ))}
               <button
-                onClick={(e) => loginHandler(e)}
+                onClick={(e) =>
+                  isAuthenticated ? logoutHandler(e) : loginHandler(e)
+                }
                 className="px-5 py-1 rounded-md bg-(--accent) hover:bg-(--primary) font-bold"
               >
-                Login
+                {isAuthenticated ? "Logout" : "Login"}
               </button>
             </div>
           </div>

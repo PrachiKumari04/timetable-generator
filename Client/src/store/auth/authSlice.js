@@ -11,11 +11,8 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     login: (state, action) => {
-      // const navigate = useNavigate();
-
-      // state.userData = action.payload;
-
-      
+      state.isAuthenticated = true;
+      state.userData = action.payload;
     },
     logout: (state) => {
       state.isAuthenticated = false;
