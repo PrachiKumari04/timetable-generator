@@ -21,12 +21,12 @@ function DataTable({ currentEntityConfig, activeEntity }) {
 
     return (
         <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-slate-800">
+            <h3 className="text-xl font-semibold text-text">
                 Existing {currentEntityConfig.pluralLabel}
             </h3>
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full text-sm text-left text-slate-600">
-                    <thead className="text-xs text-slate-700 font-medium bg-slate-100 border-b border-slate-200">
+            <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-sm text-left text-text/80">
+                    <thead className="text-xs text-text font-medium bg-surface-hover border-b border-border">
                         <tr>
                             {currentEntityConfig.fields.map((field) => (
                                 <th key={field.name} className="px-6 py-4 font-semibold">
@@ -36,12 +36,12 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                             <th className="px-6 py-4 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className='bg-white'>
+                    <tbody className='bg-surface'>
                         {entities.length === 0 ? (
                             <tr>
                                 <td
                                     colSpan={currentEntityConfig.fields.length + 1}
-                                    className="px-6 py-8 text-center text-slate-500"
+                                    className="px-6 py-8 text-center text-text/60"
                                 >
                                     No {currentEntityConfig.pluralLabel} found.
                                 </td>
@@ -50,24 +50,24 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                             entities.map((entity) => (
                                 <tr
                                     key={entity._id || entity.id}
-                                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                                    className="border-b border-border hover:bg-surface-hover transition-colors"
                                 >
                                     {currentEntityConfig.fields.map((field) => (
-                                        <td key={field.name} className="px-6 py-4 text-slate-700">
+                                        <td key={field.name} className="px-6 py-4 text-text/90">
                                             {field.type === 'boolean' ? (entity[field.name] ? 'Yes' : 'No') : entity[field.name]}
                                         </td>
                                     ))}
                                     <td className="px-6 py-4 flex items-center justify-end gap-2">
                                         <button
                                             onClick={() => handleEditEntity(entity)}
-                                            className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 transition-colors"
+                                            className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 border border-primary/20 rounded-md hover:bg-primary/20 transition-colors"
                                             title="Edit"
                                         >
                                             Edit
                                         </button>
                                         <button
                                             onClick={() => handleDeleteEntity(entity._id || entity.id)}
-                                            className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-md hover:bg-red-200 transition-colors"
+                                            className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100/50 border border-red-200 rounded-md hover:bg-red-100 transition-colors dark:bg-red-900/30 dark:border-red-800/50 dark:text-red-400 dark:hover:bg-red-900/50"
                                             title="Delete"
                                         >
                                             Delete

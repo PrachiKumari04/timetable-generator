@@ -57,14 +57,14 @@ function Form({ currentEntityConfig, activeEntity }) {
             className="space-y-6"
         >
             <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-slate-800">
+                <h3 className="text-xl font-semibold text-text">
                     {editingEntityId ? `Edit ${currentEntityConfig.label}` : `Add New ${currentEntityConfig.label}`}
                 </h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {currentEntityConfig.fields.map((field) => (
                     <div key={field.name} className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">
+                        <label className="text-sm font-medium text-text">
                             {field.label}
                             {field.required && (
                                 <span className="text-red-500 ml-1">*</span>
@@ -77,9 +77,9 @@ function Form({ currentEntityConfig, activeEntity }) {
                                     name={field.name}
                                     checked={entityForm[field.name] || false}
                                     onChange={handleEntityInputChange}
-                                    className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                                    className="h-4 w-4 text-primary border-border rounded focus:ring-primary bg-background focus:ring-offset-background"
                                 />
-                                <span className="ml-2 text-sm text-slate-600">Is Active</span>
+                                <span className="ml-2 text-sm text-text/80">Is Active</span>
                             </div>
                         ) : (
                             <input
@@ -89,19 +89,19 @@ function Form({ currentEntityConfig, activeEntity }) {
                                 onChange={handleEntityInputChange}
                                 placeholder={field.placeholder}
                                 required={field.required}
-                                className="w-full px-4 py-2 text-sm text-slate-900 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200"
+                                className="w-full px-4 py-2 text-sm text-text bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow duration-200 placeholder-text/40"
                             />
                         )}
                     </div>
                 ))}
             </div>
 
-            <div className="flex items-center justify-end gap-4 pt-5 mt-6 border-t border-slate-200">
+            <div className="flex items-center justify-end gap-4 pt-5 mt-6 border-t border-border">
                 {editingEntityId && (
                     <button
                         type="button"
                         onClick={resetEntityForm}
-                        className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors duration-200"
+                        className="px-4 py-2 text-sm font-medium rounded-lg border border-border text-text hover:bg-surface-hover transition-colors duration-200"
                     >
                         Cancel
                     </button>
@@ -109,13 +109,13 @@ function Form({ currentEntityConfig, activeEntity }) {
                 <button
                     type="button"
                     onClick={() => setEntityForm({})}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors duration-200"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-border text-text hover:bg-surface-hover transition-colors duration-200"
                 >
                     Clear
                 </button>
                 <button
                     type="submit"
-                    className="px-6 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                    className="px-6 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background transition-all duration-200"
                 >
                     {editingEntityId ? "Update" : "Add"} {currentEntityConfig.label}
                 </button>
