@@ -25,10 +25,8 @@ export const registerStudent = asyncHandler(async (req, res) => {
     if (!student.email) {
       throw new ApiError(400, "Email is required");
     }
-    if (!student.father_name) {
-      throw new ApiError(400, "Father Name is required");
-    }
-    if (!student.class_code) {
+    
+    if (!student.class) {
       throw new ApiError(400, "Class Code is required");
     }
     if (!student.batch) {
@@ -86,8 +84,8 @@ export const registerStudent = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        "Student registered successfully",
         studentRecordsInArray,
+        "Student registered successfully",
       ),
     );
 });
@@ -103,7 +101,7 @@ export const getAllStudents = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Students fetched successfully", students));
+    .json(new ApiResponse(200, students, "Students fetched successfully"));
 });
 
 //  Get student by id
@@ -187,7 +185,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Student updated successfully", updatedStudent));
+    .json(new ApiResponse(200, updatedStudent, "Student updated successfully"));
 });
 
 //  Delete student
@@ -206,5 +204,5 @@ export const deleteStudent = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, "Student deleted successfully", student));
+    .json(new ApiResponse(200, student, "Student deleted successfully"));
 });

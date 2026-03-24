@@ -42,7 +42,7 @@ function Form({ currentEntityConfig, activeEntity }) {
                 .then(() => resetEntityForm())
                 .catch((err) => console.error("Update failed", err));
         } else {
-            dispatch(addMasterData({ entityKey: activeEntity, data: entityForm }))
+            dispatch(addMasterData({ entityKey: activeEntity, data: [entityForm] }))
                 .unwrap()
                 .then(() => resetEntityForm())
                 .catch((err) => console.error("Add failed", err));

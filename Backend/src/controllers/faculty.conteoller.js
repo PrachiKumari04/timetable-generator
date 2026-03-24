@@ -32,7 +32,7 @@ export const registerFaculty = asyncHandler(async (req, res) => {
     if (!faculty.specialization) {
       throw new ApiError(400, "Specialization is required");
     }
-    if (!faculty.higher_education) {
+    if (!faculty.higher_qualification) {
       throw new ApiError(400, "Higher Education is required");
     }
     if (!faculty.years_of_Experience) {

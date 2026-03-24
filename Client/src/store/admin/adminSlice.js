@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api/v1";
+const API_BASE_URL = "/api/v1";
 
 const ENTITY_ENDPOINTS = {
   program: "/programmes",
@@ -41,6 +41,7 @@ export const addMasterData = createAsyncThunk(
     try {
       const endpoint = ENTITY_ENDPOINTS[entityKey];
       const response = await apiClient.post(endpoint, data);
+      
       return { entityKey, data: response.data.data || response.data };
     } catch (error) {
        return rejectWithValue(error.response?.data?.message || error.message);
@@ -54,6 +55,8 @@ export const updateMasterData = createAsyncThunk(
     try {
       const endpoint = `${ENTITY_ENDPOINTS[entityKey]}/${id}`;
       const response = await apiClient.put(endpoint, data);
+      console.log(response.data.message);
+
       return { entityKey, id, data: response.data.data || response.data };
     } catch (error) {
        return rejectWithValue(error.response?.data?.message || error.message);

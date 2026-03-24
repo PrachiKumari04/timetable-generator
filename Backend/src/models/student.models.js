@@ -26,15 +26,7 @@ const studentSchema = new Schema(
       trim: true,
     },
 
-    father_name: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
-
-    class_code: {
+    class: {
       type: String,
       required: true,
       lowercase: true,
@@ -59,6 +51,11 @@ const studentSchema = new Schema(
       type: String,
       required: true,
       lowercase: true,
+      trim: true,
+    },
+    division: {
+      type: String,
+      uppercase: true,
       trim: true,
     },
   },

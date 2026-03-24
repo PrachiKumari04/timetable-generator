@@ -37,7 +37,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                         </tr>
                     </thead>
                     <tbody className='bg-surface'>
-                        {entities.length === 0 ? (
+                        {entities?.length === 0 ? (
                             <tr>
                                 <td
                                     colSpan={currentEntityConfig.fields.length + 1}
@@ -47,7 +47,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                                 </td>
                             </tr>
                         ) : (
-                            entities.map((entity) => (
+                            entities?.map((entity) => (
                                 <tr
                                     key={entity._id || entity.id}
                                     className="border-b border-border hover:bg-surface-hover transition-colors"

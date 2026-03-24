@@ -33,7 +33,7 @@ const facultySchema = new Schema(
       trim: true,
     },
 
-    higher_education: {
+    higher_qualification: {
       type: String,
       required: [true, "higher education is required"],
       lowercase: true,

@@ -14,6 +14,6 @@ router
   .route("/:id")
   .get(getFacultyById)
   .delete(deleteFaculty)
-  .patch(updateFaculty);
+  .put(updateFaculty);
 
 export default router;

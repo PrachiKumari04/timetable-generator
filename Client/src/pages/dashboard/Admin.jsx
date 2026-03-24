@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+// import AdminHeader from "../../components/admin/AdminHeader";
 import SideBar from "../../components/deshboard/SideBar";
 import DataTable from "../../components/deshboard/DataTable";
 import Form from "../../components/deshboard/Form";
@@ -233,13 +234,13 @@ function Admin() {
       description: "Add faculty details to map classes and subjects.",
       fields: [
         {
-          name: "facultyId",
+          name: "faculty_id",
           label: "Faculty ID",
           placeholder: "e.g. F001",
           required: true,
         },
         {
-          name: "name",
+          name: "faculty_name",
           label: "Name",
           placeholder: "e.g. Dr. Sunil Kumar",
           required: true,
@@ -263,19 +264,19 @@ function Admin() {
           required: false,
         },
         {
-          name: "higherQualification",
+          name: "higher_qualification",
           label: "Higher Qualification",
           placeholder: "e.g. PhD in Computer Science",
           required: false,
         },
         {
-          name: "experienceYears",
+          name: "years_of_Experience",
           label: "Years of Experience",
           placeholder: "e.g. 10",
           required: false,
         },
         {
-          name: "joiningDate",
+          name: "date_of_joining",
           label: "Joining Date",
           placeholder: "e.g. 2020-08-15",
           required: false,
@@ -293,7 +294,7 @@ function Admin() {
           required: false,
         },
         {
-          name: "dateOfBirth",
+          name: "date_of_birth",
           label: "Date of Birth",
           placeholder: "e.g. 1980-05-20",
           required: false,
@@ -315,26 +316,21 @@ function Admin() {
       description: "Maintain list of students for each class/section.",
       fields: [
         {
-          name: "enrollmentNo",
+          name: "student_id",
           label: "Enrollment No",
           placeholder: "e.g. 24CS001",
           required: true,
         },
         {
-          name: "name",
+          name: "student_name",
           label: "Name",
           placeholder: "e.g. Aryan Kumar",
           required: true,
         },
+        
         {
-          name: "fatherName",
-          label: "Father's Name",
-          placeholder: "e.g. Ramesh Kumar",
-          required: false,
-        },
-        {
-          name: "classCode",
-          label: "Class Code",
+          name: "class",
+          label: "Class",
           placeholder: "e.g. CSE-3A",
           required: true,
         },
@@ -357,11 +353,18 @@ function Admin() {
           required: false,
         },
         {
-          name: "sectionName",
-          label: "Section (optional)",
+          name: "division",
+          label: "devision (optional)",
           placeholder: "e.g. A",
           required: false,
         },
+        {
+          name: "date_of_birth",
+          label: "Date of Birth",
+          placeholder: "e.g. 01-01-2000",
+          required: false,
+        },
+
       ],
       csvExampleHeader: "rollNo,name,classCode,sectionName",
     },
@@ -388,9 +391,9 @@ function Admin() {
   const renderContent = () => {
     if (!activeEntity) {
       return (
-        <div className="flex-1 p-8 flex flex-col items-center justify-center text-center text-text/60 h-full">
+        <div className="flex-1 p-8 flex flex-col items-center justify-center text-center text-slate-500 h-full">
           <svg
-            className="w-24 h-24 mb-6 text-text/40"
+            className="w-24 h-24 mb-6 text-slate-400"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -403,10 +406,10 @@ function Admin() {
               d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
             />
           </svg>
-          <h3 className="text-xl font-semibold text-text/80 mb-2">
+          <h3 className="text-xl font-semibold text-slate-600 mb-2">
             Welcome to the Admin Dashboard
           </h3>
-          <p className="text-base text-text/60">
+          <p className="text-base text-slate-500">
             Please select an item from the sidebar to get started.
           </p>
         </div>
@@ -416,9 +419,9 @@ function Admin() {
     const currentEntityConfig = ENTITY_CONFIG[activeEntity];
 
     return (
-      <div className="flex-1 p-8 space-y-6 bg-background overflow-y-auto h-full text-text">
+      <div className="flex-1 p-8 space-y-6 bg-slate-50 overflow-y-auto h-full text-slate-900">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-text">
+          <h2 className="text-3xl font-bold text-slate-900">
             {currentEntityConfig.pluralLabel}
           </h2>
           <div className="flex items-center space-x-4">
@@ -473,10 +476,10 @@ function Admin() {
           </div>
         </div>
 
-        <div className="bg-surface p-6 rounded-lg shadow-md border border-border">
+        <div className="bg-white p-6 rounded-lg shadow-md">
           <Form currentEntityConfig={currentEntityConfig} activeEntity={activeEntity} />
         </div>
-        <div className="bg-surface p-6 rounded-lg shadow-md border border-border">
+        <div className="bg-white p-6 rounded-lg shadow-md">
           <DataTable currentEntityConfig={currentEntityConfig} activeEntity={activeEntity} />
         </div>
       </div>
@@ -484,13 +487,13 @@ function Admin() {
   };
 
   return (
-    <div className="w-full h-screen max-w-[1440px] mx-auto flex flex-col bg-background text-text transition-colors duration-200">
-      <header className="flex items-center justify-between px-8 py-4 border-b border-border bg-surface">
-        <h1 className="text-2xl font-bold text-text">Admin Dashboard</h1>
+    <div className="w-full h-screen max-w-[1440px] mx-auto flex flex-col bg-slate-100 text-slate-900 transition-colors duration-200">
+      <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200 bg-white">
+        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-border px-4 py-6 overflow-y-auto hidden md:block bg-surface">
+        <aside className="w-72 border-r border-slate-200 px-4 py-6 overflow-y-auto hidden md:block bg-white">
           <SideBar
             ENTITY_CONFIG={ENTITY_CONFIG}
             masterData={masterData}
