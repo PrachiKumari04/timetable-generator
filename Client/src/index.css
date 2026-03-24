@@ -1,22 +1,24 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --text: #111827;
-  --background: #ffffff;
-  --primary: #f96120;
-  --secondary: #f6380d;
-  --accent: #52ef44;
+  --text: #020617;
+  --background: #f8fafc;
+  --primary: #3b82f6;
+  --secondary: #1d4ed8;
+  --accent: #6366f1;
 }
 
 .dark {
-  --text: #ffffff;
-  --background: #111827;
- --primary: #f96120;
-  --secondary: #f6380d;
-  --accent: #52ef44;
+  --text: #f8fafc;
+  --background: #020617;
+  --primary: #3b82f6;
+  --secondary: #1d4ed8;
+  --accent: #6366f1;
 }
 
 body {
   background-color: var(--background);
   color: var(--text);
+  font-family: 'Inter', sans-serif;
 }

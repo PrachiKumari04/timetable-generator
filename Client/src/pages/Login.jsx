@@ -14,7 +14,7 @@ function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    
+
     const data = Object.fromEntries(formData.entries());
     console.log(data);
 
