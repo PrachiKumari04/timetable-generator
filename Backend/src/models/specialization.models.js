@@ -2,13 +2,13 @@ import { Schema, model } from "mongoose";
 
 const specilizationSchema = new Schema(
   {
-    // specilization_id: {
-    //   type: String,
-    //   required: true,
-    //   unique: true,
-    //   uppercase: true,
-    //   trim: true,
-    // },
+    specilization_id: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
     specilization_name: {
       type: String,
       required: true,
@@ -16,12 +16,16 @@ const specilizationSchema = new Schema(
       trim: true,
     },
     program_id: {
-      type: Schema.Types.ObjectId,
-      ref: "Program",
+      type:String,
+      required:true,
+      lowercase:true,
+      trim:true
     },
     course_id: {
-      type: Schema.Types.ObjectId,
-      ref: "Course",
+      type: String,
+      required:true,
+      lowercase:true,
+      trim:true
     },
     isActive: {
       type: Boolean,

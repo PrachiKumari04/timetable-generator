@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 export const addSpecialization = asyncHandler(async (req, res) => {
   const specialization = req.body;
 
-  if (Array.isArray(specialization) || specialization.length === 0)
+  if (!Array.isArray(specialization) || specialization.length === 0)
     throw new ApiError(400, "Specialization data is required");
 
   //validate
@@ -19,15 +19,18 @@ export const addSpecialization = asyncHandler(async (req, res) => {
 
   //find unique records which is not  stored in db
   const uniqueSpecialization = specialization.filter((s) => {
-    return !Specilization.findOne({ specilization_name: s.specilization_name });
+    return s.specilization_name !== Specilization.findOne({ specilization_name: s.specilization_name });
   });
+
+  console.log(uniqueSpecialization)
+
 
   if (uniqueSpecialization.length === 0)
     throw new ApiError(400, "All Specialization already exists");
 
-    const createdSpecialization = await Specilization.insertMany(uniqueSpecialization);
+  const createdSpecialization = await Specilization.create(uniqueSpecialization);
 
-    if(createdSpecialization.length === 0 )throw new ApiError(400, "Something went wrong");
+  if (createdSpecialization.length === 0) throw new ApiError(400, "Something went wrong");
 
 
   res.status(200).json({
@@ -39,30 +42,30 @@ export const addSpecialization = asyncHandler(async (req, res) => {
 
 //Get all specialization
 export const getAllSpecialization = asyncHandler(async (req, res) => {
-    
-    const specialization = await Specilization.find().populate("program_id").populate("course_id");
 
-    if(specialization.length === 0) throw new ApiError(404, "No specialization found");
+  const specialization = await Specilization.find().populate("program_id").populate("course_id");
 
-    res.status(200).json({
-        success: true,
-        message: "Specialization fetched successfully",
-        data: specialization,
-      });
+  if (specialization.length === 0) throw new ApiError(404, "No specialization found");
+
+  res.status(200).json({
+    success: true,
+    message: "Specialization fetched successfully",
+    data: specialization,
+  });
 });
 
 //Get specialization by id
 export const getSpecializationById = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const specialization = await Specilization.findById(id).populate("program_id").populate("course_id");
-    if(!specialization) throw new ApiError(404, "No specialization found");
+  const specialization = await Specilization.findById(id).populate("program_id").populate("course_id");
+  if (!specialization) throw new ApiError(404, "No specialization found");
 
-    res.status(200).json({
-        success: true,
-        message: "Specialization fetched successfully",
-        data: specialization,
-      });
+  res.status(200).json({
+    success: true,
+    message: "Specialization fetched successfully",
+    data: specialization,
+  });
 });
 
 //Update specialization
@@ -112,6 +115,6 @@ export const deleteSpecialization = asyncHandler(async (req, res) => {
     message: "Specialization deleted successfully",
     data: deletedSpecialization,
   });
-  
+
 });
 

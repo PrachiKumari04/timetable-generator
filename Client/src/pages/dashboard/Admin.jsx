@@ -5,7 +5,13 @@ import { useNavigate } from "react-router-dom";
 import SideBar from "../../components/deshboard/SideBar";
 import DataTable from "../../components/deshboard/DataTable";
 import Form from "../../components/deshboard/Form";
-import { fetchMasterData, setActiveEntity, setEditingEntityId } from "../../store/admin/adminSlice";
+import {
+  fetchMasterData,
+  setActiveEntity,
+  setEditingEntityId,
+  addMasterData,
+} from "../../store/admin/adminSlice";
+import ExcelHendelButton from "../../components/ExcelHendelButton";
 
 function Admin() {
   const dispatch = useDispatch();
@@ -13,7 +19,9 @@ function Admin() {
   const userData = useSelector((state) => state.auth.userData);
   const navigate = useNavigate();
 
-  const { activeEntity, masterData, loading, error } = useSelector((state) => state.admin);
+  const { activeEntity, masterData, loading, error } = useSelector(
+    (state) => state.admin,
+  );
 
   useEffect(() => {
     if (!isAuthenticated || !userData || userData.role !== "admin") {
@@ -34,19 +42,18 @@ function Admin() {
       // description: "Define academic programs like B.Tech CSE, BBA, etc.",
       fields: [
         {
-          name: "code",
+          name: "program_id",
           label: "Program Code",
           placeholder: "e.g. UG-CSE",
           required: true,
         },
         {
-          name: "name",
+          name: "program_name",
           label: "Program Name",
           placeholder: "e.g. Undergraduate Computer Science",
           required: true,
         },
       ],
-      csvExampleHeader: "code,name",
     },
 
     course: {
@@ -55,25 +62,30 @@ function Admin() {
       // description: "Define courses like B.Tech, M.Tech, etc.",
       fields: [
         {
-          name: "code",
+          name: "course_id",
           label: "Course Code",
           placeholder: "e.g. UG-CSE-101",
           required: true,
         },
         {
-          name: "name",
+          name: "course_name",
           label: "Course Name",
           placeholder: "e.g. Introduction to Programming",
           required: true,
         },
         {
-          name: "duration",
+          name: "course_duration",
           label: "Duration (years)",
           placeholder: "e.g. 3",
           required: true,
         },
+        {
+          name: "isActive",
+          label: "isActive",
+          type: "boolean",
+          required: true,
+        },
       ],
-      csvExampleHeader: "code,name,duration",
     },
 
     room: {
@@ -82,7 +94,7 @@ function Admin() {
       // description: "Maintain list of rooms for scheduling classes.",
       fields: [
         {
-          name: "code",
+          name: "room_no",
           label: "Room Code",
           placeholder: "e.g. R101",
           required: true,
@@ -94,7 +106,7 @@ function Admin() {
           required: true,
         },
         {
-          name: "Wing",
+          name: "wing",
           label: "Wing",
           placeholder: "e.g. A Wing",
           required: true,
@@ -106,19 +118,19 @@ function Admin() {
       pluralLabel: "Classes",
       fields: [
         {
-          name: "code",
+          name: "class_id",
           label: "Class Code",
           placeholder: "e.g. CSE-3A",
           required: true,
         },
         {
-          name: "courseCode",
+          name: "course_id",
           label: "Course Code",
           placeholder: "e.g. UG-CSE-101",
           required: true,
         },
         {
-          name: "programCode",
+          name: "program_id",
           label: "Program Code",
           placeholder: "e.g. UG-CSE",
           required: true,
@@ -131,26 +143,32 @@ function Admin() {
         },
       ],
     },
-    section: {
-      label: "Section",
-      pluralLabel: "Sections",
+    division: {
+      label: "Division",
+      pluralLabel: "Divisions",
       fields: [
+        // {
+        //   name: "section_name",
+        //   label: "Section Code",
+        //   placeholder: "e.g. A",
+        //   required: true,
+        // },
         {
-          name: "sectionCode",
-          label: "Section Code",
-          placeholder: "e.g. A",
+          name: "section_name",
+          label: "Division",
+          placeholder: "e.g. 1",
           required: true,
         },
         {
-          name: "classCode",
+          name: "class_id",
           label: "Class Code",
           placeholder: "e.g. CSE-3A",
           required: true,
         },
         {
-          name: "division",
-          label: "Division",
-          placeholder: "e.g. 1",
+          name: "discraption",
+          label: "Discraption",
+          placeholder: "e.g. CSE-3A-1",
           required: true,
         },
       ],
@@ -162,19 +180,19 @@ function Admin() {
       description: "Maintain subject master list for timetables.",
       fields: [
         {
-          name: "code",
+          name: "subject_id",
           label: "Subject Code",
           placeholder: "e.g. CS301",
           required: true,
         },
         {
-          name: "name",
+          name: "subject_name",
           label: "Subject Name",
           placeholder: "e.g. Data Structures",
           required: true,
         },
         {
-          name: "credits",
+          name: "credit",
           label: "Credits",
           placeholder: "e.g. 3",
           required: false,
@@ -186,7 +204,6 @@ function Admin() {
           required: false,
         },
       ],
-      csvExampleHeader: "code,name,credits,isActive",
     },
 
     Specialization: {
@@ -195,37 +212,42 @@ function Admin() {
       description: "Define specializations for programs (e.g. AI, DS).",
       fields: [
         {
-          name: "code",
+          name: "specilization_id",
           label: "Specialization Code",
           placeholder: "e.g. CSE-AI",
           required: true,
         },
         {
-          name: "name",
+          name: "specilization_name",
           label: "Specialization Name",
           placeholder: "e.g. Computer Science - Artificial Intelligence",
           required: true,
         },
         {
-          name: "programCode",
+          name: "program_id",
           label: "Program Code",
           placeholder: "e.g. UG-CSE",
           required: true,
         },
         {
-          name: "courseCodes",
+          name: "course_id",
           label: "Related Course Codes (comma-separated)",
           placeholder: "e.g. UG-CSE-201,UG-CSE-202",
           required: false,
         },
+        // {
+        //   name: "duration",
+        //   label: "Duration (semesters)",
+        //   placeholder: "e.g. 4",
+        //   required: false,
+        // },
         {
-          name: "duration",
-          label: "Duration (semesters)",
-          placeholder: "e.g. 4",
+          name: "isActive",
+          label: "Active",
+          type: "boolean",
           required: false,
         },
       ],
-      csvExampleHeader: "code,name,programCode,courseCodes,duration",
     },
 
     faculty: {
@@ -327,7 +349,7 @@ function Admin() {
           placeholder: "e.g. Aryan Kumar",
           required: true,
         },
-        
+
         {
           name: "class",
           label: "Class",
@@ -354,7 +376,7 @@ function Admin() {
         },
         {
           name: "division",
-          label: "devision (optional)",
+          label: "division (optional)",
           placeholder: "e.g. A",
           required: false,
         },
@@ -364,7 +386,6 @@ function Admin() {
           placeholder: "e.g. 01-01-2000",
           required: false,
         },
-
       ],
       csvExampleHeader: "rollNo,name,classCode,sectionName",
     },
@@ -383,9 +404,20 @@ function Admin() {
     dispatch(setEditingEntityId(id));
   };
 
+  const handleUplode = (data) => {
+    dispatch(addMasterData({ entityKey: activeEntity, data }));
+  };
+
   const headerActions = [
-    { label: "Master Data", className: "bg-primary hover:bg-secondary text-white border-transparent" },
-    { label: "Timetables", className: "bg-background border border-text/20 hover:bg-text/10 text-text" },
+    {
+      label: "Master Data",
+      className: "bg-primary hover:bg-secondary text-white border-transparent",
+    },
+    {
+      label: "Timetables",
+      className:
+        "bg-background border border-text/20 hover:bg-text/10 text-text",
+    },
   ];
 
   const renderContent = () => {
@@ -419,12 +451,15 @@ function Admin() {
     const currentEntityConfig = ENTITY_CONFIG[activeEntity];
 
     return (
-      <div className="flex-1 p-8 space-y-6 bg-slate-50 overflow-y-auto h-full text-slate-900">
+      <div className="flex-1 p-8 space-y-6  overflow-y-auto h-full ">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-slate-900">
+          <h2 className="text-3xl font-bold ">
             {currentEntityConfig.pluralLabel}
           </h2>
+
           <div className="flex items-center space-x-4">
+            {/* Loading spinner if data is being fetched */}
+
             {loading && (
               <div className="flex items-center space-x-2">
                 <svg
@@ -452,6 +487,8 @@ function Admin() {
                 </span>
               </div>
             )}
+
+            {/* Error message if there's an error */}
             {error && (
               <div className="flex items-center space-x-2 bg-red-100 px-3 py-2 rounded-md">
                 <svg
@@ -476,24 +513,43 @@ function Admin() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <Form currentEntityConfig={currentEntityConfig} activeEntity={activeEntity} />
+        <div className=" p-6 rounded-lg shadow-md">
+          <Form
+            currentEntityConfig={currentEntityConfig}
+            activeEntity={activeEntity}
+          />
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <DataTable currentEntityConfig={currentEntityConfig} activeEntity={activeEntity} />
+        <div className=" p-6 rounded-lg shadow-md">
+          <DataTable
+            currentEntityConfig={currentEntityConfig}
+            activeEntity={activeEntity}
+          />
         </div>
       </div>
     );
   };
 
   return (
-    <div className="w-full h-screen max-w-[1440px] mx-auto flex flex-col bg-slate-100 text-slate-900 transition-colors duration-200">
-      <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200 bg-white">
-        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+    <div className="w-full h-screen max-w-[1440px] mx-auto flex flex-col transition-colors duration-200">
+      <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200">
+        <h1 className="text-2xl font-bold ">Admin Dashboard</h1>
+
+        {activeEntity && (
+          <ExcelHendelButton
+            fileName={activeEntity}
+            formet={[
+              ENTITY_CONFIG[activeEntity].fields.reduce((acc, field) => {
+                acc[field.name] = field.placeholder;
+                return acc;
+              }, {}),
+            ]}
+            handleUplode={handleUplode}
+          />
+        )}
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-slate-200 px-4 py-6 overflow-y-auto hidden md:block bg-white">
+        <aside className="w-72 border-r border-slate-200 px-4 py-6 overflow-y-auto hidden md:block ">
           <SideBar
             ENTITY_CONFIG={ENTITY_CONFIG}
             masterData={masterData}
@@ -503,9 +559,7 @@ function Admin() {
           />
         </aside>
 
-        <main className="flex-1 overflow-hidden">
-          {renderContent()}
-        </main>
+        <main className="flex-1 overflow-hidden">{renderContent()}</main>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ const roomSchema = new Schema(
       required: true,
       trim: true,
     },
-    wings: {
+    wing: {
       type: String,
       required: true,
       lowercase: true,

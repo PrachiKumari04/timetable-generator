@@ -3,14 +3,16 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 //Add Subject
-export const addSubject = asyncHandler((req, res) => {
+export const addSubject = asyncHandler(async (req, res) => {
   const subject = req.body;
+  console.log(subject);
 
-  if (Array.isArray(subject) || subject.length === 0)
+
+  if (!Array.isArray(subject) || subject.length === 0)
     throw new ApiError(400, "Subject data is required and must be an array");
 
   //Validate
-  if (subject.every((sub) => sub.subject_id && sub.subject_name && sub.credit))
+  if (!subject.every((sub) => sub.subject_id && sub.subject_name && sub.credit))
     throw new ApiError(
       400,
       "Subject id, name and credit are required for all subjects",
@@ -18,15 +20,17 @@ export const addSubject = asyncHandler((req, res) => {
 
   // find unique value which is not aviblable in database
   const uniqueSubject = subject.filter((sub) => {
-    return !Subject.findOne({ subject_id: sub.subject_id });
+    return sub.subject_id !== Subject.findOne({ subject_id: sub.subject_id });
   });
 
   if (uniqueSubject.length === 0)
     throw new ApiError(400, "All subjects already exist in the database");
 
-  const createdSubject = Subject.insertMany(uniqueSubject);
+  const createdSubject = await Subject.insertMany(uniqueSubject);
+  console.log(createdSubject);
 
-  if (createdSubject.length === 0)
+
+  if (!createdSubject)
     throw new ApiError(400, "Failed to add subjects");
 
   res.status(201).json({
@@ -87,9 +91,9 @@ export const getSubjectBySubjectId = asyncHandler((req, res) => {
 export const deleteSubject = asyncHandler((req, res) => {
   const { id } = req.params;
 
-  if (!id) throw new ApiError(400, "Subject id is required");   
-    
-    const subject = Subject.findByIdAndDelete(id);
+  if (!id) throw new ApiError(400, "Subject id is required");
+
+  const subject = Subject.findByIdAndDelete(id);
 
   if (!subject) throw new ApiError(404, "Subject not found");
 
