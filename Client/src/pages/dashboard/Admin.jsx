@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { use, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import AdminHeader from "../../components/admin/AdminHeader";
@@ -22,6 +22,20 @@ function Admin() {
   const { activeEntity, masterData, loading, error } = useSelector(
     (state) => state.admin,
   );
+
+  useEffect(() => {
+    dispatch(fetchMasterData("program"));
+    dispatch(fetchMasterData("course"));
+    dispatch(fetchMasterData("room"));
+    dispatch(fetchMasterData("classes"));
+    dispatch(fetchMasterData("division"));
+    dispatch(fetchMasterData("subject"));
+    dispatch(fetchMasterData("Specialization"));
+    dispatch(fetchMasterData("faculty"));
+    dispatch(fetchMasterData("student"));
+  }, [dispatch]);
+
+
 
   useEffect(() => {
     if (!isAuthenticated || !userData || userData.role !== "admin") {

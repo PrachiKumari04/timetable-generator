@@ -21,6 +21,8 @@ export default function ExcelHendelButton({
     if (file) {
       try {
         const data = await parseExcelFile(file);
+        // console.log("Excel data ->",data);
+        
         handleUplode(data);
       } catch (error) {
         console.error("Error parsing Excel file:", error);
