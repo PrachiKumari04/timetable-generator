@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-// import { useNavigate } from "react-router";
 
 const initialState = {
-  isAuthenticated: false,
-  userData: null,
+  isAuthenticated: localStorage.getItem("isAuthenticated") ? true : false,
+  userData: localStorage.getItem("userData")
+    ? JSON.parse(localStorage.getItem("userData"))
+    : null,
 };
 
 const authSlice = createSlice({
@@ -13,10 +14,14 @@ const authSlice = createSlice({
     login: (state, action) => {
       state.isAuthenticated = true;
       state.userData = action.payload;
+      localStorage.setItem("isAuthenticated", true);
+      localStorage.setItem("userData", JSON.stringify(action.payload));
     },
     logout: (state) => {
       state.isAuthenticated = false;
       state.userData = null;
+      localStorage.removeItem("isAuthenticated");
+      localStorage.removeItem("userData");
     },
   },
 });
