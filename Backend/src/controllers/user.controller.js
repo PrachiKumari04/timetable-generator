@@ -15,14 +15,16 @@ export const registerUser = asyncHandler(async (req, res) => {
   const users = req.body;
 
   console.log("Body -->", req.body);
-  
+
   // Handle single user registration
   if (!Array.isArray(users)) {
     const { password, role, student_id, faculty_id, created_by } = users;
-    
+
     // Validate required fields
     if (!password || !role || (!student_id && !faculty_id)) {
-      throw new ApiError(400, "Password, role, and student_id or faculty_id are required");
+      throw ApiError.badRequest(
+        "Password, role, and student_id or faculty_id are required"
+      );
     }
 
     // Check for existing user
@@ -34,7 +36,9 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (existingUser) {
-      throw new ApiError(409, "User with this student_id or faculty_id already exists");
+      throw ApiError.conflict(
+        "User with this student_id or faculty_id already exists"
+      );
     }
 
     // Create user
@@ -46,28 +50,31 @@ export const registerUser = asyncHandler(async (req, res) => {
       created_by: created_by || null,
     });
 
-    const createdUser = await User.findById(newUser._id).select("-password -refreshToken");
+    const createdUser = await User.findById(newUser._id).select(
+      "-password -refreshToken"
+    );
 
-    return res
-      .status(201)
-      .json(new ApiResponse(201, createdUser, "User registered successfully"));
+    return ApiResponse.created(
+      createdUser,
+      "User registered successfully"
+    ).send(res);
   }
 
   // Handle multiple user registration (bulk)
   if (users.length === 0) {
-    throw new ApiError(400, "User data is required and must be an array");
+    throw ApiError.badRequest("User data is required and must be an array");
   }
 
   // Validate each user
   users.forEach((user) => {
     if (!user.password) {
-      throw new ApiError(400, "Password is required");
+      throw ApiError.badRequest("Password is required");
     }
     if (!user.role) {
-      throw new ApiError(400, "Role is required");
+      throw ApiError.badRequest("Role is required");
     }
     if (!user.student_id && !user.faculty_id) {
-      throw new ApiError(400, "Student ID or Faculty ID is required");
+      throw ApiError.badRequest("Student ID or Faculty ID is required");
     }
   });
 
@@ -83,14 +90,10 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 
   const existingStudentIds = new Set(
-    existingUsers
-      .filter((u) => u.student_id)
-      .map((u) => u.student_id.toString()),
+    existingUsers.filter((u) => u.student_id).map((u) => u.student_id.toString())
   );
   const existingFacultyIds = new Set(
-    existingUsers
-      .filter((u) => u.faculty_id)
-      .map((u) => u.faculty_id.toString()),
+    existingUsers.filter((u) => u.faculty_id).map((u) => u.faculty_id.toString())
   );
 
   const uniqueUserRecords = users.filter((user) => {
@@ -104,7 +107,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (uniqueUserRecords.length === 0) {
-    throw new ApiError(409, "All provided users already exist in the database");
+    throw ApiError.conflict("All provided users already exist in the database");
   }
 
   console.log("Unique User Records -->", uniqueUserRecords);
@@ -114,19 +117,18 @@ export const registerUser = asyncHandler(async (req, res) => {
   console.log("User -->", userRecords);
 
   if (userRecords.length === 0) {
-    throw new ApiError(500, "Failed to register users");
+    throw ApiError.internal("Failed to register users");
   }
 
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(201, userRecords, "Users registered successfully"),
-    );
+  return ApiResponse.created(
+    userRecords,
+    "Users registered successfully"
+  ).send(res);
 });
 
 //Get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
-  //get all user with there name and email
+  // Get all users with their name and email
   const usersWithDetails = await User.aggregate([
     {
       $lookup: {
@@ -136,7 +138,6 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         as: "student_data",
       },
     },
-
     {
       $lookup: {
         from: "faculties",
@@ -176,12 +177,11 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         },
         user_name: {
           $cond: {
-            if: { $eq: ["$faculty-id", null] },
+            if: { $eq: ["$faculty_id", null] },
             then: "$user_data.student_name",
             else: "$user_data.faculty_name",
           },
         },
-
         email: "$user_data.email",
         isActive: 1,
         created_by: 1,
@@ -194,25 +194,22 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   ]);
 
   if (usersWithDetails.length === 0) {
-    throw new ApiError(404, "No users found");
+    throw ApiError.notFound("No users found");
   }
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, usersWithDetails[0], "Users fetched successfully"),
-    );
+  return ApiResponse.ok(usersWithDetails, "Users fetched successfully").send(res);
 });
 
 // Get user by ID
 export const getUserById = asyncHandler(async (req, res) => {
   const { id } = req.params;
   console.log("User Id -->", id);
+
   if (!id) {
-    throw new ApiError(404, "User ID is required");
+    throw ApiError.badRequest("User ID is required");
   }
 
-  //Fatching data from database
+  // Fetching data from database
   const getUserData = await User.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(id) } },
     {
@@ -269,97 +266,100 @@ export const getUserById = asyncHandler(async (req, res) => {
       },
     },
   ]);
+
   console.log("User -->", getUserData);
 
   if (getUserData.length === 0) {
-    throw new ApiError(404, "User not found");
+    throw ApiError.notFound("User not found");
   }
-  return res
-    .status(200)
-    .json(new ApiResponse(200, getUserData[0], "User fetched successfully"));
+
+  return ApiResponse.ok(getUserData[0], "User fetched successfully").send(res);
 });
 
 // Update user
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
   if (!id) {
-    throw new ApiError(400, "User ID is required");
+    throw ApiError.badRequest("User ID is required");
   }
-  
+
   const user = await User.findById(id);
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw ApiError.notFound("User not found");
   }
-  
+
   if (!req.body || Object.keys(req.body).length === 0) {
-    throw new ApiError(400, "User data is required");
+    throw ApiError.badRequest("User data is required");
   }
-  
+
   const { password, role, updated_by, isActive } = req.body;
-  
+
   // Build update object
   const updateData = {};
   if (role) updateData.role = role;
   if (isActive !== undefined) updateData.isActive = isActive;
   if (updated_by) updateData.updated_by = updated_by;
-  
+
   // Handle password update separately to trigger hashing
   if (password) {
     if (password.length < 6) {
-      throw new ApiError(400, "Password must be at least 6 characters long");
+      throw ApiError.badRequest(
+        "Password must be at least 6 characters long"
+      );
     }
     user.password = password;
     if (role) user.role = role;
     if (isActive !== undefined) user.isActive = isActive;
     if (updated_by) user.updated_by = updated_by;
-    
+
     const updatedUser = await user.save();
-    const userResponse = await User.findById(updatedUser._id).select("-password -refreshToken");
-    
-    return res
-      .status(200)
-      .json(new ApiResponse(200, userResponse, "User updated successfully"));
+    const userResponse = await User.findById(updatedUser._id).select(
+      "-password -refreshToken"
+    );
+
+    return ApiResponse.ok(userResponse, "User updated successfully").send(res);
   }
-  
+
   const updatedUser = await User.findByIdAndUpdate(
     id,
     { $set: updateData },
-    { new: true },
+    { new: true }
   ).select("-password -refreshToken");
-  
+
   if (!updatedUser) {
-    throw new ApiError(404, "User not found");
+    throw ApiError.notFound("User not found");
   }
-  
-  return res
-    .status(200)
-    .json(new ApiResponse(200, updatedUser, "User updated successfully"));
+
+  return ApiResponse.ok(updatedUser, "User updated successfully").send(res);
 });
 
 // Delete user
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
   if (!id) {
-    throw new ApiError(404, "User ID is required");
+    throw ApiError.badRequest("User ID is required");
   }
+
   const user = await User.findByIdAndDelete(id);
+
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw ApiError.notFound("User not found");
   }
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "User deleted successfully"));
+
+  return ApiResponse.ok(user, "User deleted successfully").send(res);
 });
 
 // Login with password hashing and JWT tokens
 export const userLogin = asyncHandler(async (req, res) => {
   const { user_id, password } = req.body;
-  
+
   // Validate input
   if (!user_id?.trim() || !password?.trim()) {
-    throw new ApiError(400, "User ID and password are required");
+    throw ApiError.badRequest("User ID and password are required");
   }
-  
+
   console.log("User Id -->", user_id);
 
   // Find user by student_id or faculty_id
@@ -368,19 +368,19 @@ export const userLogin = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(401, "Invalid credentials");
+    throw ApiError.unauthorized("Invalid credentials");
   }
 
   // Check if user is active
   if (!user.isActive) {
-    throw new ApiError(403, "Account is deactivated. Please contact admin.");
+    throw ApiError.forbidden("Account is deactivated. Please contact admin.");
   }
 
   // Verify password
   const isPasswordValid = await user.comparePassword(password);
-  
+
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid credentials");
+    throw ApiError.unauthorized("Invalid credentials");
   }
 
   // Generate tokens
@@ -452,24 +452,23 @@ export const userLogin = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, accessTokenCookieOptions)
     .cookie("refreshToken", refreshToken, refreshTokenCookieOptions)
     .json(
-      new ApiResponse(
-        200,
+      ApiResponse.ok(
         {
           user: userWithDetails[0],
           accessToken,
           refreshToken,
         },
         "User logged in successfully"
-      )
+      ).toJSON()
     );
 });
 
 // Logout user
 export const logoutUser = asyncHandler(async (req, res) => {
   const { userId } = req.body;
-  
+
   if (!userId) {
-    throw new ApiError(400, "User ID is required");
+    throw ApiError.badRequest("User ID is required");
   }
 
   // Clear refresh token from database
@@ -481,36 +480,43 @@ export const logoutUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .clearCookie("accessToken", { httpOnly: true, secure: process.env.NODE_ENV === "production" })
-    .clearCookie("refreshToken", { httpOnly: true, secure: process.env.NODE_ENV === "production" })
-    .json(new ApiResponse(200, {}, "User logged out successfully"));
+    .clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    })
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    })
+    .json(ApiResponse.ok({}, "User logged out successfully").toJSON());
 });
 
 // Refresh access token
 export const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "Unauthorized request - No refresh token");
+    throw ApiError.unauthorized("Unauthorized request - No refresh token");
   }
 
   // Verify refresh token
   const decodedToken = verifyRefreshToken(incomingRefreshToken);
 
   if (!decodedToken) {
-    throw new ApiError(401, "Invalid or expired refresh token");
+    throw ApiError.unauthorized("Invalid or expired refresh token");
   }
 
   // Find user
   const user = await User.findById(decodedToken._id);
 
   if (!user) {
-    throw new ApiError(401, "User not found");
+    throw ApiError.unauthorized("User not found");
   }
 
   // Check if refresh token matches
   if (user.refreshToken !== incomingRefreshToken) {
-    throw new ApiError(401, "Refresh token is expired or used");
+    throw ApiError.unauthorized("Refresh token is expired or used");
   }
 
   // Generate new tokens
@@ -525,11 +531,10 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, accessTokenCookieOptions)
     .cookie("refreshToken", newRefreshToken, refreshTokenCookieOptions)
     .json(
-      new ApiResponse(
-        200,
+      ApiResponse.ok(
         { accessToken, refreshToken: newRefreshToken },
         "Access token refreshed successfully"
-      )
+      ).toJSON()
     );
 });
 
@@ -538,31 +543,33 @@ export const changePassword = asyncHandler(async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body;
 
   if (!userId || !currentPassword || !newPassword) {
-    throw new ApiError(400, "User ID, current password, and new password are required");
+    throw ApiError.badRequest(
+      "User ID, current password, and new password are required"
+    );
   }
 
   if (newPassword.length < 6) {
-    throw new ApiError(400, "New password must be at least 6 characters long");
+    throw ApiError.badRequest(
+      "New password must be at least 6 characters long"
+    );
   }
 
   const user = await User.findById(userId);
 
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw ApiError.notFound("User not found");
   }
 
   // Verify current password
   const isPasswordValid = await user.comparePassword(currentPassword);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "Current password is incorrect");
+    throw ApiError.unauthorized("Current password is incorrect");
   }
 
   // Update password (will be hashed by pre-save middleware)
   user.password = newPassword;
   await user.save();
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Password changed successfully"));
+  return ApiResponse.ok({}, "Password changed successfully").send(res);
 });
