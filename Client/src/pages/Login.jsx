@@ -1,46 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 import Container from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
 import { login } from "../store/auth/authSlice";
 import { toggleTheme } from "../store/theme/themeSlice";
+import apiClient from "../services/apiClient";
 
 function Login() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.userData);
   const theme = useSelector((state) => state.theme.theme);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setLoading(true);
+    setError(null);
+
     const formData = new FormData(event.currentTarget);
-
     const data = Object.fromEntries(formData.entries());
-    console.log(data);
 
-    // API calling
-    const url = "/api/v1/users/login";
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    };
+    try {
+      // Optimized API call using centralized client
+      const response = await apiClient.post("/users/login", data);
+      const user = response.data.data || response.data;
 
-    const response = await fetch(url, options);
-    const user = await response.json();
+      // Role based login
+      if (user.success === true) {
+        if (user.data.role === "admin") navigate("/admin");
+        else if (user.data.role === "student") navigate("/student");
+        else if (user.data.role === "faculty") navigate("/faculty");
+        else navigate("/");
 
-
-    //role based login 
-    if (user.success === true) {
-      if (user.data.role === "admin") navigate("/admin");
-      else if (user.data.role === "student") navigate("/student");
-      else if (user.data.role === "faculty") navigate("/faculty");
-      else navigate("/");
-
-      dispatch(login(user.data));
+        dispatch(login(user.data));
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,6 +66,11 @@ function Login() {
       <Container className="flex items-center justify-center h-full">
         <div className="w-full max-w-md p-8 space-y-6 bg-surface rounded-lg shadow-xl border border-border">
           <h2 className="text-2xl font-bold text-center text-text">Login</h2>
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-100 rounded-md">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
@@ -100,9 +105,10 @@ function Login() {
             <div>
               <button
                 type="submit"
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background transition-all duration-200"
+                disabled={loading}
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Login
+                {loading ? "Logging in..." : "Login"}
               </button>
             </div>
           </form>

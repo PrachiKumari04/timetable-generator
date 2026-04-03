@@ -5,14 +5,25 @@
 - [course.controlles.js](file://Backend/src/controllers/course.controlles.js)
 - [course.models.js](file://Backend/src/models/course.models.js)
 - [course.routers.js](file://Backend/src/routes/course.routers.js)
-- [subject.controllers.js](file://Backend/src/controllers/subject.controllers.js)
-- [subject.routers.js](file://Backend/src/routes/subject.routers.js)
+- [subjectAllocation.controllers.js](file://Backend/src/controllers/subjectAllocation.controllers.js)
+- [subjectAllocation.routers.js](file://Backend/src/routes/subjectAllocation.routers.js)
+- [subjectAllocation.models.js](file://Backend/src/models/subjectAllocation.models.js)
 - [specialization.controllers.js](file://Backend/src/controllers/specialization.controllers.js)
 - [specialization.models.js](file://Backend/src/models/specialization.models.js)
+- [timetable.controllers.js](file://Backend/src/controllers/timetable.controllers.js)
+- [timetable.routers.js](file://Backend/src/routes/timetable.routers.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
 - [asyncHandler.js](file://Backend/src/utils/asyncHandler.js)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Removed subject management endpoints section as subject management system has been completely removed
+- Added new subject allocation endpoints section reflecting integration with timetable system
+- Updated architecture overview to reflect new subject allocation workflow
+- Revised dependency analysis to remove subject management dependencies
+- Updated troubleshooting guide to reflect new subject allocation error scenarios
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -26,7 +37,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document provides comprehensive API documentation for course and subject management endpoints in the timetable management system. It covers course CRUD operations including course catalog management, credit hour tracking, and prerequisite relationships. It also documents subject management endpoints for subject mapping, specialization alignment, and academic prerequisites. The documentation includes request/response schemas, validation rules for course codes and subject names, and relationship endpoints between courses, subjects, and specializations.
+This document provides comprehensive API documentation for course and subject allocation management endpoints in the timetable management system. It covers course CRUD operations including course catalog management, credit hour tracking, and prerequisite relationships. The system now integrates subject allocation functionality directly into the timetable management workflow with enhanced validation and allocation capabilities. The documentation includes request/response schemas, validation rules for course codes and subject allocation identifiers, and relationship endpoints between courses, subject allocations, and timetables.
 
 ## Project Structure
 The backend follows a layered architecture with clear separation of concerns:
@@ -39,16 +50,19 @@ The backend follows a layered architecture with clear separation of concerns:
 graph TB
 subgraph "API Layer"
 COURSE_ROUTES["Course Routes<br/>course.routers.js"]
-SUBJECT_ROUTES["Subject Routes<br/>subject.routers.js"]
+SUBJECT_ALLOC_ROUTES["Subject Allocation Routes<br/>subjectAllocation.routers.js"]
+TIMETABLE_ROUTES["Timetable Routes<br/>timetable.routers.js"]
 end
 subgraph "Controller Layer"
 COURSE_CTRL["Course Controller<br/>course.controlles.js"]
-SUBJECT_CTRL["Subject Controller<br/>subject.controllers.js"]
+SUBJECT_ALLOC_CTRL["Subject Allocation Controller<br/>subjectAllocation.controllers.js"]
+TIMETABLE_CTRL["Timetable Controller<br/>timetable.controllers.js"]
 SPEC_CTRL["Specialization Controller<br/>specialization.controllers.js"]
 end
 subgraph "Model Layer"
 COURSE_MODEL["Course Model<br/>course.models.js"]
-SUBJECT_MODEL["Subject Model<br/>subject.models.js"]
+SUBJECT_ALLOC_MODEL["Subject Allocation Model<br/>subjectAllocation.models.js"]
+TIMETABLE_MODEL["Timetable Model<br/>timetable.models.js"]
 SPEC_MODEL["Specialization Model<br/>specialization.models.js"]
 end
 subgraph "Utility Layer"
@@ -57,28 +71,37 @@ API_RESPONSE["ApiResponse<br/>ApiResponse.js"]
 ASYNC_HANDLER["Async Handler<br/>asyncHandler.js"]
 end
 COURSE_ROUTES --> COURSE_CTRL
-SUBJECT_ROUTES --> SUBJECT_CTRL
+SUBJECT_ALLOC_ROUTES --> SUBJECT_ALLOC_CTRL
+TIMETABLE_ROUTES --> TIMETABLE_CTRL
 COURSE_CTRL --> COURSE_MODEL
-SUBJECT_CTRL --> SUBJECT_MODEL
+SUBJECT_ALLOC_CTRL --> SUBJECT_ALLOC_MODEL
+TIMETABLE_CTRL --> TIMETABLE_MODEL
 SPEC_CTRL --> SPEC_MODEL
 COURSE_CTRL --> API_ERROR
-SUBJECT_CTRL --> API_ERROR
+SUBJECT_ALLOC_CTRL --> API_ERROR
+TIMETABLE_CTRL --> API_ERROR
 SPEC_CTRL --> API_ERROR
 COURSE_CTRL --> API_RESPONSE
-SUBJECT_CTRL --> API_RESPONSE
+SUBJECT_ALLOC_CTRL --> API_RESPONSE
+TIMETABLE_CTRL --> API_RESPONSE
 SPEC_CTRL --> API_RESPONSE
 COURSE_CTRL --> ASYNC_HANDLER
-SUBJECT_CTRL --> ASYNC_HANDLER
+SUBJECT_ALLOC_CTRL --> ASYNC_HANDLER
+TIMETABLE_CTRL --> ASYNC_HANDLER
 SPEC_CTRL --> ASYNC_HANDLER
 ```
 
 **Diagram sources**
 - [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [subject.routers.js:1-24](file://Backend/src/routes/subject.routers.js#L1-L24)
+- [subjectAllocation.routers.js:1-21](file://Backend/src/routes/subjectAllocation.routers.js#L1-L21)
+- [timetable.routers.js](file://Backend/src/routes/timetable.routers.js)
 - [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
-- [subject.controllers.js:1-130](file://Backend/src/controllers/subject.controllers.js#L1-L130)
+- [subjectAllocation.controllers.js:1-119](file://Backend/src/controllers/subjectAllocation.controllers.js#L1-L119)
+- [timetable.controllers.js](file://Backend/src/controllers/timetable.controllers.js)
 - [specialization.controllers.js:1-121](file://Backend/src/controllers/specialization.controllers.js#L1-L121)
 - [course.models.js:1-32](file://Backend/src/models/course.models.js#L1-L32)
+- [subjectAllocation.models.js:1-68](file://Backend/src/models/subjectAllocation.models.js#L1-L68)
+- [timetable.models.js](file://Backend/src/models/timetable.models.js)
 - [specialization.models.js:1-26](file://Backend/src/models/specialization.models.js#L1-L26)
 - [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
 - [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
@@ -86,19 +109,24 @@ SPEC_CTRL --> ASYNC_HANDLER
 
 **Section sources**
 - [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [subject.routers.js:1-24](file://Backend/src/routes/subject.routers.js#L1-L24)
+- [subjectAllocation.routers.js:1-21](file://Backend/src/routes/subjectAllocation.routers.js#L1-L21)
+- [timetable.routers.js](file://Backend/src/routes/timetable.routers.js)
 - [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
-- [subject.controllers.js:1-130](file://Backend/src/controllers/subject.controllers.js#L1-L130)
+- [subjectAllocation.controllers.js:1-119](file://Backend/src/controllers/subjectAllocation.controllers.js#L1-L119)
+- [timetable.controllers.js](file://Backend/src/controllers/timetable.controllers.js)
 - [specialization.controllers.js:1-121](file://Backend/src/controllers/specialization.controllers.js#L1-L121)
 
 ## Core Components
-This section outlines the primary components involved in course and subject management:
+This section outlines the primary components involved in course and subject allocation management:
 
 ### Course Management
 The course management system provides comprehensive CRUD operations with strict validation and duplicate prevention mechanisms. Courses are identified by unique course codes and maintain credit hour information along with active status tracking.
 
-### Subject Management  
-Subject management handles individual subject registration with validation for subject identifiers, names, and credit hours. The system supports bulk subject creation and maintains referential integrity with course catalogs.
+### Subject Allocation Management  
+Subject allocation management handles the assignment of subjects to semesters, programs, divisions, and faculty members within the timetable system. The system supports bulk subject allocation creation with comprehensive validation for allocation identifiers, academic year tracking, and LTP (Lecture-Tutorial-Practical) hour distribution.
+
+### Timetable Integration
+The subject allocation system is fully integrated with the timetable management system, enabling seamless coordination between subject assignments and scheduled classes. This integration provides enhanced validation and allocation capabilities for academic planning.
 
 ### Specialization Management
 Specialization management coordinates course-specific specializations with program associations, enabling academic track alignment and prerequisite mapping.
@@ -106,11 +134,12 @@ Specialization management coordinates course-specific specializations with progr
 **Section sources**
 - [course.models.js:1-32](file://Backend/src/models/course.models.js#L1-L32)
 - [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
-- [subject.controllers.js:1-130](file://Backend/src/controllers/subject.controllers.js#L1-L130)
+- [subjectAllocation.models.js:1-68](file://Backend/src/models/subjectAllocation.models.js#L1-L68)
+- [subjectAllocation.controllers.js:1-119](file://Backend/src/controllers/subjectAllocation.controllers.js#L1-L119)
 - [specialization.models.js:1-26](file://Backend/src/models/specialization.models.js#L1-L26)
 
 ## Architecture Overview
-The system implements a clean architecture pattern with clear separation between presentation, business logic, and data persistence layers.
+The system implements a clean architecture pattern with clear separation between presentation, business logic, and data persistence layers. The subject allocation system is now tightly integrated with the timetable management workflow.
 
 ```mermaid
 sequenceDiagram
@@ -119,31 +148,32 @@ participant Router as "Route Handler"
 participant Controller as "Business Controller"
 participant Model as "Data Model"
 participant DB as "MongoDB"
-Client->>Router : HTTP Request (POST /api/courses)
-Router->>Controller : Route to addCourses()
-Controller->>Controller : Validate input data
-Controller->>Model : Check for duplicates
-Model->>DB : Query existing records
+Client->>Router : HTTP Request (POST /api/v1/subject-allocations)
+Router->>Controller : Route to addSubjectAllocations()
+Controller->>Controller : Validate allocation array
+Controller->>Controller : Validate each allocation fields
+Controller->>Model : Check for duplicate allocations
+Model->>DB : Query existing allocations
 DB-->>Model : Return matching records
-Model-->>Controller : Unique records only
-Controller->>Model : Insert new records
+Model-->>Controller : Unique allocations only
+Controller->>Model : Insert new allocation records
 Model->>DB : Save documents
 DB-->>Model : Confirmation
 Model-->>Controller : Saved records
-Controller->>Controller : Format response
+Controller->>Controller : Format ApiResponse
 Controller-->>Router : ApiResponse
 Router-->>Client : HTTP Response
-Note over Client,DB : Complete course registration workflow
+Note over Client,DB : Complete subject allocation workflow
 ```
 
 **Diagram sources**
-- [course.routers.js:13-21](file://Backend/src/routes/course.routers.js#L13-L21)
-- [course.controlles.js:5-40](file://Backend/src/controllers/course.controlles.js#L5-L40)
-- [course.models.js:1-32](file://Backend/src/models/course.models.js#L1-L32)
+- [subjectAllocation.routers.js:12-18](file://Backend/src/routes/subjectAllocation.routers.js#L12-L18)
+- [subjectAllocation.controllers.js:7-47](file://Backend/src/controllers/subjectAllocation.controllers.js#L7-L47)
+- [subjectAllocation.models.js:3-65](file://Backend/src/models/subjectAllocation.models.js#L3-L65)
 
 **Section sources**
-- [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
+- [subjectAllocation.routers.js:1-21](file://Backend/src/routes/subjectAllocation.routers.js#L1-L21)
+- [subjectAllocation.controllers.js:1-119](file://Backend/src/controllers/subjectAllocation.controllers.js#L1-L119)
 
 ## Detailed Component Analysis
 
@@ -152,7 +182,7 @@ Note over Client,DB : Complete course registration workflow
 #### Course Registration Endpoint
 The course registration endpoint accepts bulk course creation with comprehensive validation and duplicate prevention.
 
-**Endpoint:** `POST /api/courses`
+**Endpoint:** `POST /api/v1/courses`
 **Description:** Registers multiple courses in a single request with validation for required fields and duplicate prevention.
 
 **Request Body Schema:**
@@ -192,14 +222,14 @@ The course registration endpoint accepts bulk course creation with comprehensive
 #### Course Retrieval Endpoints
 Multiple retrieval endpoints support different identification methods:
 
-**GET /api/courses** - Retrieve all courses
-**GET /api/courses/:id** - Retrieve course by MongoDB ObjectId
-**GET /api/courses/:course_id** - Retrieve course by course code
+**GET /api/v1/courses** - Retrieve all courses
+**GET /api/v1/courses/:id** - Retrieve course by MongoDB ObjectId
+**GET /api/v1/courses/:course_id** - Retrieve course by course code
 
 **Response Schema:** Same as registration response but with single course object.
 
 #### Course Update Endpoint
-**Endpoint:** `PUT /api/courses/:id`
+**Endpoint:** `PUT /api/v1/courses/:id`
 **Description:** Updates course information with partial updates supported.
 
 **Request Body Schema:**
@@ -215,7 +245,7 @@ Multiple retrieval endpoints support different identification methods:
 **Response Schema:** Updated course object with success status.
 
 #### Course Deletion Endpoint
-**Endpoint:** `DELETE /api/courses/:id`
+**Endpoint:** `DELETE /api/v1/courses/:id`
 **Description:** Removes course by ObjectId with cascade effect on related records.
 
 **Response Schema:** Deleted course object with success confirmation.
@@ -239,12 +269,12 @@ class CourseController {
 +deleteCourseById(req, res) ApiResponse
 }
 class CourseRoutes {
-+POST /api/courses
-+GET /api/courses
-+GET /api/courses/ : id
-+GET /api/courses/ : course_id
-+PUT /api/courses/ : id
-+DELETE /api/courses/ : id
++POST /api/v1/courses
++GET /api/v1/courses
++GET /api/v1/courses/ : id
++GET /api/v1/courses/ : course_id
++PUT /api/v1/courses/ : id
++DELETE /api/v1/courses/ : id
 }
 CourseController --> Course : "manages"
 CourseRoutes --> CourseController : "routes to"
@@ -262,98 +292,127 @@ CourseRoutes --> CourseController : "routes to"
 - [course.models.js:3-29](file://Backend/src/models/course.models.js#L3-L29)
 - [course.routers.js:13-21](file://Backend/src/routes/course.routers.js#L13-L21)
 
-### Subject Management Endpoints
+### Subject Allocation Management Endpoints
 
-#### Subject Registration Endpoint
-**Endpoint:** `POST /api/subjects`
-**Description:** Bulk subject registration with validation for subject identifiers, names, and credits.
+#### Subject Allocation Registration Endpoint
+**Endpoint:** `POST /api/v1/subject-allocations`
+**Description:** Bulk subject allocation registration with comprehensive validation for allocation identifiers, academic year tracking, and LTP hour distribution.
 
 **Request Body Schema:**
 ```javascript
 [
   {
-    "subject_id": "string",     // Required - Unique subject identifier
-    "subject_name": "string",   // Required - Subject name
-    "credit": number           // Required - Credit hours
+    "subjectAllocation_id": "string",  // Required - Unique allocation identifier
+    "semester_id": "string",           // Required - Semester reference
+    "program_id": "string",            // Required - Program reference
+    "division_id": "string",           // Required - Division reference
+    "faculty_id": "string",            // Required - Faculty member
+    "course_id": "string",             // Required - Course reference
+    "ltpHours": {                      // Required - LTP hour distribution
+      "l": number,                     // Lecture hours
+      "t": number,                     // Tutorial hours  
+      "p": number                      // Practical hours
+    },
+    "isLab": boolean,                  // Optional - Lab allocation flag
+    "classTeacher": "string",          // Required - Class teacher assignment
+    "academicYear": "string"           // Required - Academic year
   }
 ]
 ```
 
 **Validation Rules:**
-- `subject_id`: Required, unique identifier
-- `subject_name`: Required, descriptive name
-- `credit`: Required, positive number
+- `subjectAllocation_id`: Required, unique identifier, uppercase, trimmed
+- All required fields must be present for each allocation
+- `ltpHours` must contain all three components (l, t, p)
 - Input must be a non-empty array
+- Duplicate allocation IDs are prevented
 
 **Response Schema:**
 ```javascript
 {
-  "success": boolean,
-  "message": "string", 
-  "data": [Subject]
+  "statusCode": number,
+  "data": [SubjectAllocation],
+  "message": "string",
+  "success": boolean
 }
 ```
 
-#### Subject Retrieval Endpoints
-**GET /api/subjects** - Retrieve all subjects
-**GET /api/subjects/:id** - Retrieve subject by ObjectId
-**GET /api/subjects/subject/:subject_id** - Retrieve subject by subject code
+**Success Response:** `201 Created`
+**Error Responses:**
+- `400 Bad Request`: Invalid input format, missing required fields, or invalid LTP distribution
+- `408 Already Exists`: All provided allocations already exist
+- `404 Not Found`: No allocations found (for GET operations)
 
-**Response Schema:** Array of subject objects with pagination metadata.
+#### Subject Allocation Retrieval Endpoints
+**GET /api/v1/subject-allocations** - Retrieve all subject allocations
+**GET /api/v1/subject-allocations/:id** - Retrieve subject allocation by ObjectId
 
-#### Subject Update Endpoint
-**Endpoint:** `PUT /api/subjects/:id`
-**Description:** Partial updates for subject information.
+**Response Schema:** Array of subject allocation objects with pagination metadata.
+
+#### Subject Allocation Update Endpoint
+**Endpoint:** `PUT /api/v1/subject-allocations/:id`
+**Description:** Partial updates for subject allocation information.
 
 **Request Body Schema:**
 ```javascript
 {
-  "subject_id": "string",
-  "subject_name": "string",
-  "credit": number
+  "semester_id": "string",
+  "program_id": "string", 
+  "division_id": "string",
+  "faculty_id": "string",
+  "course_id": "string",
+  "ltpHours": {
+    "l": number,
+    "t": number,
+    "p": number
+  },
+  "isLab": boolean,
+  "classTeacher": "string",
+  "academicYear": "string"
 }
 ```
 
-**Response Schema:** Updated subject object with success confirmation.
+**Response Schema:** Updated subject allocation object with success confirmation.
 
-#### Subject Deletion Endpoint
-**Endpoint:** `DELETE /api/subjects/:id`
-**Description:** Removes subject with cascade deletion of related allocations.
+#### Subject Allocation Deletion Endpoint
+**Endpoint:** `DELETE /api/v1/subject-allocations/:id`
+**Description:** Removes subject allocation by ObjectId.
 
-**Response Schema:** Deleted subject object with success message.
+**Response Schema:** Deleted subject allocation object with success message.
 
 ```mermaid
 flowchart TD
-Start([Subject Registration Request]) --> ValidateInput["Validate Input Array"]
-ValidateInput --> ArrayValid{"Is array non-empty?"}
+Start([Subject Allocation Request]) --> ValidateArray["Validate Input Array"]
+ValidateArray --> ArrayValid{"Is array non-empty?"}
 ArrayValid --> |No| Return400["Return 400 Bad Request"]
-ArrayValid --> |Yes| ValidateFields["Validate Each Subject Fields"]
+ArrayValid --> |Yes| ValidateFields["Validate Each Allocation Fields"]
 ValidateFields --> FieldsValid{"All fields valid?"}
 FieldsValid --> |No| Return400b["Return 400 Bad Request"]
-FieldsValid --> |Yes| CheckDuplicates["Check for Existing Subjects"]
-CheckDuplicates --> HasUnique{"Any unique subjects?"}
-HasUnique --> |No| Return400c["Return 400 Already Exists"]
-HasUnique --> |Yes| InsertSubjects["Insert Unique Subjects"]
-InsertSubjects --> Return201["Return 201 Created"]
+FieldsValid --> |Yes| CheckDuplicates["Check for Existing Allocations"]
+CheckDuplicates --> HasUnique{"Any unique allocations?"}
+HasUnique --> |No| Return408["Return 408 Already Exists"]
+HasUnique --> |Yes| InsertAllocations["Insert Unique Allocations"]
+InsertAllocations --> Return201["Return 201 Created"]
 Return400 --> End([End])
 Return400b --> End
-Return400c --> End
+Return408 --> End
 Return201 --> End
 ```
 
 **Diagram sources**
-- [subject.controllers.js:6-41](file://Backend/src/controllers/subject.controllers.js#L6-L41)
+- [subjectAllocation.controllers.js:10-47](file://Backend/src/controllers/subjectAllocation.controllers.js#L10-L47)
 
 **Section sources**
-- [subject.controllers.js:6-41](file://Backend/src/controllers/subject.controllers.js#L6-L41)
-- [subject.controllers.js:44-88](file://Backend/src/controllers/subject.controllers.js#L44-L88)
-- [subject.controllers.js:108-128](file://Backend/src/controllers/subject.controllers.js#L108-L128)
-- [subject.routers.js:13-21](file://Backend/src/routes/subject.routers.js#L13-L21)
+- [subjectAllocation.controllers.js:7-47](file://Backend/src/controllers/subjectAllocation.controllers.js#L7-L47)
+- [subjectAllocation.controllers.js:50-77](file://Backend/src/controllers/subjectAllocation.controllers.js#L50-L77)
+- [subjectAllocation.controllers.js:80-103](file://Backend/src/controllers/subjectAllocation.controllers.js#L80-L103)
+- [subjectAllocation.controllers.js:106-118](file://Backend/src/controllers/subjectAllocation.controllers.js#L106-L118)
+- [subjectAllocation.routers.js:12-18](file://Backend/src/routes/subjectAllocation.routers.js#L12-L18)
 
 ### Specialization Management Endpoints
 
 #### Specialization Registration Endpoint
-**Endpoint:** `POST /api/specializations`
+**Endpoint:** `POST /api/v1/specializations`
 **Description:** Creates specializations aligned with courses and programs.
 
 **Request Body Schema:**
@@ -377,13 +436,13 @@ Return201 --> End
 ```
 
 #### Specialization Retrieval Endpoints
-**GET /api/specializations** - Retrieve all specializations with program and course populated
-**GET /api/specializations/:id** - Retrieve specific specialization with population
+**GET /api/v1/specializations** - Retrieve all specializations with program and course populated
+**GET /api/v1/specializations/:id** - Retrieve specific specialization with population
 
 **Response Schema:** Array of specializations with associated program and course details.
 
 #### Specialization Update Endpoint
-**Endpoint:** `PUT /api/specializations/:id`
+**Endpoint:** `PUT /api/v1/specializations/:id`
 **Description:** Updates specialization name, program, or course association.
 
 **Request Body Schema:**
@@ -398,7 +457,7 @@ Return201 --> End
 **Response Schema:** Updated specialization object with success confirmation.
 
 #### Specialization Deletion Endpoint
-**Endpoint:** `DELETE /api/specializations/:id`
+**Endpoint:** `DELETE /api/v1/specializations/:id`
 **Description:** Removes specialization with cascade effects.
 
 **Response Schema:** Deleted specialization object with success message.
@@ -420,10 +479,17 @@ string course_name
 number credit
 boolean isActive
 }
-SUBJECT {
-string subject_id PK
-string subject_name
-number credit
+SUBJECT_ALLOCATION {
+string subjectAllocation_id PK
+string semester_id
+string program_id
+string division_id
+string faculty_id
+string course_id
+object ltpHours
+boolean isLab
+string classTeacher
+string academicYear
 }
 SPECIALIZATION {
 string specialization_id PK
@@ -431,17 +497,18 @@ string specialization_name
 ObjectId program_id FK
 ObjectId course_id FK
 }
-COURSE ||--o{ SPECIALIZATION : "contains"
-SUBJECT ||--o{ COURSE : "maps_to"
+COURSE ||--o{ SUBJECT_ALLOCATION : "allocated_to"
+SUBJECT_ALLOCATION ||--o{ COURSE : "mapped_by"
 PROGRAM ||--o{ SPECIALIZATION : "defines"
 ```
 
 **Diagram sources**
 - [course.models.js:5-22](file://Backend/src/models/course.models.js#L5-L22)
+- [subjectAllocation.models.js:5-62](file://Backend/src/models/subjectAllocation.models.js#L5-L62)
 - [specialization.models.js:5-20](file://Backend/src/models/specialization.models.js#L5-L20)
 
 ## Dependency Analysis
-The system exhibits strong modularity with clear dependency relationships:
+The system exhibits strong modularity with clear dependency relationships. The subject management system has been removed and replaced with subject allocation integration.
 
 ```mermaid
 graph LR
@@ -467,13 +534,19 @@ UTILS -.-> EXPRESS
 
 **Diagram sources**
 - [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
+- [subjectAllocation.routers.js:1-21](file://Backend/src/routes/subjectAllocation.routers.js#L1-L21)
 - [course.controlles.js:1-3](file://Backend/src/controllers/course.controlles.js#L1-L3)
+- [subjectAllocation.controllers.js:1-4](file://Backend/src/controllers/subjectAllocation.controllers.js#L1-L4)
 - [course.models.js:1](file://Backend/src/models/course.models.js#L1)
+- [subjectAllocation.models.js:1](file://Backend/src/models/subjectAllocation.models.js#L1)
 
 **Section sources**
 - [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
+- [subjectAllocation.routers.js:1-21](file://Backend/src/routes/subjectAllocation.routers.js#L1-L21)
 - [course.controlles.js:1-3](file://Backend/src/controllers/course.controlles.js#L1-L3)
+- [subjectAllocation.controllers.js:1-4](file://Backend/src/controllers/subjectAllocation.controllers.js#L1-L4)
 - [course.models.js:1](file://Backend/src/models/course.models.js#L1)
+- [subjectAllocation.models.js:1](file://Backend/src/models/subjectAllocation.models.js#L1)
 
 ## Performance Considerations
 The system implements several performance optimizations:
@@ -498,38 +571,40 @@ The system implements several performance optimizations:
 ### Common Error Scenarios
 
 #### Validation Errors
-**Issue:** `400 Bad Request` responses during course/subject creation
+**Issue:** `400 Bad Request` responses during course/subject allocation creation
 **Causes:**
 - Missing required fields in request body
 - Invalid data types (non-array for bulk operations)
-- Duplicate course/subject identifiers
+- Missing LTP hour components
+- Invalid allocation identifiers
 
 **Solutions:**
 - Verify all required fields are present
 - Ensure bulk operations send arrays
-- Check for existing identifiers before submission
+- Check LTP hour distribution contains all three components (l, t, p)
+- Validate allocation IDs follow institutional standards
 
 #### Resource Not Found
 **Issue:** `404 Not Found` responses for GET operations
 **Causes:**
 - Non-existent ObjectId format
-- Incorrect course/subject codes
+- Incorrect course/subject allocation IDs
 - Database connection issues
 
 **Solutions:**
 - Validate ObjectId format using proper MongoDB ObjectId
-- Verify course/subject codes match stored values
+- Verify course/subject allocation IDs match stored values
 - Check database connectivity and authentication
 
 #### Duplicate Resource Errors
-**Issue:** `408 Already Exists` for course registration
+**Issue:** `408 Already Exists` for course registration or subject allocation
 **Causes:**
-- Attempting to register existing course codes
-- Conflicting course identifiers
+- Attempting to register existing course codes or allocation IDs
+- Conflicting identifiers
 
 **Solutions:**
-- Check existing course catalog before registration
-- Use unique course codes following institutional standards
+- Check existing course catalog or allocation records before registration
+- Use unique identifiers following institutional standards
 
 ### Debugging Strategies
 
@@ -549,4 +624,4 @@ The system implements several performance optimizations:
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
 
 ## Conclusion
-The course and subject management system provides a robust foundation for academic course catalog management with comprehensive CRUD operations, strict validation, and flexible data modeling. The modular architecture ensures maintainability and extensibility for future enhancements including advanced prerequisite relationships, course scheduling integration, and academic program alignment. The system's design supports both current requirements and future scalability needs for comprehensive timetable management solutions.
+The course and subject allocation management system provides a robust foundation for academic course catalog and timetable management with comprehensive CRUD operations, strict validation, and flexible data modeling. The system has evolved to integrate subject allocation directly into the timetable management workflow, eliminating the separate subject management system while maintaining comprehensive functionality. The modular architecture ensures maintainability and extensibility for future enhancements including advanced timetable scheduling, academic program alignment, and enhanced allocation validation. The system's design supports both current requirements and future scalability needs for comprehensive timetable management solutions.

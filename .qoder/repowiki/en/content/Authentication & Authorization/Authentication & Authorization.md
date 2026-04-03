@@ -2,9 +2,10 @@
 
 <cite>
 **Referenced Files in This Document**
+- [auth.middleware.js](file://Backend/src/middlewares/auth.middleware.js)
+- [Token.js](file://Backend/src/utils/Token.js)
 - [user.controller.js](file://Backend/src/controllers/user.controller.js)
 - [user.models.js](file://Backend/src/models/user.models.js)
-- [role.models.js](file://Backend/src/models/role.models.js)
 - [user.routers.js](file://Backend/src/routes/user.routers.js)
 - [authSlice.js](file://Client/src/store/auth/authSlice.js)
 - [store.js](file://Client/src/store/store.js)
@@ -12,11 +13,22 @@
 - [Admin.jsx](file://Client/src/pages/dashboard/Admin.jsx)
 - [Faculty.jsx](file://Client/src/pages/dashboard/Faculty.jsx)
 - [Student.jsx](file://Client/src/pages/dashboard/Student.jsx)
-- [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
+- [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [asyncHandler.js](file://Backend/src/utils/asyncHandler.js)
 - [index.js](file://Backend/src/index.js)
+- [package.json](file://Backend/package.json)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Complete replacement of legacy authentication system with JWT-based middleware
+- Added comprehensive auth.middleware.js with role-based access control
+- Implemented JWT token generation/verification via Token.js utility
+- Enhanced user controller with bcrypt password hashing and token management
+- Added refresh token rotation and logout functionality
+- Updated authentication flow with cookie-based token storage
+- Expanded role definitions to include coordinator and hod
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -30,19 +42,21 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the authentication and authorization system for the timetable project. It covers the login flow, state management with Redux, role-based access control (RBAC) across admin, faculty, and student roles, and the backend controller implementation for user authentication. It also outlines security best practices, logout procedures, and common error handling patterns.
+This document explains the comprehensive authentication and authorization system for the timetable project. The system has been completely redesigned with JWT-based authentication featuring token-based sessions, role-based access control (RBAC), password hashing with bcrypt, and secure cookie-based token storage. The system supports admin, faculty, student, coordinator, and HOD roles with granular permission controls and includes refresh token rotation for enhanced security.
 
 ## Project Structure
-The authentication system spans both frontend and backend:
-- Frontend (React + Redux Toolkit):
-  - Authentication state slice and persistence via localStorage
-  - Login page and role-based routing
-  - Protected dashboards for admin, faculty, and student
-- Backend (Express + MongoDB):
-  - User model with role enumeration
-  - User controller with login endpoint
-  - Route bindings for user endpoints
-  - Utility classes for consistent API responses and error handling
+The authentication system now features a robust JWT-based architecture spanning both frontend and backend:
+- **Frontend (React + Redux Toolkit)**:
+  - Authentication state management with localStorage persistence
+  - Login page with JWT token handling
+  - Role-based routing with client-side guards
+  - Protected dashboards with authentication checks
+- **Backend (Express + MongoDB)**:
+  - JWT middleware with token verification and role-based authorization
+  - Token utility for secure token generation and verification
+  - User controller with comprehensive authentication endpoints
+  - Enhanced user model with bcrypt password hashing
+  - Role-based access control with multiple role levels
 
 ```mermaid
 graph TB
@@ -58,19 +72,20 @@ subgraph "Server"
 G["user.routers.js"]
 H["user.controller.js"]
 I["user.models.js"]
-J["role.models.js"]
-K["ApiResponse.js"]
-L["ApiError.js"]
-M["asyncHandler.js"]
+J["auth.middleware.js"]
+K["Token.js"]
+L["ApiResponse.js"]
+M["ApiError.js"]
+N["asyncHandler.js"]
 end
-A --> |dispatch login| B
-A --> |fetch /api/v1/users/login| G
+A --> |JWT login| G
 G --> H
 H --> I
-H --> J
 H --> K
 H --> L
 H --> M
+H --> N
+J --> K
 B --> |persist to localStorage| B
 D --> |check role=admin| D
 E --> |check role=faculty| E
@@ -81,10 +96,11 @@ F --> |check role=student| F
 - [Login.jsx:15-45](file://Client/src/pages/Login.jsx#L15-L45)
 - [authSlice.js:10-27](file://Client/src/store/auth/authSlice.js#L10-L27)
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.controller.js:355-464](file://Backend/src/controllers/user.controller.js#L355-L464)
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
 - [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
 - [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
@@ -93,47 +109,63 @@ F --> |check role=student| F
 - [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
 - [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
 - [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
 
 ## Core Components
-- Authentication state management (Redux):
-  - Stores authentication status and user payload in localStorage
-  - Provides login and logout actions
-- Login page:
-  - Submits credentials to the backend login endpoint
-  - Redirects based on returned role and updates Redux state
-- Backend user controller:
-  - Validates input and authenticates users
-  - Returns user profile with role and minimal fields
-- Models:
-  - User model defines role enum and optional identifiers
-  - Role model defines role metadata (not used in login flow)
-- Utilities:
-  - ApiResponse and ApiError normalize responses and errors
-  - asyncHandler wraps route handlers to catch exceptions
+- **JWT Middleware System**:
+  - Token verification middleware with cookie and header support
+  - Role-based authorization with flexible role arrays
+  - Multiple specialized authorization functions (admin, faculty, optional)
+  - Account deactivation protection
+- **Token Management Utility**:
+  - Secure JWT token generation with configurable expiration
+  - Dual-token system (access and refresh tokens)
+  - Token verification with error handling
+  - Cookie configuration for secure token storage
+- **Enhanced User Controller**:
+  - Comprehensive authentication endpoints (login, logout, refresh)
+  - Password hashing with bcrypt integration
+  - User registration with role validation
+  - Password change functionality
+  - Token rotation and refresh mechanisms
+- **Advanced User Model**:
+  - Enhanced role enumeration including coordinator and HOD
+  - Password hashing with bcrypt pre-save hooks
+  - Refresh token storage for session management
+  - User ID generation based on role type
+- **Frontend Authentication State**:
+  - Redux slice with localStorage persistence
+  - Login/logout action management
+  - Role-based navigation handling
+- **Security Enhancements**:
+  - HTTPS-only cookies in production
+  - SameSite strict security policy
+  - Token expiration handling
+  - Account activation/deactivation controls
 
 **Section sources**
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
+- [user.controller.js:355-576](file://Backend/src/controllers/user.controller.js#L355-L576)
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
-- [Login.jsx:15-45](file://Client/src/pages/Login.jsx#L15-L45)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
 
 ## Architecture Overview
-The authentication flow is a client-server interaction:
-- Client collects credentials and posts to the login endpoint
-- Server validates credentials and returns user data
-- Client stores user data and redirects to role-specific dashboard
-- Dashboards enforce role-based access
+The authentication flow now operates on a JWT-based token system with comprehensive security measures:
+- Client submits credentials to JWT login endpoint
+- Server verifies credentials and generates access/refresh tokens
+- Tokens are stored in HTTP-only cookies for security
+- Subsequent requests include tokens automatically
+- Access tokens expire after 15 minutes, refresh tokens after 7 days
+- Automatic token refresh maintains session continuity
+- Role-based authorization controls access to resources
 
 ```mermaid
 sequenceDiagram
@@ -141,47 +173,210 @@ participant U as "User"
 participant C as "Client App"
 participant S as "Server"
 participant UC as "UserController"
-participant UM as "User Model"
+participant AM as "AuthMiddleware"
+participant TM as "TokenManager"
 U->>C : "Enter credentials"
 C->>S : "POST /api/v1/users/login"
-S->>UC : "Invoke userLogin handler"
-UC->>UM : "Lookup user by student_id/faculty_id and password"
-UM-->>UC : "User document"
-UC-->>S : "ApiResponse with user data"
-S-->>C : "JSON response"
-C->>C : "Dispatch login action<br/>Persist to localStorage"
-C->>C : "Redirect based on role"
+S->>UC : "Verify credentials"
+UC->>TM : "Generate tokens"
+TM-->>UC : "Access & Refresh tokens"
+UC-->>S : "Set secure cookies"
+S-->>C : "JWT tokens in cookies"
+C->>S : "Subsequent requests with cookies"
+S->>AM : "Verify JWT token"
+AM->>TM : "Verify token signature"
+TM-->>AM : "Decoded token data"
+AM-->>S : "Authorized request"
+S-->>C : "Protected resource response"
 ```
 
 **Diagram sources**
 - [Login.jsx:23-44](file://Client/src/pages/Login.jsx#L23-L44)
-- [user.routers.js](file://Backend/src/routes/user.routers.js#L16)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
+- [user.routers.js:18-19](file://Backend/src/routes/user.routers.js#L18-L19)
+- [user.controller.js:355-464](file://Backend/src/controllers/user.controller.js#L355-L464)
+- [auth.middleware.js:7-43](file://Backend/src/middlewares/auth.middleware.js#L7-L43)
+- [Token.js:4-34](file://Backend/src/utils/Token.js#L4-L34)
 
 ## Detailed Component Analysis
 
-### Frontend: Redux Authentication Slice
-- Purpose:
-  - Manage authentication state (authenticated flag and user payload)
-  - Persist state to localStorage for session continuity
-- Actions:
-  - login: sets authenticated flag and user data; persists to localStorage
-  - logout: clears authentication state and removes persisted data
-- Persistence:
-  - Uses localStorage keys for authentication status and user data
+### Backend: JWT Middleware System
+- **Token Verification**:
+  - Extracts tokens from cookies or Authorization headers
+  - Verifies JWT signature and expiration
+  - Attaches authenticated user to request object
+  - Handles account deactivation protection
+- **Role-Based Authorization**:
+  - Flexible role array validation
+  - Specialized authorization functions for different role combinations
+  - Optional authentication mode for non-critical endpoints
+  - Comprehensive error handling with specific role messages
+- **Security Features**:
+  - HTTP-only cookies prevent XSS attacks
+  - Secure cookies in production environments
+  - SameSite strict policy prevents CSRF
+  - Token expiration enforcement
 
 ```mermaid
 flowchart TD
-Start(["Dispatch login action"]) --> SetAuth["Set isAuthenticated = true"]
+Start(["Incoming Request"]) --> Extract["Extract Token from Cookies/Header"]
+Extract --> Verify{"Token Valid?"}
+Verify --> |No| Unauthorized["Throw 401 Unauthorized"]
+Verify --> |Yes| Decode["Decode JWT Payload"]
+Decode --> AttachUser["Attach User to Request"]
+AttachUser --> CheckActive{"User Active?"}
+CheckActive --> |No| Deactivated["Throw 403 Deactivated"]
+CheckActive --> |Yes| Next["Proceed to Handler"]
+```
+
+**Diagram sources**
+- [auth.middleware.js:7-43](file://Backend/src/middlewares/auth.middleware.js#L7-L43)
+- [auth.middleware.js:46-61](file://Backend/src/middlewares/auth.middleware.js#L46-L61)
+
+**Section sources**
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+
+### Backend: Token Management Utility
+- **Token Generation**:
+  - Access tokens: 15-minute expiration with user payload
+  - Refresh tokens: 7-day expiration for session renewal
+  - Configurable via environment variables
+  - Secure signing with dedicated secrets
+- **Token Verification**:
+  - Separate verification functions for access and refresh tokens
+  - Graceful error handling for expired tokens
+  - Signature validation with error recovery
+- **Cookie Configuration**:
+  - HTTP-only cookies prevent client-side access
+  - Secure cookies in production for HTTPS
+  - SameSite strict policy for CSRF protection
+  - Configurable expiration times
+
+```mermaid
+flowchart TD
+Generate["Generate Tokens"] --> AccessToken["Access Token (15m)"]
+Generate --> RefreshToken["Refresh Token (7d)"]
+AccessToken --> SignAccess["Sign with ACCESS_TOKEN_SECRET"]
+RefreshToken --> SignRefresh["Sign with REFRESH_TOKEN_SECRET"]
+SignAccess --> AccessCookie["Set Access Cookie Options"]
+SignRefresh --> RefreshCookie["Set Refresh Cookie Options"]
+AccessCookie --> Return["Return Token Pair"]
+RefreshCookie --> Return
+```
+
+**Diagram sources**
+- [Token.js:4-34](file://Backend/src/utils/Token.js#L4-L34)
+- [Token.js:55-67](file://Backend/src/utils/Token.js#L55-L67)
+
+**Section sources**
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
+
+### Backend: Enhanced User Controller (JWT Authentication)
+- **Comprehensive Authentication Flow**:
+  - Credential validation with user ID or student/faculty ID
+  - Account activation verification
+  - Password comparison with bcrypt
+  - Token generation and database storage
+  - User detail aggregation with student/faculty information
+- **Session Management**:
+  - Dual-cookie token storage (access and refresh)
+  - Token refresh endpoint with rotation
+  - Logout endpoint with token clearing
+  - Password change with validation
+- **Security Features**:
+  - Password hashing with configurable salt rounds
+  - Role-based access control integration
+  - Input validation and sanitization
+  - Comprehensive error handling
+
+```mermaid
+flowchart TD
+LoginStart["POST /users/login"] --> Validate["Validate user_id & password"]
+Validate --> FindUser["Find user by student_id/faculty_id"]
+FindUser --> CheckActive{"User active?"}
+CheckActive --> |No| Deactivated["Throw 403 Deactivated"]
+CheckActive --> |Yes| ComparePass["Compare hashed password"]
+ComparePass --> PassValid{"Password valid?"}
+PassValid --> |No| Invalid["Throw 401 Invalid Credentials"]
+PassValid --> |Yes| GenerateTokens["Generate Access & Refresh Tokens"]
+GenerateTokens --> StoreRefresh["Store refresh token in DB"]
+StoreRefresh --> AggregateUser["Aggregate user details"]
+AggregateUser --> SetCookies["Set secure cookies"]
+SetCookies --> Success["Return user data with tokens"]
+```
+
+**Diagram sources**
+- [user.controller.js:355-464](file://Backend/src/controllers/user.controller.js#L355-L464)
+
+**Section sources**
+- [user.controller.js:355-576](file://Backend/src/controllers/user.controller.js#L355-L576)
+
+### Backend: Advanced User Model
+- **Enhanced Role System**:
+  - Expanded role enumeration: admin, faculty, student, coordinator, hod
+  - Role validation with custom error messages
+  - Flexible role assignment for different user types
+- **Security Features**:
+  - Pre-save password hashing with bcrypt
+  - Configurable salt rounds via environment variables
+  - Password comparison method for authentication
+  - User ID generation based on role type
+- **Session Management**:
+  - Refresh token field for JWT session tracking
+  - Account activation/deactivation support
+  - Audit trail with created_by/updated_by references
+
+```mermaid
+classDiagram
+class User {
++string user_id
++string password
++string role
++string student_id
++string faculty_id
++string refreshToken
++boolean isActive
++comparePassword()
++pre(save) hashPassword()
+}
+class TokenManager {
++generateAccessToken()
++generateRefreshToken()
++verifyAccessToken()
++verifyRefreshToken()
+}
+User --> TokenManager : "uses for JWT"
+```
+
+**Diagram sources**
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
+
+**Section sources**
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+
+### Frontend: Redux Authentication Slice
+- **State Management**:
+  - Authentication state with localStorage persistence
+  - User data storage with automatic serialization
+  - Login action sets authentication flags and user data
+  - Logout action clears all authentication state
+- **Persistence Strategy**:
+  - localStorage for session continuity across browser restarts
+  - Automatic state restoration on application load
+  - Clean separation of authentication and application state
+
+```mermaid
+flowchart TD
+LoginAction["Dispatch login action"] --> SetAuth["Set isAuthenticated = true"]
 SetAuth --> SetUser["Set userData = payload"]
-SetUser --> Persist["Persist to localStorage"]
-Persist --> End(["Ready"])
-LogoutStart(["Dispatch logout action"]) --> ClearAuth["Set isAuthenticated = false"]
+SetUser --> Persist["localStorage.setItem('isAuthenticated', true)"]
+Persist --> PersistUser["localStorage.setItem('userData', JSON.stringify)"]
+PersistUser --> Ready["Authentication ready"]
+LogoutAction["Dispatch logout action"] --> ClearAuth["Set isAuthenticated = false"]
 ClearAuth --> ClearUser["Set userData = null"]
-ClearUser --> RemovePersist["Remove localStorage entries"]
-RemovePersist --> LogoutEnd(["Logged out"])
+ClearUser --> RemoveAuth["localStorage.removeItem('isAuthenticated')"]
+RemoveAuth --> RemoveUser["localStorage.removeItem('userData')"]
+RemoveUser --> LoggedOut["Logged out state"]
 ```
 
 **Diagram sources**
@@ -192,22 +387,26 @@ RemovePersist --> LogoutEnd(["Logged out"])
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
 
 ### Frontend: Login Page and Role-Based Routing
-- Behavior:
-  - Submits credentials to the backend login endpoint
-  - On success, reads role and navigates to admin/student/faculty route
+- **JWT Authentication Flow**:
+  - Submits credentials to JWT login endpoint
+  - Receives secure cookies containing access and refresh tokens
+  - Redirects based on returned role with enhanced security
   - Dispatches login action to update Redux state
-- Security note:
-  - Current implementation does not enforce role checks on the client side during navigation; rely on server-side protections and dashboard guards
+- **Security Enhancements**:
+  - Token-based authentication eliminates localStorage token storage
+  - Secure cookies prevent client-side token theft
+  - Automatic token refresh handled server-side
+  - Enhanced role validation and error handling
 
 ```mermaid
 sequenceDiagram
 participant U as "User"
 participant L as "Login.jsx"
-participant API as "Backend Login Endpoint"
+participant API as "JWT Login Endpoint"
 participant R as "Router"
-U->>L : "Submit form"
+U->>L : "Submit form with credentials"
 L->>API : "POST /api/v1/users/login"
-API-->>L : "Response with user data"
+API-->>L : "Response with secure cookies"
 alt role=admin
 L->>R : "navigate('/admin')"
 else role=student
@@ -225,23 +424,27 @@ L->>L : "dispatch(login(user))"
 - [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
 
 ### Frontend: Protected Dashboards (RBAC)
-- Admin dashboard:
-  - Guards access by checking authentication and role
-  - Navigates to home if not authenticated or role is not admin
-- Faculty and Student dashboards:
-  - Guard access similarly by checking authentication and role
+- **Enhanced Role-Based Access Control**:
+  - Admin dashboard: Full administrative privileges
+  - Faculty dashboard: Teaching and scheduling access
+  - Student dashboard: Timetable and academic information
+  - Client-side guards verify authentication and role
+  - Automatic redirection for unauthorized access attempts
+- **Security Implementation**:
+  - Combined client-side and server-side protection
+  - Role validation ensures appropriate resource access
+  - Redirects to login page for unauthenticated users
 
 ```mermaid
 flowchart TD
-CheckAuth["Check isAuthenticated and userData"] --> Role{"Role == 'admin'?"}
-Role --> |Yes| AllowAdmin["Render Admin Dashboard"]
-Role --> |No| RedirectHome["navigate('/')"]
-CheckAuth2["Check isAuthenticated and userData"] --> RoleF{"Role == 'faculty'?"}
-RoleF --> |Yes| AllowFaculty["Render Faculty Dashboard"]
-RoleF --> |No| RedirectLoginF["navigate('/login')"]
-CheckAuth3["Check isAuthenticated and userData"] --> RoleS{"Role == 'student'?"}
-RoleS --> |Yes| AllowStudent["Render Student Dashboard"]
-RoleS --> |No| RedirectLoginS["navigate('/login')"]
+CheckAuth["Check isAuthenticated & userData"] --> Role{"Role Validation"}
+Role --> |admin| AllowAdmin["Render Admin Dashboard"]
+Role --> |faculty| AllowFaculty["Render Faculty Dashboard"]
+Role --> |student| AllowStudent["Render Student Dashboard"]
+Role --> |other| RedirectHome["navigate('/login')"]
+CheckAuth2["Check authentication state"] --> AuthCheck{"Authenticated?"}
+AuthCheck --> |No| RedirectLogin["navigate('/login')"]
+AuthCheck --> |Yes| RoleCheck["Check role match"]
 ```
 
 **Diagram sources**
@@ -250,108 +453,55 @@ RoleS --> |No| RedirectLoginS["navigate('/login')"]
 - [Student.jsx:10-19](file://Client/src/pages/dashboard/Student.jsx#L10-L19)
 
 **Section sources**
-- [Admin.jsx:1-617](file://Client/src/pages/dashboard/Admin.jsx#L1-L617)
+- [Admin.jsx:1-638](file://Client/src/pages/dashboard/Admin.jsx#L1-L638)
 - [Faculty.jsx:1-22](file://Client/src/pages/dashboard/Faculty.jsx#L1-L22)
 - [Student.jsx:1-23](file://Client/src/pages/dashboard/Student.jsx#L1-L23)
 
-### Backend: User Controller (Authentication)
-- Responsibilities:
-  - Validate input fields
-  - Authenticate user by matching either student_id or faculty_id with password
-  - Return user profile with role and minimal fields
-- Error handling:
-  - Throws ApiError for invalid credentials and other failures
-- Response:
-  - Uses ApiResponse for consistent success responses
-
-```mermaid
-flowchart TD
-Start(["POST /users/login"]) --> Validate["Validate user_id and password"]
-Validate --> MatchUser["Aggregate match by student_id or faculty_id and password"]
-MatchUser --> Found{"User found?"}
-Found --> |No| ThrowError["Throw ApiError(401)"]
-Found --> |Yes| Project["Project user fields (id, role, name, email)"]
-Project --> ReturnResp["Return ApiResponse(200)"]
-```
-
-**Diagram sources**
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-
-**Section sources**
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-
-### Backend: Models and Roles
-- User model:
-  - Defines role enum with accepted values
-  - Supports optional student_id and faculty_id
-  - Includes isActive flag and audit fields
-- Role model:
-  - Defines role metadata (role_id, role_name, description)
-  - Not used in current login flow but can support RBAC policies
-
-```mermaid
-classDiagram
-class User {
-+string password
-+string role
-+string student_id
-+string faculty_id
-+boolean isActive
-}
-class Role {
-+string role_id
-+string role_name
-+string role_description
-+boolean isActive
-}
-User <.. Role : "audit fields reference User"
-```
-
-**Diagram sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
-
-**Section sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
-
-### Backend: Routes and Entry Point
-- Routes:
-  - Bind GET/POST endpoints for users and login
-- Entry point:
-  - Initializes environment and starts server
+### Backend: Routes and Enhanced Protection
+- **Protected Route Configuration**:
+  - JWT middleware applied to all protected endpoints
+  - Role-based authorization for different endpoint groups
+  - Flexible role arrays for multi-role access control
+  - Comprehensive endpoint coverage for user management
+- **Security Integration**:
+  - Middleware chain ensures token verification before authorization
+  - Role validation prevents unauthorized resource access
+  - Account deactivation protection at route level
 
 ```mermaid
 graph LR
-R["user.routers.js"] --> C["user.controller.js"]
-R --> P["/api/v1/users/*"]
-I["index.js"] --> S["Server listen on port"]
+R["user.routers.js"] --> VJ["verifyJWT Middleware"]
+R --> AR["authorizeRoles Middleware"]
+VJ --> C["user.controller.js"]
+AR --> C
+C --> P["Protected Endpoints"]
 ```
 
 **Diagram sources**
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [index.js:1-18](file://Backend/src/index.js#L1-L18)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [auth.middleware.js:7-61](file://Backend/src/middlewares/auth.middleware.js#L7-L61)
 
 **Section sources**
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [index.js:1-18](file://Backend/src/index.js#L1-L18)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
 
 ## Dependency Analysis
-- Client depends on:
-  - Redux store for authentication state
-  - Login page to trigger authentication
-  - Protected dashboards to enforce role checks
-- Server depends on:
-  - User controller for authentication logic
-  - User and Role models for data representation
-  - Utilities for consistent responses and error handling
-- Coupling:
-  - Client relies on server-provided role field for routing
-  - Server returns minimal user data suitable for UI rendering
+- **Client Dependencies**:
+  - Redux store for authentication state management
+  - Login page triggers JWT authentication flow
+  - Protected dashboards enforce role-based access
+  - Client-side guards complement server-side protection
+- **Server Dependencies**:
+  - JWT middleware for token verification and authorization
+  - Token utility for secure token management
+  - User controller for comprehensive authentication endpoints
+  - User model with enhanced security features
+  - Enhanced utilities for consistent API responses
+- **Security Dependencies**:
+  - bcryptjs for password hashing
+  - jsonwebtoken for JWT token operations
+  - cookie-parser for secure cookie handling
+  - dotenv for environment variable configuration
 
 ```mermaid
 graph TB
@@ -367,7 +517,8 @@ subgraph "Server"
 UR["user.routers.js"]
 UC["user.controller.js"]
 UM["user.models.js"]
-RM["role.models.js"]
+AM["auth.middleware.js"]
+TK["Token.js"]
 AR["ApiResponse.js"]
 AE["ApiError.js"]
 AH["asyncHandler.js"]
@@ -375,10 +526,11 @@ end
 LG --> UR
 UR --> UC
 UC --> UM
-UC --> RM
+UC --> TK
 UC --> AR
 UC --> AE
 UC --> AH
+AM --> TK
 AD --> LS
 FA --> LS
 SD --> LS
@@ -389,13 +541,14 @@ LS --> ST
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 - [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
-- [Admin.jsx:1-617](file://Client/src/pages/dashboard/Admin.jsx#L1-L617)
+- [Admin.jsx:1-638](file://Client/src/pages/dashboard/Admin.jsx#L1-L638)
 - [Faculty.jsx:1-22](file://Client/src/pages/dashboard/Faculty.jsx#L1-L22)
 - [Student.jsx:1-23](file://Client/src/pages/dashboard/Student.jsx#L1-L23)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
 - [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
 - [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
@@ -404,46 +557,63 @@ LS --> ST
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 - [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
-- [Admin.jsx:1-617](file://Client/src/pages/dashboard/Admin.jsx#L1-L617)
+- [Admin.jsx:1-638](file://Client/src/pages/dashboard/Admin.jsx#L1-L638)
 - [Faculty.jsx:1-22](file://Client/src/pages/dashboard/Faculty.jsx#L1-L22)
 - [Student.jsx:1-23](file://Client/src/pages/dashboard/Student.jsx#L1-L23)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
+- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
 - [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
 - [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
+- [package.json:14-23](file://Backend/package.json#L14-L23)
 
 ## Performance Considerations
-- Tokenless sessions:
-  - The current implementation stores user data in localStorage after login. There is no token refresh mechanism; session persists until logout.
-- Recommendations:
-  - Introduce short-lived access tokens and long-lived refresh tokens
-  - Implement token refresh endpoints and automatic refresh logic
-  - Add token expiration checks and proactive logout on token expiry
-  - Enforce HTTPS and secure cookies for production deployments
-
-[No sources needed since this section provides general guidance]
+- **JWT Token Benefits**:
+  - Stateless authentication eliminates server-side session storage
+  - Reduced database queries for authentication checks
+  - Improved scalability with horizontal scaling
+  - Automatic token refresh reduces login frequency
+- **Token Management Optimizations**:
+  - Short-lived access tokens (15 minutes) minimize security risk
+  - Long-lived refresh tokens (7 days) balance security and usability
+  - HTTP-only cookies prevent client-side token theft
+  - Token rotation enhances security through frequent changes
+- **Security Enhancements**:
+  - HTTPS-only cookies in production environments
+  - SameSite strict policy prevents cross-site request forgery
+  - Configurable salt rounds for password hashing performance
+  - Environment variable configuration for deployment flexibility
 
 ## Troubleshooting Guide
-Common issues and resolutions:
-- Invalid credentials:
-  - Server responds with unauthorized status; client should display an error and prevent navigation
-- Missing or empty fields:
-  - Validation throws an error; ensure both user_id and password are provided
-- Role mismatch:
-  - Client-side guards redirect to appropriate pages; ensure role field is present in the response
-- Logout:
-  - Dispatch logout action and clear localStorage; ensure all protected routes re-check authentication
+- **JWT Authentication Issues**:
+  - Token expiration: Access tokens expire every 15 minutes, refresh tokens every 7 days
+  - Token verification failures: Check token signature and expiration dates
+  - Cookie storage problems: Verify HTTP-only and secure cookie settings
+- **Role-Based Access Problems**:
+  - Role validation failures: Ensure user has correct role assigned
+  - Permission denied errors: Verify role array includes required roles
+  - Account deactivation: Check user isActive flag in database
+- **Password and Security Issues**:
+  - Password hashing errors: Verify bcrypt installation and salt rounds
+  - Token refresh failures: Check refresh token validity and database storage
+  - Logout problems: Ensure token clearing and cookie removal
+- **Common Solutions**:
+  - Clear browser cookies and cache for token-related issues
+  - Verify environment variables for token secrets and expiration
+  - Check database connectivity for user authentication
+  - Review server logs for detailed error information
 
 **Section sources**
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [user.controller.js:355-576](file://Backend/src/controllers/user.controller.js#L355-L576)
+- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
 - [authSlice.js:20-25](file://Client/src/store/auth/authSlice.js#L20-L25)
 - [Admin.jsx:40-49](file://Client/src/pages/dashboard/Admin.jsx#L40-L49)
 - [Faculty.jsx:10-19](file://Client/src/pages/dashboard/Faculty.jsx#L10-L19)
 - [Student.jsx:10-19](file://Client/src/pages/dashboard/Student.jsx#L10-L19)
 
 ## Conclusion
-The system implements a straightforward, tokenless authentication flow with role-based routing. The frontend manages session state via Redux and localStorage, while the backend performs basic credential validation and returns a minimal user profile. For production, adopt token-based authentication with refresh mechanisms, enforce HTTPS, and strengthen input validation and error handling.
+The system now implements a comprehensive, production-ready JWT-based authentication system with advanced security features. The new architecture provides secure token-based sessions, granular role-based access control, automatic token refresh, and enhanced user management capabilities. The implementation follows industry best practices with HTTP-only cookies, secure token storage, and comprehensive error handling. For production deployment, ensure proper environment variable configuration, SSL certificate setup, and regular security audits to maintain the highest level of security and reliability.

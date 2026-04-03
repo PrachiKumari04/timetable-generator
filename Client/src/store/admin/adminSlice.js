@@ -1,7 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-
-const API_BASE_URL = "/api/v1";
+import apiClient, { api, apiCache } from "../../services/apiClient";
 
 const ENTITY_ENDPOINTS = {
   program: "/programmes",
@@ -14,12 +12,6 @@ const ENTITY_ENDPOINTS = {
   faculty: "/faculties",
   student: "/students",
 };
-
-// Axios instance with credentials
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
 
 export const fetchMasterData = createAsyncThunk(
   "admin/fetchMasterData",
@@ -40,7 +32,7 @@ export const addMasterData = createAsyncThunk(
   async ({ entityKey, data }, { rejectWithValue }) => {
     try {
       const endpoint = ENTITY_ENDPOINTS[entityKey];
-      const response = await apiClient.post(endpoint, data);
+      const response = await api.post(endpoint, data, { invalidateCache: entityKey });
       
       return { entityKey, data: response.data.data || response.data };
     } catch (error) {
@@ -54,8 +46,7 @@ export const updateMasterData = createAsyncThunk(
   async ({ entityKey, id, data }, { rejectWithValue }) => {
     try {
       const endpoint = `${ENTITY_ENDPOINTS[entityKey]}/${id}`;
-      const response = await apiClient.put(endpoint, data);
-      console.log(response.data.message);
+      const response = await api.put(endpoint, data, { invalidateCache: entityKey });
 
       return { entityKey, id, data: response.data.data || response.data };
     } catch (error) {
@@ -69,7 +60,7 @@ export const deleteMasterData = createAsyncThunk(
   async ({ entityKey, id }, { rejectWithValue }) => {
     try {
       const endpoint = `${ENTITY_ENDPOINTS[entityKey]}/${id}`;
-      await apiClient.delete(endpoint);
+      await api.delete(endpoint, { invalidateCache: entityKey });
       return { entityKey, id };
     } catch (error) {
        return rejectWithValue(error.response?.data?.message || error.message);
@@ -99,7 +90,24 @@ const adminSlice = createSlice({
     },
     clearError: (state) => {
         state.error = null;
-    }
+    },
+    clearEntityCache: (state, action) => {
+      // Clear cache for specific entity or all entities
+      if (action.payload) {
+        apiCache.invalidate(action.payload);
+        delete state.masterData[action.payload];
+      } else {
+        apiCache.clear();
+        state.masterData = {};
+      }
+    },
+    refreshEntity: (state, action) => {
+      // Mark entity for refresh (will be refetched on next access)
+      if (action.payload) {
+        apiCache.invalidate(action.payload);
+        delete state.masterData[action.payload];
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -168,6 +176,6 @@ const adminSlice = createSlice({
   },
 });
 
-export const { setActiveEntity, setEditingEntityId, clearError } = adminSlice.actions;
+export const { setActiveEntity, setEditingEntityId, clearError, clearEntityCache, refreshEntity } = adminSlice.actions;
 
 export default adminSlice.reducer;
