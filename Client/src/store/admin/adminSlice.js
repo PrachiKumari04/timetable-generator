@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import toast from "react-hot-toast";
 import apiClient, { api, apiCache } from "../../services/apiClient";
 
 const ENTITY_ENDPOINTS = {
@@ -135,10 +136,12 @@ const adminSlice = createSlice({
             state.masterData[action.payload.entityKey] = [];
         }
         state.masterData[action.payload.entityKey].push(action.payload.data);
+        toast.success(`${action.payload.entityKey} added successfully!`);
       })
       .addCase(addMasterData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        toast.error(`Failed to add: ${action.payload}`);
       })
       // Update Master Data
       .addCase(updateMasterData.pending, (state) => {
@@ -153,10 +156,12 @@ const adminSlice = createSlice({
         if (index !== -1) {
           list[index] = data;
         }
+        toast.success(`${entityKey} updated successfully!`);
       })
       .addCase(updateMasterData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        toast.error(`Failed to update: ${action.payload}`);
       })
       // Delete Master Data
       .addCase(deleteMasterData.pending, (state) => {
@@ -168,10 +173,12 @@ const adminSlice = createSlice({
         const { entityKey, id } = action.payload;
         const list = state.masterData[entityKey] || [];
         state.masterData[entityKey] = list.filter((item) => item._id !== id && item.id !== id);
+        toast.success(`${entityKey} deleted successfully!`);
       })
       .addCase(deleteMasterData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        toast.error(`Failed to delete: ${action.payload}`);
       });
   },
 });

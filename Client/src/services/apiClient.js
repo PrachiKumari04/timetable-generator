@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const API_BASE_URL = "/api/v1";
 
@@ -128,6 +129,7 @@ apiClient.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           // Unauthorized - clear auth and redirect to login
+          toast.error("Session expired. Please login again.");
           localStorage.removeItem("isAuthenticated");
           localStorage.removeItem("userData");
           window.location.href = "/login";
@@ -149,6 +151,7 @@ apiClient.interceptors.response.use(
       }
     } else if (error.request) {
       console.error("[API] Network error - no response received");
+      toast.error("Network error. Please check your connection.");
     }
 
     return Promise.reject(error);

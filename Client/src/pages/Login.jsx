@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Container from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 import { login } from "../store/auth/authSlice";
 import { toggleTheme } from "../store/theme/themeSlice";
@@ -23,6 +24,8 @@ function Login() {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
+    const loadingToast = toast.loading("Logging in...");
+
     try {
       // Optimized API call using centralized client
       const response = await apiClient.post("/users/login", data);
@@ -30,15 +33,24 @@ function Login() {
 
       // Role based login
       if (user.success === true) {
+        toast.dismiss(loadingToast);
+        toast.success(`Welcome back, ${user.data.username || user.data.name || "User"}!`);
+
         if (user.data.role === "admin") navigate("/admin");
         else if (user.data.role === "student") navigate("/student");
         else if (user.data.role === "faculty") navigate("/faculty");
         else navigate("/");
 
         dispatch(login(user.data));
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error("Login failed. Please check your credentials.");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      toast.dismiss(loadingToast);
+      const errorMessage = err.response?.data?.message || "Login failed. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
