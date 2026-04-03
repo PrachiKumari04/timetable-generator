@@ -13,8 +13,8 @@ export const addCourses = asyncHandler(async (req, res) => {
   courses.forEach((course) => {
     if (!course.course_id) throw new ApiError(400, "Course ID is required");
     if (!course.course_name) throw new ApiError(400, "Course Name is required");
-    if (!course.course_duration)
-      throw new ApiError(400, "Course Duration is required");
+    if (!course.credit)
+      throw new ApiError(400, "Credit is required");
   });
 
   // Filter out existing courses by course_id

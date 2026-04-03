@@ -10,6 +10,8 @@ export const addSemester = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Semester data is required");
 
   semester.forEach((sem) => {
+    if (!sem.semester_id)
+      throw new ApiError(400, "Semester ID is required");
     if (!sem.semester_name)
       throw new ApiError(400, "Semester name is required");
   });
@@ -55,7 +57,7 @@ export const getAllSemesters = asyncHandler(async (req, res) => {
 //Update semester
 export const updateSemester = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { semester_name, isEven } = req.body;
+  const { semester_id, semester_name, isEven } = req.body;
 
   if (!id) throw new ApiError(400, "Semester id is required");
 
@@ -66,7 +68,7 @@ export const updateSemester = asyncHandler(async (req, res) => {
   //update data in db
   const updatedSemester = await Semester.findByIdAndUpdate(
     id,
-    { semester_name, isEven },
+    { semester_id, semester_name, isEven },
     { new: true },
   );
 

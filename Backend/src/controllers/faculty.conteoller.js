@@ -23,20 +23,11 @@ export const registerFaculty = asyncHandler(async (req, res) => {
     if (!faculty.faculty_name) {
       throw new ApiError(400, "Faculty Name is required");
     }
-    if (!faculty.email) {
-      throw new ApiError(400, "Email is required");
-    }
-    if (!faculty.phone) {
-      throw new ApiError(400, "Phone is required");
-    }
     if (!faculty.specialization) {
       throw new ApiError(400, "Specialization is required");
     }
     if (!faculty.higher_qualification) {
       throw new ApiError(400, "Higher Education is required");
-    }
-    if (!faculty.years_of_Experience) {
-      throw new ApiError(400, "Years of Experience is required");
     }
     if (!faculty.gender) {
       throw new ApiError(400, "Gender is required");
@@ -44,7 +35,7 @@ export const registerFaculty = asyncHandler(async (req, res) => {
     if (!faculty.date_of_joining) {
       throw new ApiError(400, "Date of Joining is required");
     }
-    if (!faculty.date_of_birth) {
+    if (!faculty.DOB) {
       throw new ApiError(400, "Date of Birth is required");
     }
     if (!faculty.address) {
@@ -54,27 +45,16 @@ export const registerFaculty = asyncHandler(async (req, res) => {
 
   //filter out unique records from given data
   const facultyIds = faculties.map((faculty) => faculty.faculty_id);
-  const emails = faculties.map((faculty) => faculty.email);
-  const phones = faculties.map((faculty) => faculty.phone);
 
   const existingFaculties = await Faculty.find({
-    $or: [
-      { faculty_id: { $in: facultyIds } },
-      { email: { $in: emails } },
-      { phone: { $in: phones } },
-    ],
+    faculty_id: { $in: facultyIds }
   });
   const existingFacultyIds = new Set(
     existingFaculties.map((f) => f.faculty_id),
   );
-  const existingEmails = new Set(existingFaculties.map((f) => f.email));
-  const existingPhones = new Set(existingFaculties.map((f) => f.phone));
 
   const uniqueFacultyRecords = faculties.filter(
-    (faculty) =>
-      !existingFacultyIds.has(faculty.faculty_id) &&
-      !existingEmails.has(faculty.email) &&
-      !existingPhones.has(faculty.phone),
+    (faculty) => !existingFacultyIds.has(faculty.faculty_id)
   );
 
   console.log("Unique Faculty Records -->", uniqueFacultyRecords);
@@ -163,14 +143,11 @@ export const updateFaculty = asyncHandler(async (req, res) => {
 
   const {
     faculty_name,
-    email,
-    phone,
     specialization,
-    higher_education,
-    years_of_Experience,
+    higher_qualification,
     gender,
     date_of_joining,
-    date_of_birth,
+    DOB,
     address,
     isActive,
   } = req.body;
@@ -181,14 +158,11 @@ export const updateFaculty = asyncHandler(async (req, res) => {
     id,
     {
       faculty_name,
-      email,
-      phone,
       specialization,
-      higher_education,
-      years_of_Experience,
+      higher_qualification,
       gender,
       date_of_joining,
-      date_of_birth,
+      DOB,
       address,
       isActive,
     },

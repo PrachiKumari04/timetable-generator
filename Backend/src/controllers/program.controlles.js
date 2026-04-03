@@ -14,6 +14,7 @@ export const addPrograms = asyncHandler(async (req, res) => {
   program.forEach((prog) => {
     if (!prog.program_id) throw new ApiError(400, "Program ID is required");
     if (!prog.program_name) throw new ApiError(400, "Program Name is required");
+    if (!prog.program_duration) throw new ApiError(400, "Program Duration is required");
   });
 
   // Filter out existing programs by program_id

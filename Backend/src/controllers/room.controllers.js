@@ -13,7 +13,7 @@ export const addRoom = asyncHandler(async (req, res) => {
   room.forEach((room) => {
     if (!room.room_no) throw new ApiError(400, "Room number is required");
     if (!room.floor_no) throw new ApiError(400, "Floor number is required");
-    if (!room.wings) throw new ApiError(400, "Wing is required");
+    if (!room.block) throw new ApiError(400, "Block is required");
   });
 
   //find unique records
@@ -96,7 +96,7 @@ export const updateRoomById = asyncHandler(async (req, res) => {
       $set: {
         room_no: room.room_no,
         floor_no: room.floor_no,
-        wings: room.wings,
+        block: room.block,
       },
     },
     { new: true, runValidators: true }

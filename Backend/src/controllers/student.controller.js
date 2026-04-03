@@ -25,7 +25,6 @@ export const registerStudent = asyncHandler(async (req, res) => {
     if (!student.email) {
       throw new ApiError(400, "Email is required");
     }
-    
     if (!student.class) {
       throw new ApiError(400, "Class Code is required");
     }
@@ -45,7 +44,6 @@ export const registerStudent = asyncHandler(async (req, res) => {
 
   // fillter those recordes which is not already stored in database
   const studentIds = students.map((student) => student.student_id);
-  const emails = students.map((student) => student.email);
 
   const existingStudents = await Student.find({
     $or: [{ student_id: { $in: studentIds } }, { email: { $in: emails } }],
@@ -150,15 +148,12 @@ export const updateStudent = asyncHandler(async (req, res) => {
   const {
     student_name,
     email,
-    father_name,
-    class_code,
+    gender,
+    class: className,
     batch,
     date_of_birth,
     specialization,
     student_id,
-    // gender,
-    // address,
-    // isActive,
   } = req.body;
 
   console.log("Body -->", req.body);
@@ -169,14 +164,11 @@ export const updateStudent = asyncHandler(async (req, res) => {
       student_id: student_id ? student_id : student.student_id,
       student_name,
       email,
-      father_name,
-      class_code,
+      gender,
+      class: className,
       batch,
       date_of_birth,
       specialization,
-      // gender,
-      // address,
-      // isActive,
     },
     { new: true },
   );

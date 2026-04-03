@@ -6,13 +6,33 @@ import {
   registerUser,
   updateUser,
   userLogin,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
 } from "../controllers/user.controller.js";
-// import { login } from "../controllers/user.controller.js";
+import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/").post(registerUser).get(getAllUsers);
-router.route("/:id").get(getUserById).delete(deleteUser).patch(updateUser);
+// Public routes
 router.route("/login").post(userLogin);
+router.route("/refresh-token").post(refreshAccessToken);
+
+// Protected routes
+router
+  .route("/")
+  .post(verifyJWT, authorizeRoles("admin"), registerUser)
+  .get(
+    verifyJWT,
+    authorizeRoles("admin", "faculty", "coordinator", "hod"),
+    getAllUsers,
+  );
+router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/change-password").post(verifyJWT, changePassword);
+router
+  .route("/:id")
+  .get(verifyJWT, getUserById)
+  .delete(verifyJWT, authorizeRoles("admin"), deleteUser)
+  .patch(verifyJWT, authorizeRoles("admin"), updateUser);
 
 export default router;
