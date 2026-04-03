@@ -14,6 +14,8 @@ function SideBar({ ENTITY_CONFIG, masterData, activeEntity, setActiveEntity, set
 
     return (
         <div className="space-y-4">
+            {/* <button className='bg-primary hover:bg-secondary w-full p-2 rounded-lg font-bold text-white shadow '>Generate TimeTable</button> */}
+
             <h2 className="px-3 text-xs font-semibold text-text/60 uppercase tracking-wider">
                 Master Entities
             </h2>

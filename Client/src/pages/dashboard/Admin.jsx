@@ -1,4 +1,4 @@
-import React, { use, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 // import AdminHeader from "../../components/admin/AdminHeader";
@@ -12,12 +12,14 @@ import {
   addMasterData,
 } from "../../store/admin/adminSlice";
 import ExcelHendelButton from "../../components/ExcelHendelButton";
+import TimeTable from "../../components/deshboard/TimeTable";
 
 function Admin() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const userData = useSelector((state) => state.auth.userData);
   const navigate = useNavigate();
+  const [showTimetable, setShowTimetable] = useState(false);
 
   const { activeEntity, masterData, loading, error } = useSelector(
     (state) => state.admin,
@@ -34,8 +36,6 @@ function Admin() {
     dispatch(fetchMasterData("faculty"));
     dispatch(fetchMasterData("student"));
   }, [dispatch]);
-
-
 
   useEffect(() => {
     if (!isAuthenticated || !userData || userData.role !== "admin") {
@@ -435,6 +435,10 @@ function Admin() {
   ];
 
   const renderContent = () => {
+    if (showTimetable) {
+      return <TimeTable onClose={() => setShowTimetable(false)} />;
+    }
+
     if (!activeEntity) {
       return (
         <div className="flex-1 p-8 flex flex-col items-center justify-center text-center text-slate-500 h-full">
@@ -544,34 +548,64 @@ function Admin() {
   };
 
   return (
-    <div className="w-full h-screen max-w-[1440px] mx-auto flex flex-col transition-colors duration-200">
-      <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200">
-        <h1 className="text-2xl font-bold ">Admin Dashboard</h1>
+    <div className="w-full h-screen mx-auto flex flex-col transition-colors duration-200">
+      <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200 bg-surface">
+        <h1 className="text-2xl font-bold text-text">Admin Dashboard</h1>
+        
+        <div className="flex items-center gap-4">
+          {/* Timetable Toggle Button */}
+          <button
+            onClick={() => setShowTimetable(!showTimetable)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              showTimetable
+                ? "bg-primary text-white hover:bg-secondary"
+                : "bg-surface-hover border border-border text-text hover:bg-border"
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            {showTimetable ? "Back to Master Data" : "View Timetable"}
+          </button>
 
-        {activeEntity && (
-          <ExcelHendelButton
-            fileName={activeEntity}
-            formet={[
-              ENTITY_CONFIG[activeEntity].fields.reduce((acc, field) => {
-                acc[field.name] = field.placeholder;
-                return acc;
-              }, {}),
-            ]}
-            handleUplode={handleUplode}
-          />
-        )}
+          {activeEntity && !showTimetable && (
+            <ExcelHendelButton
+              fileName={activeEntity}
+              formet={[
+                ENTITY_CONFIG[activeEntity].fields.reduce((acc, field) => {
+                  acc[field.name] = field.placeholder;
+                  return acc;
+                }, {}),
+              ]}
+              handleUplode={handleUplode}
+            />
+          )}
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-slate-200 px-4 py-6 overflow-y-auto hidden md:block ">
-          <SideBar
-            ENTITY_CONFIG={ENTITY_CONFIG}
-            masterData={masterData}
-            activeEntity={activeEntity}
-            setActiveEntity={handleSetActiveEntity}
-            setEditingEntityId={handleSetEditingEntityId}
-          />
-        </aside>
+        {!showTimetable && (
+          <aside className="w-72 border-r border-slate-200 px-4 py-6 overflow-y-auto hidden md:block bg-surface">
+            <SideBar
+              ENTITY_CONFIG={ENTITY_CONFIG}
+              masterData={masterData}
+              activeEntity={activeEntity}
+              setActiveEntity={handleSetActiveEntity}
+              setEditingEntityId={handleSetEditingEntityId}
+            />
+          </aside>
+        )}
 
         <main className="flex-1 overflow-hidden">{renderContent()}</main>
       </div>
