@@ -69,7 +69,6 @@ function Admin() {
         },
       ],
     },
-
     course: {
       label: "Course",
       pluralLabel: "Courses",
@@ -101,7 +100,60 @@ function Admin() {
         },
       ],
     },
-
+    semester: {
+      label: "Semester",
+      pluralLabel: "Semesters",
+      fields: [
+        {
+          name: "semester_id",
+          label: "Semester Code",
+          placeholder: "e.g. SEM1",
+          required: true,
+        },
+        {
+          name: "semester_name",
+          label: "Semester Name",
+          placeholder: "e.g. Semester 1",
+          required: true,
+        },
+        {
+          name: "isEven",
+          label: "Is Even",
+          type: "boolean",
+          required: true,
+        },
+      ],
+    },
+    division: {
+      label: "Division",
+      pluralLabel: "Divisions",
+      fields: [
+        // {
+        //   name: "section_name",
+        //   label: "Section Code",
+        //   placeholder: "e.g. A",
+        //   required: true,
+        // },
+        {
+          name: "section_name",
+          label: "Division",
+          placeholder: "e.g. 1",
+          required: true,
+        },
+        {
+          name: "class_id",
+          label: "Class Code",
+          placeholder: "e.g. CSE-3A",
+          required: true,
+        },
+        {
+          name: "discraption",
+          label: "Discraption",
+          placeholder: "e.g. CSE-3A-1",
+          required: true,
+        },
+      ],
+    },
     room: {
       label: "Room",
       pluralLabel: "Rooms",
@@ -121,7 +173,7 @@ function Admin() {
         },
         {
           name: "wing",
-          label: "Wing",
+          label: "Wing/Block",
           placeholder: "e.g. A Wing",
           required: true,
         },
@@ -157,37 +209,6 @@ function Admin() {
         },
       ],
     },
-    division: {
-      label: "Division",
-      pluralLabel: "Divisions",
-      fields: [
-        // {
-        //   name: "section_name",
-        //   label: "Section Code",
-        //   placeholder: "e.g. A",
-        //   required: true,
-        // },
-        {
-          name: "section_name",
-          label: "Division",
-          placeholder: "e.g. 1",
-          required: true,
-        },
-        {
-          name: "class_id",
-          label: "Class Code",
-          placeholder: "e.g. CSE-3A",
-          required: true,
-        },
-        {
-          name: "discraption",
-          label: "Discraption",
-          placeholder: "e.g. CSE-3A-1",
-          required: true,
-        },
-      ],
-    },
-
     subject: {
       label: "Subject",
       pluralLabel: "Subjects",
@@ -551,7 +572,7 @@ function Admin() {
     <div className="w-full h-screen mx-auto flex flex-col transition-colors duration-200">
       <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200 bg-surface">
         <h1 className="text-2xl font-bold text-text">Admin Dashboard</h1>
-        
+
         <div className="flex items-center gap-4">
           {/* Timetable Toggle Button */}
           <button
