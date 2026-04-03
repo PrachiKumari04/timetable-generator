@@ -1,31 +1,18 @@
 import { Schema, model } from "mongoose";
 
-const specilizationSchema = new Schema(
+const specializationSchema = new Schema(
   {
-    specilization_id: {
+    specialization_id: {
       type: String,
       required: true,
       unique: true,
       uppercase: true,
       trim: true,
     },
-    specilization_name: {
+    specialization_name: {
       type: String,
       required: true,
-      lowercase: true,
       trim: true,
-    },
-    program_id: {
-      type:String,
-      required:true,
-      lowercase:true,
-      trim:true
-    },
-    course_id: {
-      type: String,
-      required:true,
-      lowercase:true,
-      trim:true
     },
     isActive: {
       type: Boolean,
@@ -35,4 +22,4 @@ const specilizationSchema = new Schema(
   { timestamps: true },
 );
 
-export const Specilization = model("Specilization", specilizationSchema);
+export const Specialization = model("Specialization", specializationSchema);

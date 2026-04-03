@@ -13,49 +13,42 @@ const studentSchema = new Schema(
     student_name: {
       type: String,
       required: [true, "Student name is required"],
-      lowercase: true,
       trim: true,
-      index: true,
+    },
+
+    gender: {
+      type: String,
+      required: [true, "Gender is required"],
+      trim: true,
     },
 
     email: {
       type: String,
       required: [true, "Email is required"],
       unique: true,
-      lowercase: true,
       trim: true,
     },
 
     class: {
       type: String,
-      required: true,
-      lowercase: true,
+      required: [true, "Class is required"],
       trim: true,
     },
 
     batch: {
       type: String,
-      required: true,
-      lowercase: true,
+      required: [true, "Batch is required"],
       trim: true,
     },
 
     date_of_birth: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
+      type: Date,
+      required: [true, "Date of birth is required"],
     },
 
     specialization: {
       type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
-    division: {
-      type: String,
-      uppercase: true,
+      required: [true, "Specialization is required"],
       trim: true,
     },
   },

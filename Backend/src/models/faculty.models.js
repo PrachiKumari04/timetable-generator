@@ -2,16 +2,17 @@ import mongoose, { model, Schema } from "mongoose";
 
 const facultySchema = new Schema(
   {
-    faculty_id: { type: String, required: true, uppercase: true },
-
+    faculty_id: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+    },
     faculty_name: {
       type: String,
       required: [true, "Faculty name is required"],
-      lowercase: true,
       trim: true,
-      index: true,
     },
-
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -19,13 +20,11 @@ const facultySchema = new Schema(
       lowercase: true,
       trim: true,
     },
-
     phone: {
-      type: Number,
-      required: [true, "phone number must be a number and exactly 10 digits"],
-      unique: true,
+      type: String,
+      required: [true, "Phone number is required"],
+      trim: true,
     },
-
     specialization: {
       type: String,
       required: [true, "specialization is required"],
@@ -36,7 +35,7 @@ const facultySchema = new Schema(
     higher_qualification: {
       type: String,
       required: [true, "higher education is required"],
-      lowercase: true,
+      uppercase: true,
       trim: true,
     },
 
@@ -49,7 +48,6 @@ const facultySchema = new Schema(
     gender: {
       type: String,
       required: [true, "gender is required"],
-      lowercase: true,
       trim: true,
     },
 

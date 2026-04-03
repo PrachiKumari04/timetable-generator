@@ -2,13 +2,13 @@ import mongoose, { model, Schema } from "mongoose";
 
 const userSchema = new Schema(
   {
-    // user_id: {
-    //   type: String,
-    //   required: [true, "User ID is required"],
-    //   unique: true,
-    //   uppercase: true,
-    //   trim: true,
-    // },
+    user_id: {
+      type: String,
+      required: [true, "User ID is required"],
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
 
     password: {
       type: String,

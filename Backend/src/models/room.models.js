@@ -10,14 +10,14 @@ const roomSchema = new Schema(
       trim: true,
     },
     floor_no: {
-      type: Number,
+      type: String,
       required: true,
       trim: true,
     },
-    wing: {
+    block: {
       type: String,
-      required: true,
-      lowercase: true,
+      required: true, 
+      uppercase: true,
       trim: true,
     },
   },

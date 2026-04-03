@@ -1,31 +1,26 @@
 import { Schema, model } from "mongoose";
 
-const programSchema = new Schema(
+const qualificationTypeSchema = new Schema(
   {
-    program_id: {
+    qualification_id: {
       type: String,
       required: true,
       unique: true,
       uppercase: true,
       trim: true,
     },
-    program_name: {
+    qualification_name: {
       type: String,
       required: true,
       uppercase: true,
-      trim: true,
     },
-    program_duration: {
-      type: Number,
+    description: {
+      type: String,
       required: true,
       trim: true,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
     },
   },
   { timestamps: true },
 );
 
-export const Program = model("Program", programSchema);
+export const QualificationType = model("QualificationType", qualificationTypeSchema);
