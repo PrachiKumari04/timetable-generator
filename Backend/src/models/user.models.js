@@ -5,7 +5,7 @@ const userSchema = new Schema(
   {
     user_id: {
       type: String,
-      required: [true, "User ID is required"],
+      // required: [true, "User ID is required"],
       unique: true,
       uppercase: true,
       trim: true,
@@ -64,16 +64,27 @@ const userSchema = new Schema(
   { timestamps: true },
 );
 
-// Hash password before saving
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-
+// Pre-save hook to generate user_id and hash password
+userSchema.pre("save", async function () {
   try {
-    const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
-    this.password = await bcrypt.hash(this.password, saltRounds);
-    next();
+    // Generate user_id based on role and student/faculty id
+    if (this.isNew && !this.user_id) {
+      if (this.student_id) {
+        this.user_id = `STU_${this.student_id}`;
+      } else if (this.faculty_id) {
+        this.user_id = `FAC_${this.faculty_id}`;
+      }
+    }
+
+    // Hash password if modified
+    if (this.isModified("password")) {
+      const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
+      this.password = await bcrypt.hash(this.password, saltRounds);
+    }
+
   } catch (error) {
-    next(error);
+    // Handle error
+    console.error("Error in userSchema pre-save hook:", error);
   }
 });
 
@@ -81,17 +92,5 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
-
-// Method to generate user_id based on role and student/faculty id
-userSchema.pre("save", async function (next) {
-  if (this.isNew && !this.user_id) {
-    if (this.student_id) {
-      this.user_id = `STU_${this.student_id}`;
-    } else if (this.faculty_id) {
-      this.user_id = `FAC_${this.faculty_id}`;
-    }
-  }
-  next();
-});
 
 export const User = model("User", userSchema);

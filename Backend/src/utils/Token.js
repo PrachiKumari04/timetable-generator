@@ -15,6 +15,9 @@ export const generateAccessToken = (user) => {
   );
 };
 
+// const u = { _id:"69d008f40a3cac9435a78f8d", user_id: "STU_ADT25COMM0873",student_id:"ADT25COMM0873",  role: "admin" };
+// console.log(generateAccessToken(u));
+
 // Generate Refresh Token (long-lived)
 export const generateRefreshToken = (user) => {
   return jwt.sign(

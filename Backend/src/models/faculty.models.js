@@ -16,7 +16,13 @@ const facultySchema = new Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,
+      validate: {
+        validator: (value) => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return emailRegex.test(value);
+        },
+        message: "{VALUE} is not a valid email address",
+      },
       lowercase: true,
       trim: true,
     },

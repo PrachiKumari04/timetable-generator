@@ -44,6 +44,7 @@ export const registerStudent = asyncHandler(async (req, res) => {
 
   // fillter those recordes which is not already stored in database
   const studentIds = students.map((student) => student.student_id);
+  const emails = students.map((student) => student.email);
 
   const existingStudents = await Student.find({
     $or: [{ student_id: { $in: studentIds } }, { email: { $in: emails } }],

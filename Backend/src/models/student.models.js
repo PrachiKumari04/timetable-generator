@@ -25,6 +25,13 @@ const studentSchema = new Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
+      validate: {
+        validator: (value) => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return emailRegex.test(value);
+        },
+        message: "{VALUE} is not a valid email address",
+      },
       unique: true,
       trim: true,
     },
@@ -44,6 +51,11 @@ const studentSchema = new Schema(
     date_of_birth: {
       type: Date,
       required: [true, "Date of birth is required"],
+    },
+    phone: {
+      type: String,
+      required: [true, "Phone number is required"],
+      trim: true,
     },
 
     specialization: {

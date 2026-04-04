@@ -6,6 +6,7 @@ import { User } from "../models/user.models.js";
 // Verify JWT token and attach user to request
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
+    
     // Get token from cookies or Authorization header
     const token =
       req.cookies?.accessToken ||

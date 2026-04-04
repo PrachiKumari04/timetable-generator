@@ -15,15 +15,17 @@ export const registerUser = asyncHandler(async (req, res) => {
   const users = req.body;
 
   console.log("Body -->", req.body);
+  console.log("Users -->", req.user);
 
   // Handle single user registration
   if (!Array.isArray(users)) {
+    // console.log("Single User -->", users);
     const { password, role, student_id, faculty_id, created_by } = users;
 
     // Validate required fields
     if (!password || !role || (!student_id && !faculty_id)) {
       throw ApiError.badRequest(
-        "Password, role, and student_id or faculty_id are required"
+        "Password, role, and student_id or faculty_id are required",
       );
     }
 
@@ -37,7 +39,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     if (existingUser) {
       throw ApiError.conflict(
-        "User with this student_id or faculty_id already exists"
+        "User with this student_id or faculty_id already exists",
       );
     }
 
@@ -51,12 +53,12 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     const createdUser = await User.findById(newUser._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken",
     );
 
     return ApiResponse.created(
       createdUser,
-      "User registered successfully"
+      "User registered successfully",
     ).send(res);
   }
 
@@ -90,10 +92,14 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 
   const existingStudentIds = new Set(
-    existingUsers.filter((u) => u.student_id).map((u) => u.student_id.toString())
+    existingUsers
+      .filter((u) => u.student_id)
+      .map((u) => u.student_id.toString()),
   );
   const existingFacultyIds = new Set(
-    existingUsers.filter((u) => u.faculty_id).map((u) => u.faculty_id.toString())
+    existingUsers
+      .filter((u) => u.faculty_id)
+      .map((u) => u.faculty_id.toString()),
   );
 
   const uniqueUserRecords = users.filter((user) => {
@@ -120,10 +126,9 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw ApiError.internal("Failed to register users");
   }
 
-  return ApiResponse.created(
-    userRecords,
-    "Users registered successfully"
-  ).send(res);
+  return ApiResponse.created(userRecords, "Users registered successfully").send(
+    res,
+  );
 });
 
 //Get all users
@@ -197,7 +202,9 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     throw ApiError.notFound("No users found");
   }
 
-  return ApiResponse.ok(usersWithDetails, "Users fetched successfully").send(res);
+  return ApiResponse.ok(usersWithDetails, "Users fetched successfully").send(
+    res,
+  );
 });
 
 // Get user by ID
@@ -304,9 +311,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   // Handle password update separately to trigger hashing
   if (password) {
     if (password.length < 6) {
-      throw ApiError.badRequest(
-        "Password must be at least 6 characters long"
-      );
+      throw ApiError.badRequest("Password must be at least 6 characters long");
     }
     user.password = password;
     if (role) user.role = role;
@@ -315,7 +320,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
     const updatedUser = await user.save();
     const userResponse = await User.findById(updatedUser._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken",
     );
 
     return ApiResponse.ok(userResponse, "User updated successfully").send(res);
@@ -324,7 +329,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(
     id,
     { $set: updateData },
-    { new: true }
+    { new: true },
   ).select("-password -refreshToken");
 
   if (!updatedUser) {
@@ -353,7 +358,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
 // Login with password hashing and JWT tokens
 export const userLogin = asyncHandler(async (req, res) => {
-  const { user_id, password } = req.body;
+  const { username, password } = req.body;
+  const user_id = username;
+  console.log(req.body);
 
   // Validate input
   if (!user_id?.trim() || !password?.trim()) {
@@ -458,8 +465,8 @@ export const userLogin = asyncHandler(async (req, res) => {
           accessToken,
           refreshToken,
         },
-        "User logged in successfully"
-      ).toJSON()
+        "User logged in successfully",
+      ).toJSON(),
     );
 });
 
@@ -475,7 +482,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     userId,
     { $set: { refreshToken: null } },
-    { new: true }
+    { new: true },
   );
 
   return res
@@ -533,8 +540,8 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(
       ApiResponse.ok(
         { accessToken, refreshToken: newRefreshToken },
-        "Access token refreshed successfully"
-      ).toJSON()
+        "Access token refreshed successfully",
+      ).toJSON(),
     );
 });
 
@@ -544,13 +551,13 @@ export const changePassword = asyncHandler(async (req, res) => {
 
   if (!userId || !currentPassword || !newPassword) {
     throw ApiError.badRequest(
-      "User ID, current password, and new password are required"
+      "User ID, current password, and new password are required",
     );
   }
 
   if (newPassword.length < 6) {
     throw ApiError.badRequest(
-      "New password must be at least 6 characters long"
+      "New password must be at least 6 characters long",
     );
   }
 

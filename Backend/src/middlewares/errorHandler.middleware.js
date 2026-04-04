@@ -6,6 +6,8 @@ import { ApiError } from "../utils/ApiError.js";
  */
 const errorHandler = (err, req, res, next) => {
   let error = err;
+  console.log("error -->",error);
+  
 
   // If error is not an ApiError, convert it
   if (!(error instanceof ApiError)) {
