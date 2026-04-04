@@ -31,6 +31,18 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         if (value === undefined || value === null) return '-';
         
         if (field.type === 'boolean') {
+            const isActiveField = field.name === 'isActive';
+            if (isActiveField) {
+                return value ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                        Active
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                        Inactive
+                    </span>
+                );
+            }
             return value ? 'Yes' : 'No';
         }
         
@@ -81,7 +93,13 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                             entities?.map((entity) => (
                                 <tr
                                     key={entity._id || entity.id}
-                                    className="border-b border-border hover:bg-surface-hover transition-colors"
+                                    className={`border-b border-border hover:bg-surface-hover transition-colors ${
+                                        entity.isActive === false
+                                            ? 'bg-red-50/50 dark:bg-red-900/10'
+                                            : entity.isActive === true
+                                            ? 'bg-green-50/50 dark:bg-green-900/10'
+                                            : ''
+                                    }`}
                                 >
                                     {currentEntityConfig.fields.map((field) => (
                                         <td key={field.name} className="px-6 py-4 text-text/90">

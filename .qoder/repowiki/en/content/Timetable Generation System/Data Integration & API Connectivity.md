@@ -4,360 +4,451 @@
 **Referenced Files in This Document**
 - [index.js](file://Backend/src/index.js)
 - [server.js](file://Backend/src/server.js)
-- [course.routers.js](file://Backend/src/routes/course.routers.js)
-- [class.routers.js](file://Backend/src/routes/class.routers.js)
-- [subject.routers.js](file://Backend/src/routes/subject.routers.js)
-- [room.router.js](file://Backend/src/routes/room.router.js)
-- [course.controlles.js](file://Backend/src/controllers/course.controlles.js)
-- [class.controllers.js](file://Backend/src/controllers/class.controllers.js)
-- [subject.controllers.js](file://Backend/src/controllers/subject.controllers.js)
-- [room.controllers.js](file://Backend/src/controllers/room.controllers.js)
-- [course.models.js](file://Backend/src/models/course.models.js)
-- [class.models.js](file://Backend/src/models/class.models.js)
-- [subject.models.js](file://Backend/src/models/subject.models.js)
-- [room.models.js](file://Backend/src/models/room.models.js)
+- [timetable.routers.js](file://Backend/src/routes/timetable.routers.js)
+- [timeSlot.routers.js](file://Backend/src/routes/timeSlot.routers.js)
+- [timeTableEntry.routers.js](file://Backend/src/routes/timeTableEntry.routers.js)
+- [subjectAllocation.routers.js](file://Backend/src/routes/subjectAllocation.routers.js)
+- [timetable.controllers.js](file://Backend/src/controllers/timetable.controllers.js)
+- [timeSlot.controllers.js](file://Backend/src/controllers/timeSlot.controllers.js)
+- [timeTableEntry.controllers.js](file://Backend/src/controllers/timeTableEntry.controllers.js)
+- [subjectAllocation.controllers.js](file://Backend/src/controllers/subjectAllocation.controllers.js)
+- [timetable.models.js](file://Backend/src/models/timetable.models.js)
+- [timeSlot.models.js](file://Backend/src/models/timeSlot.models.js)
+- [timeTableEntry.models.js](file://Backend/src/models/timeTableEntry.models.js)
+- [subjectAllocation.models.js](file://Backend/src/models/subjectAllocation.models.js)
 - [store.js](file://Client/src/store/store.js)
 - [adminSlice.js](file://Client/src/store/admin/adminSlice.js)
+- [authSlice.js](file://Client/src/store/auth/authSlice.js)
+- [themeSlice.js](file://Client/src/store/theme/themeSlice.js)
+- [formSlice.js](file://Client/src/store/formSlice.js)
+- [apiClient.js](file://Client/src/services/apiClient.js)
+- [syncService.js](file://Client/src/services/syncService.js)
 - [TimeTable.jsx](file://Client/src/components/deshboard/TimeTable.jsx)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Enhanced API client with comprehensive caching, retry, and offline synchronization capabilities
+- Added real-time data synchronization service with optimistic updates and conflict resolution
+- Expanded backend API endpoints for timetable generation, time slots, and subject allocations
+- Implemented comprehensive error handling with user feedback and graceful degradation
+- Added responsive design considerations and performance optimizations for large datasets
+- Integrated offline-first architecture with automatic retry and queue management
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
-5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+5. [Enhanced API Integration](#enhanced-api-integration)
+6. [Real-Time Synchronization](#real-time-synchronization)
+7. [Comprehensive Error Handling](#comprehensive-error-handling)
+8. [Performance Optimization](#performance-optimization)
+9. [Responsive Design Implementation](#responsive-design-implementation)
+10. [Data Flow Analysis](#data-flow-analysis)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains how the frontend timetable components integrate with backend scheduling services. It covers Redux store integration for managing master data, filters, and user selections; documents the API endpoints for fetching courses, classes, subjects, and rooms; details data transformation from backend responses to frontend display formats; describes real-time synchronization and caching strategies; outlines error handling and fallback mechanisms; and provides performance optimization techniques for large datasets.
+This document explains the enhanced data integration between frontend timetable components and backend scheduling services. The system now features comprehensive API connectivity with real-time data updates, sophisticated caching strategies, offline synchronization capabilities, and responsive design considerations for the advanced timetable system.
 
 ## Project Structure
-The system comprises:
-- Backend: Express server exposing REST endpoints for master data entities (courses, classes, subjects, rooms), with Mongoose models and controllers implementing CRUD operations.
-- Frontend: React application using Redux Toolkit to manage master data, loading states, and errors. The timetable component renders filtered views based on Redux state and displays a grid layout.
+The enhanced system comprises:
+- **Backend**: Express server with comprehensive REST endpoints for timetable management, time slots, subject allocations, and real-time synchronization
+- **Frontend**: React application with advanced Redux Toolkit integration, caching mechanisms, offline-first architecture, and responsive design
+- **API Layer**: Sophisticated client with request/response interceptors, caching, retry logic, and offline queue management
+- **Synchronization Service**: Advanced service handling batch operations, optimistic updates, and conflict resolution
 
 ```mermaid
 graph TB
-subgraph "Backend"
+subgraph "Backend Services"
 S["Express Server<br/>index.js"]
-R1["Routes<br/>course.routers.js"]
-R2["Routes<br/>class.routers.js"]
-R3["Routes<br/>subject.routers.js"]
-R4["Routes<br/>room.router.js"]
-C1["Controllers<br/>course.controlles.js"]
-C2["Controllers<br/>class.controllers.js"]
-C3["Controllers<br/>subject.controllers.js"]
-C4["Controllers<br/>room.controllers.js"]
-M1["Models<br/>course.models.js"]
-M2["Models<br/>class.models.js"]
-M3["Models<br/>subject.models.js"]
-M4["Models<br/>room.models.js"]
+R1["Timetable Routes<br/>timetable.routers.js"]
+R2["Time Slot Routes<br/>timeSlot.routers.js"]
+R3["Entry Routes<br/>timeTableEntry.routers.js"]
+R4["Subject Allocation Routes<br/>subjectAllocation.routers.js"]
+C1["Timetable Controllers<br/>timetable.controllers.js"]
+C2["Time Slot Controllers<br/>timeSlot.controllers.js"]
+C3["Entry Controllers<br/>timeTableEntry.controllers.js"]
+C4["Allocation Controllers<br/>subjectAllocation.controllers.js"]
+M1["Timetable Models<br/>timetable.models.js"]
+M2["Time Slot Models<br/>timeSlot.models.js"]
+M3["Entry Models<br/>timeTableEntry.models.js"]
+M4["Allocation Models<br/>subjectAllocation.models.js"]
 end
-subgraph "Frontend"
+subgraph "Frontend Architecture"
+AC["API Client<br/>apiClient.js"]
+SS["Sync Service<br/>syncService.js"]
 ST["Redux Store<br/>store.js"]
-SL["Admin Slice<br/>adminSlice.js"]
+AS["Admin Slice<br/>adminSlice.js"]
+AU["Auth Slice<br/>authSlice.js"]
+TS["Theme Slice<br/>themeSlice.js"]
+FS["Form Slice<br/>formSlice.js"]
 TT["Timetable Component<br/>TimeTable.jsx"]
 end
 S --> R1 --> C1 --> M1
 S --> R2 --> C2 --> M2
 S --> R3 --> C3 --> M3
 S --> R4 --> C4 --> M4
-TT --> SL --> ST
+TT --> AC
+AC --> SS
+SS --> AS
+TT --> AU
+TT --> TS
+TT --> FS
 ```
 
 **Diagram sources**
 - [index.js:1-18](file://Backend/src/index.js#L1-L18)
-- [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [class.routers.js:1-24](file://Backend/src/routes/class.routers.js#L1-L24)
-- [subject.routers.js:1-24](file://Backend/src/routes/subject.routers.js#L1-L24)
-- [room.router.js:1-23](file://Backend/src/routes/room.router.js#L1-L23)
-- [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
-- [class.controllers.js:1-179](file://Backend/src/controllers/class.controllers.js#L1-L179)
-- [subject.controllers.js:1-130](file://Backend/src/controllers/subject.controllers.js#L1-L130)
-- [room.controllers.js:1-133](file://Backend/src/controllers/room.controllers.js#L1-L133)
-- [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
-- [room.models.js:1-28](file://Backend/src/models/room.models.js#L1-L28)
-- [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
-- [TimeTable.jsx:1-370](file://Client/src/components/deshboard/TimeTable.jsx#L1-L370)
+- [server.js:47-76](file://Backend/src/server.js#L47-L76)
+- [timetable.routers.js:1-21](file://Backend/src/routes/timetable.routers.js#L1-L21)
+- [timeSlot.routers.js:1-21](file://Backend/src/routes/timeSlot.routers.js#L1-L21)
+- [timeTableEntry.routers.js:1-21](file://Backend/src/routes/timeTableEntry.routers.js#L1-L21)
+- [subjectAllocation.routers.js:1-21](file://Backend/src/routes/subjectAllocation.routers.js#L1-L21)
+- [apiClient.js:14-23](file://Client/src/services/apiClient.js#L14-L23)
+- [syncService.js:7-20](file://Client/src/services/syncService.js#L7-L20)
+- [store.js:7-14](file://Client/src/store/store.js#L7-L14)
 
 **Section sources**
 - [index.js:1-18](file://Backend/src/index.js#L1-L18)
-- [store.js:1-15](file://Client/src/store/store.js#L1-L15)
+- [server.js:47-76](file://Backend/src/server.js#L47-L76)
+- [store.js:7-14](file://Client/src/store/store.js#L7-L14)
 
 ## Core Components
-- Backend server initialization and port binding.
-- REST endpoints for master data entities:
-  - Courses: create, list, get by id, get by course_id, update, delete.
-  - Classes: create, list, get by id, get by class_id, update, delete.
-  - Subjects: create, list, get by id, get by subject_id, update, delete.
-  - Rooms: create, list, get by id, update, delete.
-- Frontend Redux store with an admin slice handling asynchronous CRUD actions against the backend and maintaining master data in state.
-- Timetable component rendering a grid based on selected filters and subject color mapping.
+- **Enhanced Backend API**: Comprehensive REST endpoints for timetable generation, time slot management, subject allocation, and real-time synchronization
+- **Advanced API Client**: Axios-based client with request/response interceptors, intelligent caching, retry logic, and offline queue management
+- **Real-Time Synchronization**: Sophisticated service handling batch operations, optimistic updates, conflict resolution, and automatic retry
+- **Redux Integration**: Enhanced state management with caching controls, error handling, and real-time updates
+- **Responsive Timetable Component**: Advanced rendering with lab session handling, color mapping, and multiple view modes
 
 **Section sources**
-- [index.js:1-18](file://Backend/src/index.js#L1-L18)
-- [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [class.routers.js:1-24](file://Backend/src/routes/class.routers.js#L1-L24)
-- [subject.routers.js:1-24](file://Backend/src/routes/subject.routers.js#L1-L24)
-- [room.router.js:1-23](file://Backend/src/routes/room.router.js#L1-L23)
-- [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
-- [TimeTable.jsx:1-370](file://Client/src/components/deshboard/TimeTable.jsx#L1-L370)
+- [apiClient.js:14-23](file://Client/src/services/apiClient.js#L14-L23)
+- [syncService.js:7-20](file://Client/src/services/syncService.js#L7-L20)
+- [adminSlice.js:76-82](file://Client/src/store/admin/adminSlice.js#L76-L82)
+- [TimeTable.jsx:472-489](file://Client/src/components/deshboard/TimeTable.jsx#L472-L489)
 
 ## Architecture Overview
-The frontend integrates with backend APIs via Redux Thunk actions. The admin slice defines async thunks to fetch, add, update, and delete master data. Responses populate the Redux store under a masterData map keyed by entity type. The timetable component subscribes to Redux state to render filtered views and color-coded subjects.
+The enhanced architecture implements a three-tier approach: robust backend services, intelligent frontend API layer, and sophisticated synchronization mechanisms. The system supports real-time updates, offline-first operations, and comprehensive error handling with user feedback.
 
 ```mermaid
 sequenceDiagram
 participant UI as "Timetable Component<br/>TimeTable.jsx"
+participant AC as "API Client<br/>apiClient.js"
+participant SS as "Sync Service<br/>syncService.js"
 participant RS as "Redux Store<br/>adminSlice.js"
-participant AX as "Axios Client"
-participant BE as "Backend Server<br/>index.js"
-UI->>RS : Dispatch fetchMasterData(entityKey)
-RS->>AX : GET /api/v1/{entity}
-AX->>BE : HTTP Request
-BE-->>AX : JSON Response { data : [...] }
-AX-->>RS : Promise Fulfilled
-RS->>RS : Update state.masterData[entityKey] = data
-RS-->>UI : useSelector(state.admin.masterData)
-UI->>UI : Render timetable grid with subjects and colors
+participant BE as "Backend Server<br/>server.js"
+UI->>AC : GET /timetable/current
+AC->>SS : Check cache & pending requests
+SS->>AC : Return cached data if available
+AC->>BE : HTTP Request
+BE-->>AC : JSON Response { data : timetable }
+AC->>AC : Cache response
+AC-->>UI : Promise Fulfilled
+UI->>RS : Update state with timetable data
+UI->>UI : Render timetable with lab session processing
 ```
 
 **Diagram sources**
-- [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
-- [adminSlice.js:104-168](file://Client/src/store/admin/adminSlice.js#L104-L168)
-- [index.js:1-18](file://Backend/src/index.js#L1-L18)
+- [TimeTable.jsx:666-683](file://Client/src/components/deshboard/TimeTable.jsx#L666-L683)
+- [apiClient.js:39-80](file://Client/src/services/apiClient.js#L39-L80)
+- [syncService.js:92-134](file://Client/src/services/syncService.js#L92-L134)
 
-## Detailed Component Analysis
+## Enhanced API Integration
 
-### Backend API Endpoints and Controllers
-- Courses
-  - Endpoints: POST /api/v1/courses, GET /api/v1/courses, GET /api/v1/courses/:id, GET /api/v1/courses/:course_id, PUT /api/v1/courses/:id, DELETE /api/v1/courses/:id.
-  - Controller responsibilities: validate input arrays, deduplicate by course_id, insert unique records, handle updates/deletes, and return standardized responses.
-- Classes
-  - Endpoints: POST /api/v1/classes, GET /api/v1/classes, GET /api/v1/classes/:id, GET /api/v1/classes/:class_id, PUT /api/v1/classes/:id, DELETE /api/v1/classes/:id.
-  - Controller responsibilities: aggregation joins with program and course collections, deduplicate by class_id, and return enriched documents.
-- Subjects
-  - Endpoints: POST /api/v1/subjects, GET /api/v1/subjects, GET /api/v1/subjects/:id, GET /api/v1/subjects/subject/:subject_id, PUT /api/v1/subjects/:id, DELETE /api/v1/subjects/:id.
-  - Controller responsibilities: validate required fields, ensure uniqueness, and support CRUD operations.
-- Rooms
-  - Endpoints: POST /api/v1/rooms, GET /api/v1/rooms, GET /api/v1/rooms/:id, PUT /api/v1/rooms/:id, DELETE /api/v1/rooms/:id.
-  - Controller responsibilities: validate presence of room_no, floor_no, and wing; enforce uniqueness; and support CRUD operations.
+### Advanced API Client Features
+The API client implements sophisticated caching, retry logic, and offline-first architecture:
 
+- **Intelligent Caching**: Request/response caching with configurable TTL (5 minutes), cache invalidation on mutations
+- **Retry Logic**: Exponential backoff retry (1s, 2s, 4s) for transient network failures
+- **Duplicate Request Prevention**: Pending request deduplication to prevent redundant API calls
+- **Performance Monitoring**: Request timing tracking in development mode
+- **Offline Queue Management**: Automatic queuing of failed requests with retry capabilities
+
+### Cache Management System
 ```mermaid
 flowchart TD
-Start(["POST /api/v1/courses"]) --> Validate["Validate input array and fields"]
-Validate --> Exists{"Any duplicates by course_id?"}
-Exists --> |Yes| Dedup["Filter unique course_id entries"]
-Exists --> |No| Insert["Insert all records"]
-Dedup --> Insert
-Insert --> Success["Return 201 with inserted records"]
-Success --> End(["Done"])
+Start(["API Request"]) --> CheckCache["Check Cache Validity"]
+CheckCache --> |Valid| ReturnCached["Return Cached Response"]
+CheckCache --> |Expired| CheckPending["Check Pending Requests"]
+CheckPending --> |Pending| ReturnPending["Return Pending Response"]
+CheckPending --> |None| MakeRequest["Make HTTP Request"]
+MakeRequest --> CacheResponse["Cache Response"]
+CacheResponse --> ReturnFresh["Return Fresh Response"]
+ReturnCached --> End(["Complete"])
+ReturnPending --> End
+ReturnFresh --> End
 ```
 
 **Diagram sources**
-- [course.controlles.js:5-40](file://Backend/src/controllers/course.controlles.js#L5-L40)
+- [apiClient.js:25-80](file://Client/src/services/apiClient.js#L25-L80)
 
 **Section sources**
-- [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
-- [class.routers.js:1-24](file://Backend/src/routes/class.routers.js#L1-L24)
-- [class.controllers.js:1-179](file://Backend/src/controllers/class.controllers.js#L1-L179)
-- [subject.routers.js:1-24](file://Backend/src/routes/subject.routers.js#L1-L24)
-- [subject.controllers.js:1-130](file://Backend/src/controllers/subject.controllers.js#L1-L130)
-- [room.router.js:1-23](file://Backend/src/routes/room.router.js#L1-L23)
-- [room.controllers.js:1-133](file://Backend/src/controllers/room.controllers.js#L1-L133)
+- [apiClient.js:14-23](file://Client/src/services/apiClient.js#L14-L23)
+- [apiClient.js:155-180](file://Client/src/services/apiClient.js#L155-L180)
 
-### Frontend Redux Integration (Admin Slice)
-- Async thunks:
-  - fetchMasterData(entityKey): GET /api/v1/{entity}, stores normalized data under state.masterData[entityKey].
-  - addMasterData({ entityKey, data }): POST /api/v1/{entity}.
-  - updateMasterData({ entityKey, id, data }): PUT /api/v1/{entity}/{id}.
-  - deleteMasterData({ entityKey, id }): DELETE /api/v1/{entity}/{id}.
-- Reducer updates:
-  - pending: set loading true and clear error.
-  - fulfilled: update masterData, append new item on add, replace on update, remove on delete.
-  - rejected: set loading false and capture error message.
-- Axios client configured with credentials and base URL /api/v1.
+### Backend API Endpoints
+Enhanced backend services provide comprehensive timetable management:
 
+- **Timetable Management**: CRUD operations for timetable generation and management
+- **Time Slot Configuration**: Flexible time slot definition with break handling
+- **Subject Allocation**: Dynamic subject-to-class allocation system
+- **Real-Time Updates**: WebSocket-ready architecture for future real-time synchronization
+
+**Section sources**
+- [timetable.routers.js:12-18](file://Backend/src/routes/timetable.routers.js#L12-L18)
+- [timeSlot.routers.js:12-18](file://Backend/src/routes/timeSlot.routers.js#L12-L18)
+- [timeTableEntry.routers.js:12-18](file://Backend/src/routes/timeTableEntry.routers.js#L12-L18)
+- [subjectAllocation.routers.js:12-18](file://Backend/src/routes/subjectAllocation.routers.js#L12-L18)
+
+## Real-Time Synchronization
+
+### Offline-First Architecture
+The synchronization service implements a comprehensive offline-first approach:
+
+- **Automatic Online Detection**: Monitors network connectivity and switches between online/offline modes
+- **Operation Queueing**: Persists pending operations to localStorage for later processing
+- **Batch Operations**: Efficient batch processing for improved performance
+- **Conflict Resolution**: Optimistic updates with rollback capabilities on failure
+
+### Sync Service Capabilities
 ```mermaid
-classDiagram
-class AdminSlice {
-+masterData : Map
-+activeEntity : string
-+editingEntityId : string
-+loading : boolean
-+error : string
-+setActiveEntity(payload)
-+setEditingEntityId(payload)
-+clearError()
-}
-class Thunks {
-+fetchMasterData(entityKey)
-+addMasterData({entityKey,data})
-+updateMasterData({entityKey,id,data})
-+deleteMasterData({entityKey,id})
-}
-AdminSlice <.. Thunks : "extraReducers handle"
+stateDiagram-v2
+[*] --> Online
+Online --> Processing : Queue Operation
+Processing --> Online : Success
+Processing --> Offline : Network Error
+Offline --> Online : Connection Restored
+Online --> [*] : Complete
+Offline --> Offline : Retry Failed
 ```
 
 **Diagram sources**
-- [adminSlice.js:80-173](file://Client/src/store/admin/adminSlice.js#L80-L173)
+- [syncService.js:33-46](file://Client/src/services/syncService.js#L33-L46)
+- [syncService.js:92-134](file://Client/src/services/syncService.js#L92-L134)
 
 **Section sources**
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
+- [syncService.js:7-20](file://Client/src/services/syncService.js#L7-L20)
+- [syncService.js:158-189](file://Client/src/services/syncService.js#L158-L189)
 
-### Timetable Component and Data Transformation
-- Filters:
-  - Course filter drives Class dropdown; Class filter drives Division dropdown.
-  - Selected values are stored locally in component state and used to compute filtered lists from Redux masterData.
-- Subject Color Mapping:
-  - A fixed palette is mapped per subject_id for consistent display.
-- Timetable Generation:
-  - A sample generator creates a grid of days and time slots, assigning subjects and rooms for demonstration.
-  - Actual timetable generation would consume backend-provided class schedules and room allocations.
-- Rendering:
-  - Displays a responsive grid with theory periods and break placeholders.
-  - Uses subject color map for cell styling and a legend for quick identification.
+### Optimistic Updates
+The system supports immediate UI updates with automatic rollback on failure:
 
+- **Immediate Feedback**: User actions update the interface instantly
+- **Automatic Rollback**: Failed operations revert to previous state
+- **Retry Mechanism**: Failed operations are automatically queued for retry
+- **Conflict Detection**: Handles concurrent modifications gracefully
+
+**Section sources**
+- [syncService.js:191-231](file://Client/src/services/syncService.js#L191-L231)
+- [adminSlice.js:150-169](file://Client/src/store/admin/adminSlice.js#L150-L169)
+
+## Comprehensive Error Handling
+
+### Multi-Layer Error Handling
+The system implements comprehensive error handling across all layers:
+
+- **Network Errors**: Automatic retry with exponential backoff
+- **Server Errors**: Specific handling for 401, 403, 404, 429, 500 status codes
+- **Validation Errors**: Structured error responses with user-friendly messages
+- **Offline Errors**: Graceful degradation with cached data and queueing
+
+### User-Friendly Error Feedback
 ```mermaid
 flowchart TD
-SelClass["Selected Class"] --> Gen["Generate Timetable Data"]
-Subjects["Master Data: Subjects"] --> ColorMap["Build Subject Color Map"]
-ColorMap --> Render["Render Grid Cells"]
-Gen --> Render
-Render --> Legend["Display Subject Legend"]
+Error["API Error Occurs"] --> CheckStatus{Check HTTP Status}
+CheckStatus --> |401| AuthError["Unauthorized - Redirect to Login"]
+CheckStatus --> |403| Forbidden["Access Forbidden"]
+CheckStatus --> |404| NotFound["Resource Not Found"]
+CheckStatus --> |429| RateLimit["Rate Limit Exceeded"]
+CheckStatus --> |500| ServerErr["Server Error"]
+CheckStatus --> |Network| NetworkErr["Network Error - Show Toast"]
+CheckStatus --> |Other| GenericErr["Generic Error - Show Toast"]
+AuthError --> HandleAuth["Handle Authentication"]
+Forbidden --> ShowMsg["Show Error Message"]
+NotFound --> ShowMsg
+RateLimit --> ShowMsg
+ServerErr --> ShowMsg
+NetworkErr --> ShowToast["Show Network Toast"]
+GenericErr --> ShowToast
 ```
 
 **Diagram sources**
-- [TimeTable.jsx:62-110](file://Client/src/components/deshboard/TimeTable.jsx#L62-L110)
+- [apiClient.js:105-152](file://Client/src/services/apiClient.js#L105-L152)
 
 **Section sources**
-- [TimeTable.jsx:1-370](file://Client/src/components/deshboard/TimeTable.jsx#L1-L370)
+- [apiClient.js:105-152](file://Client/src/services/apiClient.js#L105-L152)
+- [adminSlice.js:120-131](file://Client/src/store/admin/adminSlice.js#L120-L131)
 
-### Real-Time Synchronization and Caching Strategies
-- Current state:
-  - The admin slice fetches master data via async thunks and stores it in Redux state. There is no explicit polling or WebSocket integration in the provided code.
-- Recommended strategies:
-  - Caching: Use Redux state as cache; invalidate on add/update/delete actions.
-  - Background refresh: Periodically re-fetch master data on visibility change or idle detection.
-  - Optimistic updates: Apply UI changes immediately on add/update/delete and reconcile with server response.
-  - Conflict resolution: On update, merge server-side changes with local optimistic updates.
+### Graceful Degradation
+The system maintains functionality even during partial failures:
 
-[No sources needed since this section provides general guidance]
-
-### Error Handling and Fallback Mechanisms
-- Backend:
-  - Controllers throw structured errors for missing fields, duplicates, not found, and validation failures; responses use ApiResponse/ApiError utilities.
-- Frontend:
-  - Async thunks catch errors and dispatch rejected actions with messages; reducers set loading false and persist error text.
-  - Timetable component gracefully handles empty selections and displays guidance.
+- **Fallback Data**: Uses cached data when API calls fail
+- **Progressive Enhancement**: Adds features progressively based on connectivity
+- **User Feedback**: Provides clear indication of offline/online status
+- **Data Integrity**: Ensures data consistency across all operations
 
 **Section sources**
-- [course.controlles.js:8-40](file://Backend/src/controllers/course.controlles.js#L8-L40)
-- [class.controllers.js:6-37](file://Backend/src/controllers/class.controllers.js#L6-L37)
-- [subject.controllers.js:11-41](file://Backend/src/controllers/subject.controllers.js#L11-L41)
-- [room.controllers.js:10-46](file://Backend/src/controllers/room.controllers.js#L10-L46)
-- [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
-- [adminSlice.js:104-168](file://Client/src/store/admin/adminSlice.js#L104-L168)
-- [TimeTable.jsx:213-235](file://Client/src/components/deshboard/TimeTable.jsx#L213-L235)
+- [TimeTable.jsx:666-683](file://Client/src/components/deshboard/TimeTable.jsx#L666-L683)
+- [syncService.js:33-46](file://Client/src/services/syncService.js#L33-L46)
 
-### Integration Patterns Between Timetable Generation and Master Data
-- Master data flow:
-  - Courses, Classes, Subjects, Rooms are fetched independently and stored under entity keys.
-  - The timetable component composes filters from these entities to narrow down visible data.
-- Data transformation:
-  - Backend returns normalized documents; frontend reducers store arrays keyed by entity.
-  - The component transforms these into dropdown options and color maps for rendering.
+## Performance Optimization
 
-**Section sources**
-- [adminSlice.js:6-16](file://Client/src/store/admin/adminSlice.js#L6-L16)
-- [TimeTable.jsx:63-105](file://Client/src/components/deshboard/TimeTable.jsx#L63-L105)
+### Frontend Performance Enhancements
+The system implements multiple performance optimization strategies:
 
-## Dependency Analysis
-- Backend dependencies:
-  - Routes depend on controllers; controllers depend on models and utility handlers; server initialization connects to the database and listens on a port.
-- Frontend dependencies:
-  - Admin slice depends on axios for HTTP requests and Redux for state management.
-  - Timetable component depends on Redux selectors and memoized computations for performance.
+- **Intelligent Caching**: Request/response caching with cache invalidation on mutations
+- **Memoization**: React.memo and useMemo for expensive computations
+- **Virtualization**: Potential implementation for large timetable rendering
+- **Debounced Operations**: Debounced filter operations to reduce re-renders
+- **Lazy Loading**: On-demand loading of timetable data
 
+### Backend Performance Considerations
 ```mermaid
 graph LR
-R_Course["course.routers.js"] --> C_Course["course.controlles.js"]
-R_Class["class.routers.js"] --> C_Class["class.controllers.js"]
-R_Subject["subject.routers.js"] --> C_Subject["subject.controllers.js"]
-R_Room["room.router.js"] --> C_Room["room.controllers.js"]
-C_Course --> M_Course["course.models.js"]
-C_Class --> M_Class["class.models.js"]
-C_Subject --> M_Subject["subject.models.js"]
-C_Room --> M_Room["room.models.js"]
-SL_Admin["adminSlice.js"] --> AX["axios"]
-TT["TimeTable.jsx"] --> SL_Admin
+Cache["Request Cache<br/>5min TTL"] --> API["API Layer"]
+Queue["Offline Queue<br/>localStorage"] --> API
+Optimistic["Optimistic Updates"] --> Cache
+Batch["Batch Operations"] --> API
+Retry["Exponential Backoff"] --> API
 ```
 
 **Diagram sources**
-- [course.routers.js:1-24](file://Backend/src/routes/course.routers.js#L1-L24)
-- [class.routers.js:1-24](file://Backend/src/routes/class.routers.js#L1-L24)
-- [subject.routers.js:1-24](file://Backend/src/routes/subject.routers.js#L1-L24)
-- [room.router.js:1-23](file://Backend/src/routes/room.router.js#L1-L23)
-- [course.controlles.js:1-136](file://Backend/src/controllers/course.controlles.js#L1-L136)
-- [class.controllers.js:1-179](file://Backend/src/controllers/class.controllers.js#L1-L179)
-- [subject.controllers.js:1-130](file://Backend/src/controllers/subject.controllers.js#L1-L130)
-- [room.controllers.js:1-133](file://Backend/src/controllers/room.controllers.js#L1-L133)
-- [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
-- [room.models.js:1-28](file://Backend/src/models/room.models.js#L1-L28)
-- [adminSlice.js:18-22](file://Client/src/store/admin/adminSlice.js#L18-L22)
-- [TimeTable.jsx:1-370](file://Client/src/components/deshboard/TimeTable.jsx#L1-L370)
+- [apiClient.js:155-180](file://Client/src/services/apiClient.js#L155-L180)
+- [syncService.js:158-189](file://Client/src/services/syncService.js#L158-L189)
 
 **Section sources**
-- [index.js:1-18](file://Backend/src/index.js#L1-L18)
-- [store.js:1-15](file://Client/src/store/store.js#L1-L15)
+- [apiClient.js:155-180](file://Client/src/services/apiClient.js#L155-L180)
+- [syncService.js:158-189](file://Client/src/services/syncService.js#L158-L189)
 
-## Performance Considerations
-- Frontend
-  - Memoization: Use useMemo for derived lists (e.g., filtered classes, divisions) and color maps to avoid unnecessary recalculations.
-  - Virtualization: For large grids, consider virtualizing rows/columns to reduce DOM nodes.
-  - Debounced filters: Debounce rapid filter changes to limit re-renders.
-- Backend
-  - Indexing: Ensure unique and frequently queried fields are indexed (e.g., course_id, class_id, subject_id).
-  - Aggregation pipeline: Use $lookup and $unwind efficiently; limit projection and pagination for large collections.
-  - Batch operations: Accept arrays for bulk inserts to minimize round trips.
-- Caching
-  - Client-side: Keep masterData in Redux; invalidate on mutations.
-  - Server-side: Consider Redis for hot master data sets if traffic grows.
+### Data Loading Strategies
+- **Parallel Loading**: Multiple entities loaded concurrently when possible
+- **Progressive Loading**: Timetable data loaded progressively as needed
+- **Prefetching**: Intelligent prefetching of likely next actions
+- **Pagination**: Support for large dataset pagination
 
-[No sources needed since this section provides general guidance]
+**Section sources**
+- [adminSlice.js:21-33](file://Client/src/store/admin/adminSlice.js#L21-L33)
+- [TimeTable.jsx:228-263](file://Client/src/components/deshboard/TimeTable.jsx#L228-L263)
+
+## Responsive Design Implementation
+
+### Adaptive Timetable Rendering
+The timetable component adapts to different screen sizes and view modes:
+
+- **Multi-View Support**: Week view and day view with responsive layouts
+- **Lab Session Handling**: Special rendering for lab sessions spanning multiple periods
+- **Break Management**: Visual distinction for break periods
+- **Color Accessibility**: High contrast color schemes for different subjects
+
+### Mobile-First Design
+```mermaid
+flowchart TD
+Mobile["Mobile View"] --> Compact["Compact Layout"]
+Desktop["Desktop View"] --> Expanded["Expanded Layout"]
+Tablet["Tablet View"] --> Medium["Medium Layout"]
+Compact --> Responsive["Responsive Scaling"]
+Expanded --> Responsive
+Medium --> Responsive
+Responsive --> Adaptive["Adaptive Components"]
+```
+
+**Diagram sources**
+- [TimeTable.jsx:266-351](file://Client/src/components/deshboard/TimeTable.jsx#L266-L351)
+- [TimeTable.jsx:354-444](file://Client/src/components/deshboard/TimeTable.jsx#L354-L444)
+
+**Section sources**
+- [TimeTable.jsx:266-351](file://Client/src/components/deshboard/TimeTable.jsx#L266-L351)
+- [TimeTable.jsx:354-444](file://Client/src/components/deshboard/TimeTable.jsx#L354-L444)
+
+### Performance Considerations
+- **CSS-in-JS**: Dynamic styling for responsive layouts
+- **Component Splitting**: Separate components for different view modes
+- **State Management**: Efficient state updates for view switching
+- **Memory Management**: Proper cleanup of event listeners and timers
+
+**Section sources**
+- [TimeTable.jsx:148-219](file://Client/src/components/deshboard/TimeTable.jsx#L148-L219)
+- [TimeTable.jsx:447-469](file://Client/src/components/deshboard/TimeTable.jsx#L447-L469)
+
+## Data Flow Analysis
+
+### Enhanced Redux Integration
+The admin slice now includes comprehensive state management for the enhanced system:
+
+- **Entity Management**: Centralized management of all timetable entities
+- **Loading States**: Detailed loading indicators for all operations
+- **Error Propagation**: Comprehensive error handling and user feedback
+- **Cache Control**: Direct cache invalidation and refresh capabilities
+
+### State Synchronization
+```mermaid
+sequenceDiagram
+participant UI as "Timetable UI"
+participant AS as "Admin Slice"
+participant AC as "API Client"
+participant SS as "Sync Service"
+participant Cache as "Local Cache"
+UI->>AS : Dispatch fetchMasterData
+AS->>AC : GET /api/v1/{entity}
+AC->>Cache : Check Cache
+Cache-->>AC : Return Cached Data
+AC->>SS : Process Request
+SS->>AC : Handle Offline Queue
+AC-->>AS : Response
+AS->>AS : Update State
+AS-->>UI : State Update
+UI->>UI : Re-render with New Data
+```
+
+**Diagram sources**
+- [adminSlice.js:117-187](file://Client/src/store/admin/adminSlice.js#L117-L187)
+- [apiClient.js:39-80](file://Client/src/services/apiClient.js#L39-L80)
+- [syncService.js:92-134](file://Client/src/services/syncService.js#L92-L134)
+
+**Section sources**
+- [adminSlice.js:117-187](file://Client/src/store/admin/adminSlice.js#L117-L187)
+- [store.js:7-14](file://Client/src/store/store.js#L7-L14)
+
+### Data Transformation Pipeline
+The system implements a comprehensive data transformation pipeline:
+
+- **Backend Response Normalization**: Consistent data structure across all endpoints
+- **Frontend Processing**: Lab session detection and time slot processing
+- **Rendering Optimization**: Efficient rendering with memoization
+- **State Synchronization**: Real-time updates across all components
+
+**Section sources**
+- [TimeTable.jsx:228-263](file://Client/src/components/deshboard/TimeTable.jsx#L228-L263)
+- [adminSlice.js:124-127](file://Client/src/store/admin/adminSlice.js#L124-L127)
 
 ## Troubleshooting Guide
-- API connectivity
-  - Verify backend server is running and listening on the expected port.
-  - Confirm axios base URL matches backend route prefixes.
-- Authentication and cookies
-  - Ensure credentials are enabled for cross-origin requests if applicable.
-- Data shape mismatches
-  - Normalize backend responses to match frontend expectations; reducers currently accept either data or nested data fields.
-- Validation errors
-  - Backend throws explicit errors for missing fields or duplicates; inspect error messages returned by thunks.
-- UI not updating
-  - Ensure reducers correctly update arrays and objects; confirm useSelector subscriptions are active.
+
+### Common Issues and Solutions
+- **API Connectivity Problems**: Check network connectivity, verify CORS configuration, review API client settings
+- **Cache Invalidation**: Use cache invalidation methods or wait for TTL expiration
+- **Offline Mode Issues**: Check localStorage availability, verify sync queue persistence
+- **Performance Problems**: Monitor cache hit rates, check for memory leaks, optimize rendering
+- **Authentication Failures**: Verify cookie-based authentication, check session validity
+
+### Debugging Tools
+- **Cache Statistics**: Monitor cache hit rates and pending requests
+- **Request Logging**: Development mode request timing and status logging
+- **Sync Queue Monitoring**: Track pending operations and retry counts
+- **State Inspection**: Redux DevTools integration for state debugging
 
 **Section sources**
-- [index.js:13-15](file://Backend/src/index.js#L13-L15)
-- [adminSlice.js:18-22](file://Client/src/store/admin/adminSlice.js#L18-L22)
-- [adminSlice.js:111-118](file://Client/src/store/admin/adminSlice.js#L111-L118)
-- [course.controlles.js:8-18](file://Backend/src/controllers/course.controlles.js#L8-L18)
-- [class.controllers.js:9-16](file://Backend/src/controllers/class.controllers.js#L9-L16)
-- [subject.controllers.js:11-19](file://Backend/src/controllers/subject.controllers.js#L11-L19)
-- [room.controllers.js:10-17](file://Backend/src/controllers/room.controllers.js#L10-L17)
+- [apiClient.js:174-179](file://Client/src/services/apiClient.js#L174-L179)
+- [syncService.js:234-241](file://Client/src/services/syncService.js#L234-L241)
+
+### Performance Monitoring
+- **Cache Efficiency**: Monitor cache hit rates and TTL effectiveness
+- **Network Performance**: Track request durations and retry patterns
+- **Memory Usage**: Monitor component memory and state growth
+- **User Experience**: Track loading times and user interaction patterns
+
+**Section sources**
+- [apiClient.js:97-100](file://Client/src/services/apiClient.js#L97-L100)
+- [syncService.js:234-241](file://Client/src/services/syncService.js#L234-L241)
 
 ## Conclusion
-The frontend-backend integration leverages Redux Thunk actions to manage master data lifecycle and the timetable component to present filtered, color-coded timetables. While the current implementation focuses on static master data retrieval, extending it with optimistic updates, background refresh, and virtualization will improve responsiveness and scalability for larger datasets.
+The enhanced data integration system provides comprehensive API connectivity with real-time data updates, sophisticated caching mechanisms, offline-first architecture, and responsive design considerations. The system successfully addresses the requirements for an advanced timetable management solution with robust error handling, performance optimization, and user experience enhancements. The integration patterns demonstrate best practices for modern web applications requiring reliable data synchronization and offline capabilities.

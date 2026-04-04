@@ -15,6 +15,7 @@ const ENTITY_ENDPOINTS = {
   time_slot: "/time-slots",
   timetable: "/timetables",
   timetable_entry: "/timetable-entries",
+  user: "/users",
 };
 
 export const fetchMasterData = createAsyncThunk(

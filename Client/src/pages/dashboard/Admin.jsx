@@ -41,6 +41,7 @@ function Admin() {
       dispatch(fetchMasterData("time_slot"));
       dispatch(fetchMasterData("timetable"));
       dispatch(fetchMasterData("timetable_entry"));
+      dispatch(fetchMasterData("user"));
     }
   }, [dispatch, isAuthenticated, userData]);
 
@@ -686,6 +687,57 @@ function Admin() {
           label: "Status",
           type: "select",
           options: ["scheduled", "cancelled", "rescheduled"],
+          required: false,
+        },
+      ],
+    },
+    user: {
+      label: "User",
+      pluralLabel: "Users",
+      description: "Manage system users (admin, faculty, students, coordinators, HODs).",
+      fields: [
+        {
+          name:"user_name",
+          label: "User Name",
+          type: "text",
+        },
+        {
+          name:"user_id",
+          label: "User ID",
+          type:"text"
+        },
+        {
+          name: "password",
+          label: "Password",
+          placeholder: "Min 6 characters",
+          type: "password",
+          required: true,
+        },
+        {
+          name: "role",
+          label: "Role",
+          type: "select",
+          options: ["admin", "faculty", "student", "coordinator", "hod"],
+          required: true,
+        },
+        {
+          name: "student_id",
+          label: "Student ID (if student)",
+          placeholder: "e.g. 24CS001",
+          type: "text",
+          required: false,
+        },
+        {
+          name: "faculty_id",
+          label: "Faculty ID (if faculty)",
+          placeholder: "e.g. F001",
+          type: "text",
+          required: false,
+        },
+        {
+          name: "isActive",
+          label: "Active",
+          type: "boolean",
           required: false,
         },
       ],
