@@ -13,6 +13,7 @@
 - [Admin.jsx](file://Client/src/pages/dashboard/Admin.jsx)
 - [Faculty.jsx](file://Client/src/pages/dashboard/Faculty.jsx)
 - [Student.jsx](file://Client/src/pages/dashboard/Student.jsx)
+- [apiClient.js](file://Client/src/services/apiClient.js)
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [asyncHandler.js](file://Backend/src/utils/asyncHandler.js)
@@ -27,6 +28,9 @@
 - Added refresh token rotation and logout functionality
 - Updated authentication flow with cookie-based token storage
 - Expanded role definitions to include coordinator and hod
+- Integrated frontend Redux authentication slice with session verification
+- Enhanced frontend login page with improved error handling and navigation
+- Added comprehensive frontend dashboard components with role-based routing
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -49,6 +53,7 @@ The authentication system now features a robust JWT-based architecture spanning 
   - Login page with JWT token handling
   - Role-based routing with client-side guards
   - Protected dashboards with authentication checks
+  - Session verification on application load
 - **Backend (Express + MongoDB)**:
   - JWT middleware with token verification and role-based authorization
   - Token utility for secure token generation and verification
@@ -65,25 +70,27 @@ C["store.js"]
 D["Admin.jsx"]
 E["Faculty.jsx"]
 F["Student.jsx"]
+G["apiClient.js"]
 end
 subgraph "Server"
-G["user.routers.js"]
-H["user.controller.js"]
-I["user.models.js"]
-J["auth.middleware.js"]
-K["Token.js"]
-L["ApiResponse.js"]
-M["ApiError.js"]
-N["asyncHandler.js"]
+H["user.routers.js"]
+I["user.controller.js"]
+J["user.models.js"]
+K["auth.middleware.js"]
+L["Token.js"]
+M["ApiResponse.js"]
+N["ApiError.js"]
+O["asyncHandler.js"]
 end
-A --> |JWT login| G
-G --> H
+A --> |JWT login| H
+G --> |withCredentials| H
 H --> I
-H --> K
-H --> L
-H --> M
-H --> N
-J --> K
+I --> J
+I --> L
+I --> M
+I --> N
+I --> O
+K --> L
 B --> |persist to Redux| B
 D --> |check role=admin| D
 E --> |check role=faculty| E
@@ -142,6 +149,7 @@ F --> |check role=student| F
   - Redux slice with authentication state management
   - Login/logout action management
   - Role-based navigation handling
+  - Session verification on app load
 - **Security Enhancements**:
   - HTTPS-only cookies in production
   - SameSite strict security policy
@@ -358,6 +366,10 @@ User --> TokenManager : "uses for JWT"
   - User data storage with automatic serialization
   - Login action sets authentication flags and user data
   - Logout action clears all authentication state
+- **Session Management**:
+  - Async thunk for session verification on app load
+  - Automatic authentication state restoration
+  - Error handling for session verification failures
 - **Persistence Strategy**:
   - Redux store for session continuity across browser restarts
   - Automatic state restoration on application load
@@ -365,6 +377,10 @@ User --> TokenManager : "uses for JWT"
 
 ```mermaid
 flowchart TD
+LoadApp["App Load"] --> VerifySession["verifySession Async Thunk"]
+VerifySession --> Pending["Set loading=true"]
+VerifySession --> Success["Set isAuthenticated=true"]
+VerifySession --> Failed["Set isAuthenticated=false"]
 LoginAction["Dispatch login action"] --> SetAuth["Set isAuthenticated = true"]
 SetAuth --> SetUser["Set userData = payload"]
 SetUser --> Ready["Authentication ready"]
@@ -479,12 +495,28 @@ C --> P["Protected Endpoints"]
 - [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
 - [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
 
+### Frontend: API Client with Cookie Handling
+- **Enhanced API Configuration**:
+  - HTTP-only cookie support with withCredentials: true
+  - Automatic token transmission with each request
+  - Request caching for GET operations
+  - Response interceptors for error handling
+- **Performance Optimizations**:
+  - Request deduplication for concurrent identical requests
+  - Cache invalidation on mutations
+  - Network error retry with exponential backoff
+  - Development logging for request performance
+
+**Section sources**
+- [apiClient.js:1-213](file://Client/src/services/apiClient.js#L1-L213)
+
 ## Dependency Analysis
 - **Client Dependencies**:
   - Redux store for authentication state management
   - Login page triggers JWT authentication flow
   - Protected dashboards enforce role-based access
   - Client-side guards complement server-side protection
+  - API client handles cookie-based authentication
 - **Server Dependencies**:
   - JWT middleware for token verification and authorization
   - Token utility for secure token management
@@ -506,6 +538,7 @@ LG["Login.jsx"]
 AD["Admin.jsx"]
 FA["Faculty.jsx"]
 SD["Student.jsx"]
+AC["apiClient.js"]
 end
 subgraph "Server"
 UR["user.routers.js"]
@@ -529,6 +562,7 @@ AD --> LS
 FA --> LS
 SD --> LS
 LS --> ST
+AC --> UR
 ```
 
 **Diagram sources**
@@ -579,6 +613,11 @@ LS --> ST
   - SameSite strict policy prevents cross-site request forgery
   - Configurable salt rounds for password hashing performance
   - Environment variable configuration for deployment flexibility
+- **Frontend Performance**:
+  - Request caching reduces redundant API calls
+  - Session verification prevents unnecessary re-authentication
+  - Async loading states improve user experience
+  - Network retry logic handles transient failures
 
 ## Troubleshooting Guide
 - **JWT Authentication Issues**:
@@ -593,11 +632,16 @@ LS --> ST
   - Password hashing errors: Verify bcrypt installation and salt rounds
   - Token refresh failures: Check refresh token validity and database storage
   - Logout problems: Ensure token clearing and cookie removal
+- **Frontend Authentication Issues**:
+  - Session verification failures: Check Redux state and API response format
+  - Navigation problems: Verify role-based routing and authentication guards
+  - Cookie handling issues: Ensure withCredentials is enabled in API client
 - **Common Solutions**:
   - Clear browser cookies and cache for token-related issues
   - Verify environment variables for token secrets and expiration
   - Check database connectivity for user authentication
   - Review server logs for detailed error information
+  - Test API endpoints independently to isolate frontend issues
 
 **Section sources**
 - [user.controller.js:355-583](file://Backend/src/controllers/user.controller.js#L355-L583)
@@ -607,6 +651,7 @@ LS --> ST
 - [Admin.jsx:40-49](file://Client/src/pages/dashboard/Admin.jsx#L40-L49)
 - [Faculty.jsx:10-19](file://Client/src/pages/dashboard/Faculty.jsx#L10-L19)
 - [Student.jsx:10-19](file://Client/src/pages/dashboard/Student.jsx#L10-L19)
+- [apiClient.js:105-151](file://Client/src/services/apiClient.js#L105-L151)
 
 ## Conclusion
-The system now implements a comprehensive, production-ready JWT-based authentication system with advanced security features. The new architecture provides secure token-based sessions, granular role-based access control, automatic token refresh, and enhanced user management capabilities. The implementation follows industry best practices with HTTP-only cookies, secure token storage, and comprehensive error handling. For production deployment, ensure proper environment variable configuration, SSL certificate setup, and regular security audits to maintain the highest level of security and reliability.
+The system now implements a comprehensive, production-ready JWT-based authentication system with advanced security features. The new architecture provides secure token-based sessions, granular role-based access control, automatic token refresh, and enhanced user management capabilities. The implementation follows industry best practices with HTTP-only cookies, secure token storage, and comprehensive error handling. For production deployment, ensure proper environment variable configuration, SSL certificate setup, and regular security audits to maintain the highest level of security and reliability. The integrated frontend Redux authentication slice provides seamless user experience with automatic session management and role-based navigation.

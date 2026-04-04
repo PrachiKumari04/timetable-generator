@@ -17,13 +17,15 @@
 
 ## Update Summary
 **Changes Made**
-- Updated authentication flow to include JWT token generation and management
-- Enhanced user login functionality with username-based authentication
-- Improved error handling with comprehensive ApiError implementations
-- Added password hashing with bcryptjs integration
-- Implemented role-based authorization middleware
-- Enhanced debugging capabilities with extensive console logging
-- Added comprehensive token refresh and logout functionality
+- Complete JWT-based authentication implementation with token generation and management
+- Password hashing using bcryptjs with secure pre-save hooks
+- Secure httpOnly cookie handling for token storage
+- Bulk user registration with intelligent duplicate detection
+- Comprehensive error handling with structured ApiError responses
+- Enhanced authentication middleware with role-based authorization
+- Username-based login supporting student_id or faculty_id validation
+- Token refresh cycle with refresh token verification and rotation
+- Profile management with detailed user data aggregation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -79,26 +81,26 @@ M --> DB
 
 **Diagram sources**
 - [server.js:1-106](file://Backend/src/server.js#L1-L106)
-- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 - [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
-- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.controller.js:1-654](file://Backend/src/controllers/user.controller.js#L1-L654)
 - [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
 - [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 - [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
+- [asyncHandler.js:1-47](file://Backend/src/utils/asyncHandler.js#L1-L47)
 - [db/index.js:1-19](file://Backend/src/db/index.js#L1-L19)
 
 **Section sources**
 - [server.js:1-106](file://Backend/src/server.js#L1-L106)
-- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 - [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
-- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.controller.js:1-654](file://Backend/src/controllers/user.controller.js#L1-L654)
 - [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
 - [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 - [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
+- [asyncHandler.js:1-47](file://Backend/src/utils/asyncHandler.js#L1-L47)
 - [db/index.js:1-19](file://Backend/src/db/index.js#L1-L19)
 
 ## Core Components
@@ -118,7 +120,7 @@ Key responsibilities:
 
 **Section sources**
 - [user.controller.js:14-132](file://Backend/src/controllers/user.controller.js#L14-L132)
-- [user.controller.js:359-582](file://Backend/src/controllers/user.controller.js#L359-L582)
+- [user.controller.js:359-654](file://Backend/src/controllers/user.controller.js#L359-L654)
 - [user.models.js:4-97](file://Backend/src/models/user.models.js#L4-L97)
 - [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
@@ -168,7 +170,7 @@ Ctrl-->>Client : 200 OK with new tokens
 ```
 
 **Diagram sources**
-- [user.routers.js:17-36](file://Backend/src/routes/user.routers.js#L17-L36)
+- [user.routers.js:18-21](file://Backend/src/routes/user.routers.js#L18-L21)
 - [auth.middleware.js:6-44](file://Backend/src/middlewares/auth.middleware.js#L6-L44)
 - [user.controller.js:359-546](file://Backend/src/controllers/user.controller.js#L359-L546)
 - [Token.js:33-55](file://Backend/src/utils/Token.js#L33-L55)
@@ -389,7 +391,7 @@ Comprehensive authentication and authorization middleware.
 **Updated** Routes are now protected with JWT authentication and role-based authorization middleware, providing granular access control with different permission levels for various operations.
 
 **Section sources**
-- [user.routers.js:17-36](file://Backend/src/routes/user.routers.js#L17-L36)
+- [user.routers.js:18-38](file://Backend/src/routes/user.routers.js#L18-L38)
 - [auth.middleware.js:6-121](file://Backend/src/middlewares/auth.middleware.js#L6-L121)
 
 ## Dependency Analysis
@@ -412,9 +414,9 @@ UM --> BC["bcryptjs"]
 ```
 
 **Diagram sources**
-- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.controller.js:1-654](file://Backend/src/controllers/user.controller.js#L1-L654)
 - [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
-- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 - [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 - [server.js:1-106](file://Backend/src/server.js#L1-L106)
@@ -422,9 +424,9 @@ UM --> BC["bcryptjs"]
 - [constenets.js:1-2](file://Backend/src/constenets.js#L1-L2)
 
 **Section sources**
-- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.controller.js:1-654](file://Backend/src/controllers/user.controller.js#L1-L654)
 - [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
-- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 - [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 - [server.js:1-106](file://Backend/src/server.js#L1-L106)
