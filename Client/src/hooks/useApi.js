@@ -7,10 +7,7 @@ import apiClient, { api, apiCache } from "../services/apiClient";
  * @param {Object} options - Configuration options
  * @returns {Object} { data, loading, error, refetch, clearCache }
  */
-export const useApi = (
-  url,
-  options = {}
-) => {
+export const useApi = (url, options = {}) => {
   const {
     method = "GET",
     params = {},
@@ -108,7 +105,13 @@ export const useApi = (
         }
       }
     },
-    [url, method, JSON.stringify(params), JSON.stringify(body), ...dependencies]
+    [
+      url,
+      method,
+      JSON.stringify(params),
+      JSON.stringify(body),
+      ...dependencies,
+    ],
   );
 
   // Initial fetch
@@ -121,7 +124,7 @@ export const useApi = (
   // Refetch function
   const refetch = useCallback(
     (options = {}) => fetchData({ ...options, forceRefresh: true }),
-    [fetchData]
+    [fetchData],
   );
 
   // Clear cache for this endpoint
@@ -146,11 +149,7 @@ export const useApi = (
  * @returns {Object} Paginated data and controls
  */
 export const usePaginatedApi = (url, options = {}) => {
-  const {
-    initialPage = 1,
-    initialLimit = 20,
-    ...restOptions
-  } = options;
+  const { initialPage = 1, initialLimit = 20, ...restOptions } = options;
 
   const [page, setPage] = useState(initialPage);
   const [limit, setLimit] = useState(initialLimit);
@@ -180,7 +179,7 @@ export const usePaginatedApi = (url, options = {}) => {
         setPage(newPage);
       }
     },
-    [pagination]
+    [pagination],
   );
 
   const nextPage = useCallback(() => {
@@ -272,7 +271,7 @@ export const useMutation = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const reset = useCallback(() => {
@@ -302,56 +301,53 @@ export const useBatchOperation = () => {
     loading: false,
   });
 
-  const executeBatch = useCallback(
-    async (operations, options = {}) => {
-      const { onProgress, continueOnError = true } = options;
+  const executeBatch = useCallback(async (operations, options = {}) => {
+    const { onProgress, continueOnError = true } = options;
 
-      setProgress({
-        total: operations.length,
-        completed: 0,
-        failed: 0,
-        loading: true,
-      });
+    setProgress({
+      total: operations.length,
+      completed: 0,
+      failed: 0,
+      loading: true,
+    });
 
-      const results = [];
+    const results = [];
 
-      for (let i = 0; i < operations.length; i++) {
-        const op = operations[i];
-        try {
-          const response = await apiClient[op.method.toLowerCase()](
-            op.url,
-            op.data
-          );
-          results.push({ success: true, data: response.data, operation: op });
-          setProgress((prev) => ({ ...prev, completed: prev.completed + 1 }));
-        } catch (error) {
-          results.push({
-            success: false,
-            error: error.message,
-            operation: op,
-          });
-          setProgress((prev) => ({ ...prev, failed: prev.failed + 1 }));
+    for (let i = 0; i < operations.length; i++) {
+      const op = operations[i];
+      try {
+        const response = await apiClient[op.method.toLowerCase()](
+          op.url,
+          op.data,
+        );
+        results.push({ success: true, data: response.data, operation: op });
+        setProgress((prev) => ({ ...prev, completed: prev.completed + 1 }));
+      } catch (error) {
+        results.push({
+          success: false,
+          error: error.message,
+          operation: op,
+        });
+        setProgress((prev) => ({ ...prev, failed: prev.failed + 1 }));
 
-          if (!continueOnError) {
-            break;
-          }
-        }
-
-        if (onProgress) {
-          onProgress({
-            current: i + 1,
-            total: operations.length,
-            completed: results.filter((r) => r.success).length,
-            failed: results.filter((r) => !r.success).length,
-          });
+        if (!continueOnError) {
+          break;
         }
       }
 
-      setProgress((prev) => ({ ...prev, loading: false }));
-      return results;
-    },
-    []
-  );
+      if (onProgress) {
+        onProgress({
+          current: i + 1,
+          total: operations.length,
+          completed: results.filter((r) => r.success).length,
+          failed: results.filter((r) => !r.success).length,
+        });
+      }
+    }
+
+    setProgress((prev) => ({ ...prev, loading: false }));
+    return results;
+  }, []);
 
   const reset = useCallback(() => {
     setProgress({

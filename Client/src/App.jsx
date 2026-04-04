@@ -1,6 +1,6 @@
 
 
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
@@ -11,6 +11,43 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Admin from './pages/dashboard/Admin';
 import { verifySession } from './store/auth/authSlice';
+
+// Loading spinner component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
+
+// Protected Route component - redirects to login if not authenticated
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const location = useLocation();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" replace state={{ from: location }} />;
+};
+
+// Public Route component for login page only - redirects to dashboard if already authenticated
+const PublicRoute = ({ children, requireAuth = false }) => {
+  const { isAuthenticated, userData, loading } = useSelector((state) => state.auth);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  // Only redirect to dashboard if this is the login page and user is authenticated
+  if (requireAuth && isAuthenticated && userData?.role) {
+    const role = userData.role.toLowerCase();
+    const dashboardPath = role === 'admin' ? '/admin' : role === 'faculty' ? '/faculty' : '/student';
+    return <Navigate to={dashboardPath} replace />;
+  }
+
+  return children;
+};
 
 function App() {
   const theme = useSelector((state) => state.theme.theme);
@@ -66,12 +103,12 @@ function App() {
         }}
       />
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<PublicRoute requireAuth><Login /></PublicRoute>} />
         <Route path="/" element={<Layout />}  >
           <Route index element={<Home />} />
-          <Route path="/faculty" element={<Faculty />} />
-          <Route path="/student" element={<Student />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/faculty" element={<ProtectedRoute><Faculty /></ProtectedRoute>} />
+          <Route path="/student" element={<ProtectedRoute><Student /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
         </Route>
       </Routes>
     </>

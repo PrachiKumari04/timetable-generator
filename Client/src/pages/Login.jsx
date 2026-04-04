@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, memo } from "react";
+import React, { useState, useCallback, memo } from "react";
 import Container from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
@@ -55,12 +55,10 @@ const EyeIcon = memo(({ visible }) => (
 
 function Login() {
   const dispatch = useDispatch();
-  const userData = useSelector((state) => state.auth.userData);
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const authLoading = useSelector((state) => state.auth.loading);
   const theme = useSelector((state) => state.theme.theme);
   const navigate = useNavigate();
-  
+
   // Form state
   const [values, setValues] = useState({
     username: "",
@@ -70,18 +68,6 @@ function Login() {
   const [touched, setTouched] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Redirect if already authenticated (only after auth check is complete)
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && userData) {
-      const redirectPath = {
-        admin: "/admin",
-        student: "/student",
-        faculty: "/faculty",
-      }[userData.role] || "/";
-      navigate(redirectPath, { replace: true });
-    }
-  }, [authLoading, isAuthenticated, userData, navigate]);
 
   // Show loading while verifying session
   if (authLoading) {

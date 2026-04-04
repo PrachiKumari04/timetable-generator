@@ -123,9 +123,9 @@ apiClient.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Unauthorized - redirect to login
-          toast.error("Session expired. Please login again.");
-          window.location.href = "/login";
+          // Unauthorized - let the auth slice handle this
+          // Don't redirect here to avoid interfering with React Router
+          console.error("[API] Unauthorized request");
           break;
         case 403:
           console.error("[API] Access forbidden:", error.response.data?.message);

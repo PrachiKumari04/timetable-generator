@@ -4,7 +4,7 @@ import apiClient from "../../services/apiClient";
 const initialState = {
   isAuthenticated: false,
   userData: null,
-  loading: false,
+  loading: true, // Start as true since we verify session on app load
   error: null,
 };
 
