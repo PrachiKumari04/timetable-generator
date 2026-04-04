@@ -68,14 +68,9 @@ apiClient.interceptors.request.use(
     // Add request timestamp for performance tracking
     config.metadata = { startTime: Date.now() };
 
-    // Add auth token if available
-    const userData = localStorage.getItem("userData");
-    if (userData) {
-      const user = JSON.parse(userData);
-      if (user.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
-      }
-    }
+    // Note: Authentication is handled via HTTP-only cookies automatically by the browser
+    // The backend sets accessToken and refreshToken cookies on login
+    // No need to manually set Authorization header - cookies are sent automatically
 
     return config;
   },
@@ -128,10 +123,8 @@ apiClient.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Unauthorized - clear auth and redirect to login
+          // Unauthorized - redirect to login
           toast.error("Session expired. Please login again.");
-          localStorage.removeItem("isAuthenticated");
-          localStorage.removeItem("userData");
           window.location.href = "/login";
           break;
         case 403:

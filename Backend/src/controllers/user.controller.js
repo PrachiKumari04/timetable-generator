@@ -545,6 +545,77 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
+// Get current user from token
+export const getCurrentUser = asyncHandler(async (req, res) => {
+  // User is already attached to req by verifyJWT middleware
+  const user = req.user;
+
+  if (!user) {
+    throw ApiError.unauthorized("User not found");
+  }
+
+  // Get user details with student/faculty info
+  const userWithDetails = await User.aggregate([
+    { $match: { _id: user._id } },
+    {
+      $lookup: {
+        from: "students",
+        localField: "student_id",
+        foreignField: "student_id",
+        as: "student_data",
+      },
+    },
+    {
+      $lookup: {
+        from: "faculties",
+        localField: "faculty_id",
+        foreignField: "faculty_id",
+        as: "faculty_data",
+      },
+    },
+    {
+      $addFields: {
+        user_data: {
+          $cond: {
+            if: { $gt: [{ $size: "$student_data" }, 0] },
+            then: { $arrayElemAt: ["$student_data", 0] },
+            else: { $arrayElemAt: ["$faculty_data", 0] },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        role: 1,
+        isActive: 1,
+        user_id: {
+          $cond: {
+            if: { $ne: ["$student_id", null] },
+            then: "$student_id",
+            else: "$faculty_id",
+          },
+        },
+        user_name: {
+          $cond: {
+            if: { $ne: ["$student_id", null] },
+            then: "$user_data.student_name",
+            else: "$user_data.faculty_name",
+          },
+        },
+        email: "$user_data.email",
+      },
+    },
+  ]);
+
+  return ApiResponse.ok(
+    {
+      user: userWithDetails[0],
+    },
+    "Current user fetched successfully"
+  ).send(res);
+});
+
 // Change password
 export const changePassword = asyncHandler(async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body;

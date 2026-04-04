@@ -6,12 +6,15 @@ const ENTITY_ENDPOINTS = {
   program: "/programmes",
   course: "/courses",
   room: "/rooms",
-  classes: "/classes",
-  section: "/sections",
-  subject: "/subjects",
-  Specialization: "/specializations",
+  division: "/divisions",
+  specialization: "/specializations",
   faculty: "/faculties",
   student: "/students",
+  qualification_type: "/qualification-types",
+  subject_allocation: "/subject-allocations",
+  time_slot: "/time-slots",
+  timetable: "/timetables",
+  timetable_entry: "/timetable-entries",
 };
 
 export const fetchMasterData = createAsyncThunk(

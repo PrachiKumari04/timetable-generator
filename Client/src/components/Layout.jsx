@@ -10,10 +10,8 @@ function Layout() {
   return (
     <div className={theme}>
       <Header />
-      <main className="py-10">
-        <Container className={`flex items-center justify-around `}>
-          <Outlet />
-        </Container>
+      <main className="pt-16">
+        <Outlet />
       </main>
     </div>
   );

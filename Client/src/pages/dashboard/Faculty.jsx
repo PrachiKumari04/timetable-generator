@@ -5,17 +5,39 @@ import { useNavigate } from "react-router-dom";
 export default function Faculty() {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const userData = useSelector((state) => state.auth.userData);
+  const authLoading = useSelector((state) => state.auth.loading);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated || !userData || userData.role !== "faculty") {
+    // Only redirect if auth check is complete and user is not authenticated
+    if (!authLoading && (!isAuthenticated || !userData || userData.role !== "faculty")) {
       navigate("/login");
     }
-  }, [isAuthenticated, userData, navigate]);
+  }, [authLoading, isAuthenticated, userData, navigate]);
+
+  // Show loading while verifying session
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center space-x-2">
+          <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="text-lg font-medium text-primary">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !userData || userData.role !== "faculty") {
-    // Render nothing or a loading spinner while redirecting
     return null;
   }
-  return <div>Faculty</div>;
+
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-bold text-text mb-4">Faculty Dashboard</h1>
+      <p className="text-text/70">Welcome, {userData.user_name || userData.user_id}!</p>
+    </div>
+  );
 }

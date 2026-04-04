@@ -19,6 +19,13 @@
 - [package.json](file://Backend/package.json)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Enhanced error handler middleware with comprehensive error logging and debugging capabilities
+- Improved development experience with detailed error context and stack traces
+- Added request context preservation for better debugging
+- Strengthened error tracking and monitoring capabilities
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [System Architecture](#system-architecture)
@@ -41,6 +48,8 @@ The Enhanced Error Handling System is a comprehensive error management framework
 
 The framework addresses common error scenarios in web applications including validation failures, database conflicts, authentication issues, authorization problems, and unexpected runtime errors. It ensures that all error responses follow a standardized format while providing appropriate context for both development and production environments.
 
+**Updated** The system now features enhanced error logging and debugging capabilities that significantly improve the development experience and error tracking processes.
+
 ## System Architecture
 
 The error handling system follows a layered architecture pattern with clear separation of concerns:
@@ -54,6 +63,7 @@ subgraph "HTTP Layer"
 Router[Express Router]
 AuthMW[Authentication Middleware]
 ErrorMW[Global Error Handler]
+AsyncMW[Async Handler Wrapper]
 end
 subgraph "Controller Layer"
 Controllers[Route Controllers]
@@ -79,11 +89,12 @@ Controllers --> ApiResponse
 Controllers --> TokenUtils
 ErrorMW --> ApiError
 ErrorMW --> ApiResponse
+AsyncMW --> ErrorMW
 ```
 
 **Diagram sources**
 - [server.js:1-106](file://Backend/src/server.js#L1-L106)
-- [errorHandler.middleware.js:1-86](file://Backend/src/middlewares/errorHandler.middleware.js#L1-L86)
+- [errorHandler.middleware.js:1-88](file://Backend/src/middlewares/errorHandler.middleware.js#L1-L88)
 - [asyncHandler.js:1-47](file://Backend/src/utils/asyncHandler.js#L1-L47)
 
 The architecture ensures that errors propagate consistently through the system while maintaining proper separation between error handling logic and business logic.
@@ -204,7 +215,7 @@ Generic --> Response
 - [errorHandler.middleware.js:16-41](file://Backend/src/middlewares/errorHandler.middleware.js#L16-L41)
 
 **Section sources**
-- [errorHandler.middleware.js:1-86](file://Backend/src/middlewares/errorHandler.middleware.js#L1-L86)
+- [errorHandler.middleware.js:1-88](file://Backend/src/middlewares/errorHandler.middleware.js#L1-L88)
 
 ### HTTP Status Code Standards
 
@@ -252,7 +263,7 @@ ErrorHandler->>Console : Log error (development)
 
 **Section sources**
 - [server.js:1-106](file://Backend/src/server.js#L1-L106)
-- [errorHandler.middleware.js:1-86](file://Backend/src/middlewares/errorHandler.middleware.js#L1-L86)
+- [errorHandler.middleware.js:1-88](file://Backend/src/middlewares/errorHandler.middleware.js#L1-L88)
 
 ### Authentication Error Integration
 
@@ -282,7 +293,7 @@ AuthSuccess --> Next[Proceed to Next Middleware]
 - [auth.middleware.js:7-43](file://Backend/src/middlewares/auth.middleware.js#L7-L43)
 
 **Section sources**
-- [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 
 ## Controller Implementation Patterns
 
@@ -309,7 +320,7 @@ ReturnSuccess --> SuccessResponse[Standardized Success Response]
 - [user.controller.js:14-127](file://Backend/src/controllers/user.controller.js#L14-L127)
 
 **Section sources**
-- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
 - [faculty.conteoller.js:1-203](file://Backend/src/controllers/faculty.conteoller.js#L1-L203)
 - [student.controller.js:1-202](file://Backend/src/controllers/student.controller.js#L1-L202)
 
@@ -507,8 +518,10 @@ The system adapts error response content based on environment:
 | Development | Included | Full error details | Complete stack trace |
 | Production | Hidden | Minimal information | Generic error messages |
 
+**Updated** Enhanced error logging capabilities in development mode provide comprehensive debugging information including request context, stack traces, and detailed error analysis.
+
 **Section sources**
-- [errorHandler.middleware.js:58-69](file://Backend/src/middlewares/errorHandler.middleware.js#L58-L69)
+- [errorHandler.middleware.js:58-71](file://Backend/src/middlewares/errorHandler.middleware.js#L58-L71)
 
 ## Development and Production Behavior
 
@@ -528,20 +541,51 @@ ProductionResponse --> Response
 ```
 
 **Diagram sources**
-- [errorHandler.middleware.js:58-69](file://Backend/src/middlewares/errorHandler.middleware.js#L58-L69)
+- [errorHandler.middleware.js:58-71](file://Backend/src/middlewares/errorHandler.middleware.js#L58-L71)
 
 **Section sources**
-- [errorHandler.middleware.js:58-69](file://Backend/src/middlewares/errorHandler.middleware.js#L58-L69)
+- [errorHandler.middleware.js:58-71](file://Backend/src/middlewares/errorHandler.middleware.js#L58-L71)
 
-### Logging and Monitoring
+### Enhanced Logging and Debugging
 
-The system provides comprehensive logging capabilities for debugging and monitoring:
+**Updated** The system now provides comprehensive logging capabilities for debugging and monitoring:
+
+#### Development Mode Logging Features
 
 | Log Level | Information Included | Use Case |
 |-----------|---------------------|----------|
-| Error | Full stack trace, request context | Debugging, error analysis |
-| Warning | Error summary, affected endpoints | Performance monitoring |
-| Info | Successful operations, response times | System health monitoring |
+| Error | Full stack trace, request context, detailed error analysis | Debugging, error analysis, development troubleshooting |
+| Warning | Error summary, affected endpoints, request details | Performance monitoring, error tracking |
+| Info | Successful operations, response times, request metadata | System health monitoring, audit trails |
+
+#### Request Context Preservation
+
+The enhanced error handler now preserves comprehensive request context for improved debugging:
+
+- **URL Path**: Complete original URL for precise error location identification
+- **HTTP Method**: Request method (GET, POST, PUT, DELETE, etc.)
+- **Timestamp**: Exact time of error occurrence
+- **Error Type**: Specific error category and classification
+- **Stack Trace**: Complete call stack for detailed debugging
+
+#### Error Tracking Improvements
+
+The system implements advanced error tracking mechanisms:
+
+```mermaid
+flowchart TD
+ErrorOccurred[Error Occurred] --> ClassifyError[Classify Error Type]
+ClassifyError --> ExtractContext[Extract Request Context]
+ExtractContext --> LogToConsole[Log to Console with Context]
+ExtractContext --> StoreInDatabase[Store in Error Database]
+LogToConsole --> GenerateErrorReport[Generate Error Report]
+StoreInDatabase --> GenerateErrorReport
+GenerateErrorReport --> ReturnStandardizedResponse[Return Standardized Response]
+```
+
+**Section sources**
+- [errorHandler.middleware.js:60-71](file://Backend/src/middlewares/errorHandler.middleware.js#L60-L71)
+- [asyncHandler.js:10-18](file://Backend/src/utils/asyncHandler.js#L10-L18)
 
 ## Performance Considerations
 
@@ -577,13 +621,14 @@ The system benefits from Express caching mechanisms:
 
 ### Debugging Techniques
 
+**Updated** Enhanced debugging capabilities now include:
+
 1. **Enable Development Mode**: Set `NODE_ENV=development` for detailed error information
 2. **Check Request Context**: Review error objects for path and method information
-3. **Database Validation**: Verify Mongoose schema validation rules
-4. **Authentication Flow**: Trace JWT token lifecycle and verification steps
-
-**Section sources**
-- [errorHandler.middleware.js:62-68](file://Backend/src/middlewares/errorHandler.middleware.js#L62-L68)
+3. **Analyze Stack Traces**: Use comprehensive stack traces for precise error location
+4. **Database Validation**: Verify Mongoose schema validation rules
+5. **Authentication Flow**: Trace JWT token lifecycle and verification steps
+6. **Error Logging**: Utilize enhanced console logs with request context
 
 ### Error Recovery Strategies
 
@@ -627,9 +672,21 @@ NotifyAdmin --> ClientResponse
 3. **Context Preservation**: Ensure error objects maintain request context
 4. **Environment Awareness**: Adapt behavior based on deployment environment
 
+### Enhanced Development Practices
+
+**Updated** With the enhanced error handling system, developers should follow these additional practices:
+
+1. **Leverage Development Logging**: Use comprehensive error logs during development
+2. **Monitor Error Patterns**: Track recurring error types for system improvement
+3. **Utilize Request Context**: Use preserved request information for debugging
+4. **Implement Error Tracking**: Monitor error rates and patterns in production
+5. **Optimize Error Messages**: Provide meaningful error messages for both developers and users
+
 ## Conclusion
 
 The Enhanced Error Handling System provides a robust, scalable foundation for error management in the Timetable Management Application. By implementing standardized error responses, comprehensive error classification, and seamless integration with authentication and validation systems, the framework ensures consistent user experiences while maintaining developer productivity.
+
+**Updated** The recent enhancements significantly improve the development experience and error tracking capabilities through comprehensive error logging, request context preservation, and detailed debugging information.
 
 Key strengths of the system include:
 
@@ -637,6 +694,9 @@ Key strengths of the system include:
 - **Security**: Appropriate error information disclosure based on environment
 - **Maintainability**: Clear separation of concerns and reusable error handling components
 - **Scalability**: Efficient error processing with minimal performance impact
-- **Developer Experience**: Comprehensive logging and debugging capabilities
+- **Developer Experience**: Comprehensive logging and debugging capabilities with request context
+- **Error Tracking**: Advanced error monitoring and analysis features
 
 The system successfully addresses common web application error scenarios while providing extensibility for future enhancements. Its modular design allows for easy maintenance and updates as the application evolves.
+
+**Updated** The enhanced error logging and debugging capabilities represent a significant improvement in error tracking and development productivity, making it easier to identify, diagnose, and resolve issues in both development and production environments.

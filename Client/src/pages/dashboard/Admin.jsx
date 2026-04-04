@@ -18,6 +18,7 @@ function Admin() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const userData = useSelector((state) => state.auth.userData);
+  const authLoading = useSelector((state) => state.auth.loading);
   const navigate = useNavigate();
   const [showTimetable, setShowTimetable] = useState(false);
 
@@ -25,212 +26,111 @@ function Admin() {
     (state) => state.admin,
   );
 
+  // Verify session first, then fetch data
   useEffect(() => {
-    dispatch(fetchMasterData("program"));
-    dispatch(fetchMasterData("course"));
-    dispatch(fetchMasterData("room"));
-    dispatch(fetchMasterData("classes"));
-    dispatch(fetchMasterData("division"));
-    dispatch(fetchMasterData("subject"));
-    dispatch(fetchMasterData("Specialization"));
-    dispatch(fetchMasterData("faculty"));
-    dispatch(fetchMasterData("student"));
-  }, [dispatch]);
+    if (isAuthenticated && userData?.role === "admin") {
+      dispatch(fetchMasterData("program"));
+      dispatch(fetchMasterData("course"));
+      dispatch(fetchMasterData("room"));
+      dispatch(fetchMasterData("division"));
+      dispatch(fetchMasterData("specialization"));
+      dispatch(fetchMasterData("faculty"));
+      dispatch(fetchMasterData("student"));
+      dispatch(fetchMasterData("qualification_type"));
+      dispatch(fetchMasterData("subject_allocation"));
+      dispatch(fetchMasterData("time_slot"));
+      dispatch(fetchMasterData("timetable"));
+      dispatch(fetchMasterData("timetable_entry"));
+    }
+  }, [dispatch, isAuthenticated, userData]);
 
   useEffect(() => {
-    if (!isAuthenticated || !userData || userData.role !== "admin") {
+    // Only redirect if auth check is complete and user is not authenticated
+    if (!authLoading && (!isAuthenticated || !userData || userData.role !== "admin")) {
       navigate("/");
     }
-  }, [isAuthenticated, userData, navigate]);
+  }, [authLoading, isAuthenticated, userData, navigate]);
+
+  // Show loading while verifying session
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center space-x-2">
+          <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="text-lg font-medium text-primary">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !userData || userData.role !== "admin") {
-    // Render nothing or a loading spinner while redirecting
     return null;
   }
 
-  // ---- Simple config for all master entities ----
+  // ---- Entity configurations aligned with backend models ----
   const ENTITY_CONFIG = {
     program: {
       label: "Program",
       pluralLabel: "Programs",
-      // description: "Define academic programs like B.Tech CSE, BBA, etc.",
+      description: "Define academic programs like B.Tech CSE, BBA, etc.",
       fields: [
         {
           name: "program_id",
           label: "Program Code",
           placeholder: "e.g. UG-CSE",
+          type: "text",
           required: true,
         },
         {
           name: "program_name",
           label: "Program Name",
           placeholder: "e.g. Undergraduate Computer Science",
+          type: "text",
           required: true,
+        },
+        {
+          name: "program_duration",
+          label: "Duration (years)",
+          placeholder: "e.g. 4",
+          type: "number",
+          required: true,
+        },
+        {
+          name: "isActive",
+          label: "Active",
+          type: "boolean",
+          required: false,
         },
       ],
     },
     course: {
       label: "Course",
       pluralLabel: "Courses",
-      // description: "Define courses like B.Tech, M.Tech, etc.",
+      description: "Define courses with credit hours.",
       fields: [
         {
           name: "course_id",
           label: "Course Code",
           placeholder: "e.g. UG-CSE-101",
+          type: "text",
           required: true,
         },
         {
           name: "course_name",
           label: "Course Name",
           placeholder: "e.g. Introduction to Programming",
-          required: true,
-        },
-        {
-          name: "course_duration",
-          label: "Duration (years)",
-          placeholder: "e.g. 3",
-          required: true,
-        },
-        {
-          name: "isActive",
-          label: "isActive",
-          type: "boolean",
-          required: true,
-        },
-      ],
-    },
-    semester: {
-      label: "Semester",
-      pluralLabel: "Semesters",
-      fields: [
-        {
-          name: "semester_id",
-          label: "Semester Code",
-          placeholder: "e.g. SEM1",
-          required: true,
-        },
-        {
-          name: "semester_name",
-          label: "Semester Name",
-          placeholder: "e.g. Semester 1",
-          required: true,
-        },
-        {
-          name: "isEven",
-          label: "Is Even",
-          type: "boolean",
-          required: true,
-        },
-      ],
-    },
-    division: {
-      label: "Division",
-      pluralLabel: "Divisions",
-      fields: [
-        // {
-        //   name: "section_name",
-        //   label: "Section Code",
-        //   placeholder: "e.g. A",
-        //   required: true,
-        // },
-        {
-          name: "section_name",
-          label: "Division",
-          placeholder: "e.g. 1",
-          required: true,
-        },
-        {
-          name: "class_id",
-          label: "Class Code",
-          placeholder: "e.g. CSE-3A",
-          required: true,
-        },
-        {
-          name: "discraption",
-          label: "Discraption",
-          placeholder: "e.g. CSE-3A-1",
-          required: true,
-        },
-      ],
-    },
-    room: {
-      label: "Room",
-      pluralLabel: "Rooms",
-      // description: "Maintain list of rooms for scheduling classes.",
-      fields: [
-        {
-          name: "room_no",
-          label: "Room Code",
-          placeholder: "e.g. R101",
-          required: true,
-        },
-        {
-          name: "floor_no",
-          label: "Floor no",
-          placeholder: "e.g. Ground Floor",
-          required: true,
-        },
-        {
-          name: "wing",
-          label: "Wing/Block",
-          placeholder: "e.g. A Wing",
-          required: true,
-        },
-      ],
-    },
-    classes: {
-      label: "Class",
-      pluralLabel: "Classes",
-      fields: [
-        {
-          name: "class_id",
-          label: "Class Code",
-          placeholder: "e.g. CSE-3A",
-          required: true,
-        },
-        {
-          name: "course_id",
-          label: "Course Code",
-          placeholder: "e.g. UG-CSE-101",
-          required: true,
-        },
-        {
-          name: "program_id",
-          label: "Program Code",
-          placeholder: "e.g. UG-CSE",
-          required: true,
-        },
-        {
-          name: "year",
-          label: "Year",
-          placeholder: "e.g. 2024",
-          required: true,
-        },
-      ],
-    },
-    subject: {
-      label: "Subject",
-      pluralLabel: "Subjects",
-      description: "Maintain subject master list for timetables.",
-      fields: [
-        {
-          name: "subject_id",
-          label: "Subject Code",
-          placeholder: "e.g. CS301",
-          required: true,
-        },
-        {
-          name: "subject_name",
-          label: "Subject Name",
-          placeholder: "e.g. Data Structures",
+          type: "text",
           required: true,
         },
         {
           name: "credit",
           label: "Credits",
           placeholder: "e.g. 3",
-          required: false,
+          type: "number",
+          required: true,
         },
         {
           name: "isActive",
@@ -240,42 +140,108 @@ function Admin() {
         },
       ],
     },
-
-    Specialization: {
+    semester: {
+      label: "Semester",
+      pluralLabel: "Semesters",
+      description: "Define semesters (odd/even).",
+      fields: [
+        {
+          name: "semester_id",
+          label: "Semester Code",
+          placeholder: "e.g. SEM1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "semester_name",
+          label: "Semester Name",
+          placeholder: "e.g. Semester 1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "isEven",
+          label: "Is Even Semester",
+          type: "boolean",
+          required: false,
+        },
+      ],
+    },
+    division: {
+      label: "Division",
+      pluralLabel: "Divisions",
+      description: "Define class divisions/sections.",
+      fields: [
+        {
+          name: "division_id",
+          label: "Division Code",
+          placeholder: "e.g. DIV-A",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "division_name",
+          label: "Division Name",
+          placeholder: "e.g. Section A",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "description",
+          label: "Description",
+          placeholder: "e.g. Morning batch division",
+          type: "text",
+          required: false,
+        },
+      ],
+    },
+    room: {
+      label: "Room",
+      pluralLabel: "Rooms",
+      description: "Maintain list of rooms for scheduling classes.",
+      fields: [
+        {
+          name: "room_no",
+          label: "Room Number",
+          placeholder: "e.g. R101",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "floor_no",
+          label: "Floor",
+          placeholder: "e.g. 1st Floor",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "block",
+          label: "Block",
+          placeholder: "e.g. A",
+          type: "text",
+          required: true,
+        },
+      ],
+    },
+    specialization: {
       label: "Specialization",
       pluralLabel: "Specializations",
       description: "Define specializations for programs (e.g. AI, DS).",
       fields: [
         {
-          name: "specilization_id",
+          name: "specialization_id",
           label: "Specialization Code",
           placeholder: "e.g. CSE-AI",
+          type: "text",
           required: true,
         },
         {
-          name: "specilization_name",
+          name: "specialization_name",
           label: "Specialization Name",
-          placeholder: "e.g. Computer Science - Artificial Intelligence",
+          placeholder: "e.g. Artificial Intelligence",
+          type: "text",
           required: true,
         },
-        {
-          name: "program_id",
-          label: "Program Code",
-          placeholder: "e.g. UG-CSE",
-          required: true,
-        },
-        {
-          name: "course_id",
-          label: "Related Course Codes (comma-separated)",
-          placeholder: "e.g. UG-CSE-201,UG-CSE-202",
-          required: false,
-        },
-        // {
-        //   name: "duration",
-        //   label: "Duration (semesters)",
-        //   placeholder: "e.g. 4",
-        //   required: false,
-        // },
         {
           name: "isActive",
           label: "Active",
@@ -284,7 +250,6 @@ function Admin() {
         },
       ],
     },
-
     faculty: {
       label: "Faculty",
       pluralLabel: "Faculty",
@@ -294,49 +259,78 @@ function Admin() {
           name: "faculty_id",
           label: "Faculty ID",
           placeholder: "e.g. F001",
+          type: "text",
           required: true,
         },
         {
           name: "faculty_name",
-          label: "Name",
+          label: "Full Name",
           placeholder: "e.g. Dr. Sunil Kumar",
+          type: "text",
           required: true,
         },
         {
           name: "email",
           label: "Email",
           placeholder: "e.g. sunil@college.edu",
-          required: false,
+          type: "email",
+          required: true,
         },
         {
           name: "phone",
-          label: "Phone",
-          placeholder: "e.g. +1234567890",
-          required: false,
+          label: "Phone Number",
+          placeholder: "e.g. +91 9876543210",
+          type: "tel",
+          required: true,
+        },
+        {
+          name: "gender",
+          label: "Gender",
+          placeholder: "e.g. Male/Female/Other",
+          type: "text",
+          required: true,
         },
         {
           name: "specialization",
           label: "Specialization",
           placeholder: "e.g. Computer Science",
-          required: false,
+          type: "text",
+          required: true,
         },
         {
           name: "higher_qualification",
-          label: "Higher Qualification",
+          label: "Highest Qualification",
           placeholder: "e.g. PhD in Computer Science",
-          required: false,
+          type: "text",
+          required: true,
         },
         {
           name: "years_of_Experience",
           label: "Years of Experience",
           placeholder: "e.g. 10",
-          required: false,
+          type: "number",
+          required: true,
         },
         {
           name: "date_of_joining",
-          label: "Joining Date",
+          label: "Date of Joining",
           placeholder: "e.g. 2020-08-15",
+          type: "date",
+          required: true,
+        },
+        {
+          name: "date_of_birth",
+          label: "Date of Birth",
+          placeholder: "e.g. 1980-05-20",
+          type: "date",
           required: false,
+        },
+        {
+          name: "address",
+          label: "Address",
+          placeholder: "e.g. 123 Main St, City",
+          type: "text",
+          required: true,
         },
         {
           name: "isActive",
@@ -344,29 +338,8 @@ function Admin() {
           type: "boolean",
           required: false,
         },
-        {
-          name: "gender",
-          label: "Gender",
-          placeholder: "e.g. Male",
-          required: false,
-        },
-        {
-          name: "date_of_birth",
-          label: "Date of Birth",
-          placeholder: "e.g. 1980-05-20",
-          required: false,
-        },
-        {
-          name: "address",
-          label: "Address",
-          placeholder: "e.g. 123 Main St, City",
-          required: false,
-        },
       ],
-      csvExampleHeader:
-        " employeeId,name,email,phone,specialization,higherQualification,experienceYears,joiningDate,isActive,gender,dateOfBirth,address",
     },
-
     student: {
       label: "Student",
       pluralLabel: "Students",
@@ -374,55 +347,348 @@ function Admin() {
       fields: [
         {
           name: "student_id",
-          label: "Enrollment No",
+          label: "Student ID",
           placeholder: "e.g. 24CS001",
+          type: "text",
           required: true,
         },
         {
           name: "student_name",
-          label: "Name",
+          label: "Full Name",
           placeholder: "e.g. Aryan Kumar",
-          required: true,
-        },
-
-        {
-          name: "class",
-          label: "Class",
-          placeholder: "e.g. CSE-3A",
+          type: "text",
           required: true,
         },
         {
-          name: "batch",
-          label: "Batch",
-          placeholder: "e.g. 2024",
-          required: false,
-        },
-        {
-          name: "specialization",
-          label: "Specialization",
-          placeholder: "e.g. AI",
-          required: false,
+          name: "gender",
+          label: "Gender",
+          placeholder: "e.g. Male/Female/Other",
+          type: "text",
+          required: true,
         },
         {
           name: "email",
           label: "Email",
           placeholder: "e.g. aryan@college.edu",
-          required: false,
+          type: "email",
+          required: true,
         },
         {
-          name: "division",
-          label: "division (optional)",
-          placeholder: "e.g. A",
-          required: false,
+          name: "phone",
+          label: "Phone Number",
+          placeholder: "e.g. +91 9876543210",
+          type: "tel",
+          required: true,
+        },
+        {
+          name: "class",
+          label: "Class",
+          placeholder: "e.g. CSE-3A",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "batch",
+          label: "Batch",
+          placeholder: "e.g. 2024-2028",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "specialization",
+          label: "Specialization",
+          placeholder: "e.g. AI",
+          type: "text",
+          required: true,
         },
         {
           name: "date_of_birth",
           label: "Date of Birth",
-          placeholder: "e.g. 01-01-2000",
+          placeholder: "e.g. 2000-01-01",
+          type: "date",
+          required: true,
+        },
+      ],
+    },
+    qualification_type: {
+      label: "Qualification Type",
+      pluralLabel: "Qualification Types",
+      description: "Define qualification types for faculty.",
+      fields: [
+        {
+          name: "qualification_id",
+          label: "Qualification Code",
+          placeholder: "e.g. PHD-CS",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "qualification_name",
+          label: "Qualification Name",
+          placeholder: "e.g. PhD in Computer Science",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "description",
+          label: "Description",
+          placeholder: "e.g. Doctoral degree in Computer Science",
+          type: "text",
+          required: true,
+        },
+      ],
+    },
+    subject_allocation: {
+      label: "Subject Allocation",
+      pluralLabel: "Subject Allocations",
+      description: "Allocate subjects to faculty for specific divisions.",
+      fields: [
+        {
+          name: "subjectAllocation_id",
+          label: "Allocation ID",
+          placeholder: "e.g. SA-2024-001",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "semester_id",
+          label: "Semester",
+          placeholder: "e.g. SEM1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "program_id",
+          label: "Program",
+          placeholder: "e.g. UG-CSE",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "division_id",
+          label: "Division",
+          placeholder: "e.g. DIV-A",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "course_id",
+          label: "Course",
+          placeholder: "e.g. UG-CSE-101",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "faculty_id",
+          label: "Faculty",
+          placeholder: "e.g. F001",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "classTeacher",
+          label: "Class Teacher Name",
+          placeholder: "e.g. Dr. Sunil Kumar",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "academicYear",
+          label: "Academic Year",
+          placeholder: "e.g. 2024-2025",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "ltpHours.l",
+          label: "Lecture Hours (L)",
+          placeholder: "e.g. 3",
+          type: "number",
+          required: true,
+        },
+        {
+          name: "ltpHours.t",
+          label: "Tutorial Hours (T)",
+          placeholder: "e.g. 1",
+          type: "number",
+          required: true,
+        },
+        {
+          name: "ltpHours.p",
+          label: "Practical Hours (P)",
+          placeholder: "e.g. 2",
+          type: "number",
+          required: true,
+        },
+        {
+          name: "isLab",
+          label: "Is Lab Subject",
+          type: "boolean",
           required: false,
         },
       ],
-      csvExampleHeader: "rollNo,name,classCode,sectionName",
+    },
+    time_slot: {
+      label: "Time Slot",
+      pluralLabel: "Time Slots",
+      description: "Define time slots for the timetable.",
+      fields: [
+        {
+          name: "slot_id",
+          label: "Slot Code",
+          placeholder: "e.g. SLOT-1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "day_of_week",
+          label: "Day of Week",
+          placeholder: "e.g. monday",
+          type: "select",
+          options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+          required: true,
+        },
+        {
+          name: "startTime",
+          label: "Start Time",
+          placeholder: "e.g. 09:00",
+          type: "time",
+          required: true,
+        },
+        {
+          name: "endTime",
+          label: "End Time",
+          placeholder: "e.g. 10:00",
+          type: "time",
+          required: true,
+        },
+        {
+          name: "slot_type",
+          label: "Slot Type",
+          placeholder: "e.g. LECTURE",
+          type: "select",
+          options: ["LECTURE", "LAB", "BREAK", "LUNCH"],
+          required: true,
+        },
+        {
+          name: "isBreak",
+          label: "Is Break",
+          type: "boolean",
+          required: false,
+        },
+      ],
+    },
+    timetable: {
+      label: "Timetable",
+      pluralLabel: "Timetables",
+      description: "Generate and manage timetables.",
+      fields: [
+        {
+          name: "timetable_id",
+          label: "Timetable ID",
+          placeholder: "e.g. TT-2024-SEM1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "semester_id",
+          label: "Semester",
+          placeholder: "e.g. SEM1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "academicYear",
+          label: "Academic Year",
+          placeholder: "e.g. 2024-2025",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "generatedBy",
+          label: "Generated By",
+          placeholder: "e.g. ADMIN001",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "status",
+          label: "Status",
+          type: "select",
+          options: ["draft", "published", "archived"],
+          required: true,
+        },
+      ],
+    },
+    timetable_entry: {
+      label: "Timetable Entry",
+      pluralLabel: "Timetable Entries",
+      description: "Individual entries in a timetable.",
+      fields: [
+        {
+          name: "entry_id",
+          label: "Entry ID",
+          placeholder: "e.g. TE-001",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "faculty_id",
+          label: "Faculty",
+          placeholder: "e.g. F001",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "course_id",
+          label: "Course",
+          placeholder: "e.g. UG-CSE-101",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "slot_id",
+          label: "Time Slot",
+          placeholder: "e.g. SLOT-1",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "room_no",
+          label: "Room",
+          placeholder: "e.g. R101",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "class_group",
+          label: "Class Group",
+          placeholder: "e.g. CSE-3A",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "day_of_week",
+          label: "Day",
+          placeholder: "e.g. monday",
+          type: "select",
+          options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+          required: true,
+        },
+        {
+          name: "isLab",
+          label: "Is Lab",
+          type: "boolean",
+          required: false,
+        },
+        {
+          name: "status",
+          label: "Status",
+          type: "select",
+          options: ["scheduled", "cancelled", "rescheduled"],
+          required: false,
+        },
+      ],
     },
   };
 

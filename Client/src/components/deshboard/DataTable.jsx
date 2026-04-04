@@ -17,6 +17,37 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         }
     };
 
+    // Helper function to get nested field value
+    const getFieldValue = (entity, fieldName) => {
+        if (fieldName.includes('.')) {
+            const [parent, child] = fieldName.split('.');
+            return entity[parent]?.[child];
+        }
+        return entity[fieldName];
+    };
+
+    // Helper function to format cell value based on field type
+    const formatCellValue = (value, field) => {
+        if (value === undefined || value === null) return '-';
+        
+        if (field.type === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        
+        if (field.type === 'date' && value) {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString();
+            }
+        }
+        
+        if (field.type === 'time' && value) {
+            return value;
+        }
+        
+        return value;
+    };
+
     if (!currentEntityConfig) return null;
 
     return (
@@ -54,7 +85,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                                 >
                                     {currentEntityConfig.fields.map((field) => (
                                         <td key={field.name} className="px-6 py-4 text-text/90">
-                                            {field.type === 'boolean' ? (entity[field.name] ? 'Yes' : 'No') : entity[field.name]}
+                                            {formatCellValue(getFieldValue(entity, field.name), field)}
                                         </td>
                                     ))}
                                     <td className="px-6 py-4 flex items-center justify-end gap-2">

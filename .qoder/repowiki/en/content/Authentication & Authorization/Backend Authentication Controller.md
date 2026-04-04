@@ -5,6 +5,8 @@
 - [user.controller.js](file://Backend/src/controllers/user.controller.js)
 - [user.models.js](file://Backend/src/models/user.models.js)
 - [user.routers.js](file://Backend/src/routes/user.routers.js)
+- [Token.js](file://Backend/src/utils/Token.js)
+- [auth.middleware.js](file://Backend/src/middlewares/auth.middleware.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
 - [asyncHandler.js](file://Backend/src/utils/asyncHandler.js)
@@ -12,6 +14,16 @@
 - [db/index.js](file://Backend/src/db/index.js)
 - [constenets.js](file://Backend/src/constenets.js)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated authentication flow to include JWT token generation and management
+- Enhanced user login functionality with username-based authentication
+- Improved error handling with comprehensive ApiError implementations
+- Added password hashing with bcryptjs integration
+- Implemented role-based authorization middleware
+- Enhanced debugging capabilities with extensive console logging
+- Added comprehensive token refresh and logout functionality
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -25,253 +37,363 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the backend authentication controller implementation for user registration, login, and profile management. It covers the user authentication flow, including login validation, password verification, user role assignment, and integration with Mongoose models. It also documents error handling patterns, response formatting, and route protection strategies. Notably, the current implementation performs plaintext password comparison during login and does not include JWT token generation or middleware for session management.
+This document explains the enhanced backend authentication controller implementation for user registration, login, logout, token management, and profile management. The system now includes comprehensive JWT-based authentication, password hashing with bcryptjs, role-based authorization, and extensive debugging capabilities with console logging. It covers the complete user authentication flow including login validation, password verification, JWT token generation, user role assignment, and integration with Mongoose models for secure user data management.
 
 ## Project Structure
-The authentication controller resides under the controllers directory and integrates with Mongoose models, Express routes, and shared utilities for error and response handling. The server initializes middleware and mounts routes.
+The authentication controller now operates within a fully secured ecosystem with JWT token management, role-based authorization, and comprehensive error handling. The system integrates with Mongoose models, Express routes, JWT utilities, authentication middleware, and shared utilities for error and response handling.
 
 ```mermaid
 graph TB
-subgraph "Server"
+subgraph "Server Layer"
 S["Express App<br/>server.js"]
 R["Routes<br/>user.routers.js"]
 end
+subgraph "Authentication Layer"
+AM["Auth Middleware<br/>auth.middleware.js"]
+TK["Token Utils<br/>Token.js"]
+end
 subgraph "Controllers"
-C["User Controller<br/>user.controller.js"]
+C["Enhanced User Controller<br/>user.controller.js"]
 end
 subgraph "Models"
-M["User Model<br/>user.models.js"]
+M["Enhanced User Model<br/>user.models.js"]
 end
 subgraph "Utilities"
-EH["Async Handler<br/>asyncHandler.js"]
 AE["ApiError<br/>ApiError.js"]
 AR["ApiResponse<br/>ApiResponse.js"]
+AH["Async Handler<br/>asyncHandler.js"]
 end
 subgraph "Database"
 DB["MongoDB via Mongoose<br/>db/index.js"]
 end
 S --> R
+R --> AM
+AM --> TK
 R --> C
 C --> M
-C --> EH
 C --> AE
 C --> AR
+C --> TK
 M --> DB
 ```
 
 **Diagram sources**
-- [server.js:1-54](file://Backend/src/server.js#L1-L54)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
+- [server.js:1-106](file://Backend/src/server.js#L1-L106)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
 - [db/index.js:1-19](file://Backend/src/db/index.js#L1-L19)
 
 **Section sources**
-- [server.js:1-54](file://Backend/src/server.js#L1-L54)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
+- [server.js:1-106](file://Backend/src/server.js#L1-L106)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
 - [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
 - [db/index.js:1-19](file://Backend/src/db/index.js#L1-L19)
 
 ## Core Components
-- User Controller: Implements registration, login, user retrieval, updates, and deletion. Uses aggregation pipelines to join user data with students or faculties and projects required fields.
-- User Model: Defines schema for password, role, student_id, faculty_id, activity status, and audit fields.
-- Routes: Exposes endpoints for user registration, listing, fetching by ID, updating, deleting, and logging in.
-- Utilities: Shared error and response wrappers, and an async handler to simplify error propagation.
+- **Enhanced User Controller**: Implements comprehensive authentication flows including registration, login with JWT, logout, token refresh, password change, and profile management. Features username-based login, password hashing, token generation, and extensive console logging for debugging.
+- **Enhanced User Model**: Includes bcryptjs password hashing, user_id generation, role validation, and password comparison methods with pre-save hooks for automatic password encryption.
+- **JWT Token System**: Full token management with access tokens (15 minutes), refresh tokens (7 days), secure cookie options, and token verification utilities.
+- **Authentication Middleware**: Comprehensive middleware for JWT verification, role-based authorization, admin-only access, and optional authentication.
+- **Enhanced Error Handling**: Structured error responses with ApiError class providing consistent HTTP status codes and error messages.
+- **Response Formatting**: Standardized ApiResponse class for consistent success responses across all controller methods.
 
 Key responsibilities:
-- Registration validates arrays of user records, checks uniqueness against existing student and faculty IDs, and inserts unique records.
-- Login validates presence of credentials, performs aggregation to match user by student or faculty ID with the provided password, and returns user profile data.
-- Profile management supports fetching all users, fetching by ID, updating roles/password/activity status, and deletion.
-
-Security note: Passwords are stored as plaintext and compared as-is during login. There is no token generation or middleware for session management in the current implementation.
+- **Registration**: Validates user data, generates unique user_ids, hashes passwords, and handles both single and bulk user registration with duplicate detection.
+- **Authentication**: Supports username-based login with student_id or faculty_id validation, password verification using bcryptjs, and JWT token generation.
+- **Session Management**: Handles token refresh cycles, logout procedures, and secure cookie-based session management.
+- **Profile Management**: Comprehensive CRUD operations with role-based access control and detailed user data aggregation.
+- **Security**: Implements password hashing, token-based authentication, role-based authorization, and account deactivation handling.
 
 **Section sources**
-- [user.controller.js:8-81](file://Backend/src/controllers/user.controller.js#L8-L81)
-- [user.controller.js:84-161](file://Backend/src/controllers/user.controller.js#L84-L161)
-- [user.controller.js:164-236](file://Backend/src/controllers/user.controller.js#L164-L236)
-- [user.controller.js:239-278](file://Backend/src/controllers/user.controller.js#L239-L278)
-- [user.controller.js:281-354](file://Backend/src/controllers/user.controller.js#L281-L354)
-- [user.models.js:3-58](file://Backend/src/models/user.models.js#L3-L58)
-- [user.routers.js:14-16](file://Backend/src/routes/user.routers.js#L14-L16)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
+- [user.controller.js:14-132](file://Backend/src/controllers/user.controller.js#L14-L132)
+- [user.controller.js:359-582](file://Backend/src/controllers/user.controller.js#L359-L582)
+- [user.models.js:4-97](file://Backend/src/models/user.models.js#L4-L97)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
 
 ## Architecture Overview
-The authentication flow connects client requests to the controller, which queries the database via Mongoose and returns structured responses.
+The enhanced authentication flow now includes comprehensive JWT-based security, role-based authorization, and extensive debugging capabilities.
 
 ```mermaid
 sequenceDiagram
 participant Client as "Client"
 participant Router as "User Router<br/>user.routers.js"
-participant Ctrl as "User Controller<br/>user.controller.js"
-participant Model as "User Model<br/>user.models.js"
+participant AuthMW as "Auth Middleware<br/>auth.middleware.js"
+participant Ctrl as "Enhanced User Controller<br/>user.controller.js"
+participant TokenUtil as "Token Utils<br/>Token.js"
+participant Model as "Enhanced User Model<br/>user.models.js"
 participant DB as "MongoDB<br/>db/index.js"
-Client->>Router : POST /api/v1/users/register
-Router->>Ctrl : registerUser(req,res)
-Ctrl->>Model : insertMany(uniqueUsers)
-Model->>DB : Save records
-DB-->>Model : Acknowledged
-Model-->>Ctrl : Saved records
-Ctrl-->>Client : ApiResponse(201)
 Client->>Router : POST /api/v1/users/login
 Router->>Ctrl : userLogin(req,res)
-Ctrl->>Model : aggregate(match user_id + password)
-Model->>DB : Lookup joined student/faculty data
-DB-->>Model : Joined user data
-Model-->>Ctrl : User profile
-Ctrl-->>Client : ApiResponse(200)
+Ctrl->>Ctrl : Validate username & password
+Ctrl->>Model : findOne({student_id/faculty_id})
+Model->>DB : Query user
+DB-->>Model : User document
+Model-->>Ctrl : User found
+Ctrl->>Ctrl : comparePassword()
+Ctrl->>TokenUtil : generateTokens(user)
+TokenUtil-->>Ctrl : {accessToken, refreshToken}
+Ctrl->>Model : save refresh token
+Model->>DB : Update refresh token
+DB-->>Model : Updated user
+Ctrl->>Ctrl : Aggregate user details
+Ctrl->>Ctrl : Set secure cookies
+Ctrl-->>Client : 200 OK with tokens
+Client->>Router : POST /api/v1/users/refresh-token
+Router->>Ctrl : refreshAccessToken(req,res)
+Ctrl->>TokenUtil : verifyRefreshToken()
+TokenUtil-->>Ctrl : Decoded token
+Ctrl->>Model : findById()
+Model->>DB : Query user
+DB-->>Model : User with refreshToken
+Model-->>Ctrl : User found
+Ctrl->>TokenUtil : generateTokens(user)
+TokenUtil-->>Ctrl : New tokens
+Ctrl->>Model : save new refresh token
+Ctrl-->>Client : 200 OK with new tokens
 ```
 
 **Diagram sources**
-- [user.routers.js:14-16](file://Backend/src/routes/user.routers.js#L14-L16)
-- [user.controller.js:8-81](file://Backend/src/controllers/user.controller.js#L8-L81)
-- [user.controller.js:281-354](file://Backend/src/controllers/user.controller.js#L281-L354)
-- [user.models.js:3-58](file://Backend/src/models/user.models.js#L3-L58)
+- [user.routers.js:17-36](file://Backend/src/routes/user.routers.js#L17-L36)
+- [auth.middleware.js:6-44](file://Backend/src/middlewares/auth.middleware.js#L6-L44)
+- [user.controller.js:359-546](file://Backend/src/controllers/user.controller.js#L359-L546)
+- [Token.js:33-55](file://Backend/src/utils/Token.js#L33-L55)
+- [user.models.js:92-94](file://Backend/src/models/user.models.js#L92-L94)
 - [db/index.js:4-16](file://Backend/src/db/index.js#L4-L16)
 
 ## Detailed Component Analysis
 
-### User Registration
-- Validates that the request body is a non-empty array and each record includes password, role, and either student_id or faculty_id.
-- Checks for duplicates by querying existing users with matching student or faculty IDs.
-- Inserts only unique records and returns the first inserted record with a success response.
+### Enhanced User Registration
+The registration system now includes comprehensive validation, duplicate detection, and secure password handling with extensive logging for debugging.
 
 ```mermaid
 flowchart TD
-Start(["registerUser Entry"]) --> Validate["Validate input is non-empty array"]
-Validate --> Fields["Validate each user has password, role,<br/>and student_id or faculty_id"]
-Fields --> FetchExisting["Fetch existing users by student_id/faculty_id"]
-FetchExisting --> FilterUnique["Filter unique records not in DB"]
+Start(["registerUser Entry"]) --> Validate["Validate input is array or single user"]
+Validate --> Single{"Single user?"}
+Single --> |Yes| SingleFields["Validate password, role, student_id/faculty_id"]
+Single --> |No| MultiFields["Validate each user in array"]
+MultiFields --> UniqueCheck["Check for existing student/faculty IDs"]
+Single --> UniqueCheck
+UniqueCheck --> FilterUnique["Filter unique records not in DB"]
 FilterUnique --> HasUnique{"Any unique records?"}
-HasUnique --> |No| Throw408["Throw ApiError(408)"]
-HasUnique --> |Yes| Insert["Insert unique records"]
+HasUnique --> |No| Throw409["Throw ApiError(409) - Conflict"]
+HasUnique --> |Yes| Insert["Insert unique records with logging"]
 Insert --> Success{"Inserted > 0?"}
-Success --> |No| Throw500["Throw ApiError(500)"]
-Success --> |Yes| Respond["Return ApiResponse(201)"]
+Success --> |No| Throw500["Throw ApiError(500) - Internal Error"]
+Success --> |Yes| Response["Return ApiResponse(201) with user data"]
 ```
 
 **Diagram sources**
-- [user.controller.js:8-81](file://Backend/src/controllers/user.controller.js#L8-L81)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
+- [user.controller.js:14-132](file://Backend/src/controllers/user.controller.js#L14-L132)
+- [ApiError.js:28-59](file://Backend/src/utils/ApiError.js#L28-L59)
+- [ApiResponse.js:16-22](file://Backend/src/utils/ApiResponse.js#L16-L22)
 
 **Section sources**
-- [user.controller.js:8-81](file://Backend/src/controllers/user.controller.js#L8-L81)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
+- [user.controller.js:14-132](file://Backend/src/controllers/user.controller.js#L14-L132)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
 
-### User Login
-- Validates that user_id and password are present.
-- Performs an aggregation pipeline to match a user by student_id or faculty_id with the provided password, joins with student or faculty collection, and projects essential fields.
-- Returns user profile data on success or throws an unauthorized error if no match is found.
+### Enhanced User Login with JWT Authentication
+The login system now supports username-based authentication, password verification with bcryptjs, JWT token generation, and comprehensive error handling.
 
 ```mermaid
 sequenceDiagram
 participant Client as "Client"
 participant Router as "Router"
-participant Ctrl as "Controller"
-participant Model as "User Model"
+participant Ctrl as "Enhanced Controller"
+participant Model as "Enhanced Model"
+participant TokenUtil as "Token Utils"
 participant DB as "MongoDB"
 Client->>Router : POST /api/v1/users/login
 Router->>Ctrl : userLogin(req,res)
-Ctrl->>Ctrl : Validate fields
-Ctrl->>Model : aggregate({$or : [student_id,user_id], password})
-Model->>DB : Lookup student/faculty data
-DB-->>Model : Joined user data
-Model-->>Ctrl : Matched user
-Ctrl->>Ctrl : Check length == 0?
-alt Found
-Ctrl-->>Client : ApiResponse(200)
-else Not Found
-Ctrl-->>Client : ApiError(401)
-end
+Ctrl->>Ctrl : Validate username & password
+Ctrl->>Model : findOne({$or : [student_id,faculty_id]})
+Model->>DB : Query user by ID
+DB-->>Model : User found
+Model-->>Ctrl : User document
+Ctrl->>Ctrl : Check isActive
+Ctrl->>Ctrl : comparePassword()
+Ctrl->>TokenUtil : generateTokens(user)
+TokenUtil-->>Ctrl : {accessToken, refreshToken}
+Ctrl->>Model : save refresh token
+Model->>DB : Update refresh token
+DB-->>Model : Updated user
+Ctrl->>Ctrl : Aggregate user details
+Ctrl->>Ctrl : Set secure cookies
+Ctrl-->>Client : 200 OK with user data, tokens
 ```
 
 **Diagram sources**
-- [user.controller.js:281-354](file://Backend/src/controllers/user.controller.js#L281-L354)
-- [user.models.js:3-58](file://Backend/src/models/user.models.js#L3-L58)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
+- [user.controller.js:359-471](file://Backend/src/controllers/user.controller.js#L359-L471)
+- [user.models.js:92-94](file://Backend/src/models/user.models.js#L92-L94)
+- [Token.js:33-37](file://Backend/src/utils/Token.js#L33-L37)
+- [ApiError.js:33-39](file://Backend/src/utils/ApiError.js#L33-L39)
+- [ApiResponse.js:16-18](file://Backend/src/utils/ApiResponse.js#L16-L18)
 
 **Section sources**
-- [user.controller.js:281-354](file://Backend/src/controllers/user.controller.js#L281-L354)
-- [user.models.js:3-58](file://Backend/src/models/user.models.js#L3-L58)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
+- [user.controller.js:359-471](file://Backend/src/controllers/user.controller.js#L359-L471)
+- [user.models.js:92-94](file://Backend/src/models/user.models.js#L92-L94)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
 
-### User Profile Management
-- Retrieve all users: Uses aggregation to join student or faculty data and projects a consolidated user profile view.
-- Retrieve by ID: Matches user by ObjectId and applies the same join and projection logic.
-- Update user: Updates role, password, updated_by, and isActive fields.
-- Delete user: Removes a user by ID.
+### Token Management System
+Comprehensive JWT token management with access tokens, refresh tokens, and secure cookie handling.
 
 ```mermaid
 flowchart TD
-A["getAllUsers Entry"] --> AggAll["Aggregate join students/faculties"]
-AggAll --> ProjAll["Project consolidated fields"]
-ProjAll --> RespAll["Return ApiResponse(200)"]
-B["getUserById Entry"] --> MatchId["Match by ObjectId"]
-MatchId --> JoinId["Join student/faculty"]
-JoinId --> ProjId["Project consolidated fields"]
-ProjId --> RespId["Return ApiResponse(200)"]
-C["updateUser Entry"] --> FindUser["Find by ID"]
-FindUser --> UpdateFields["Update role/password/updated_by/isActive"]
-UpdateFields --> RespUpd["Return ApiResponse(200)"]
-D["deleteUser Entry"] --> Remove["Remove by ID"]
-Remove --> RespDel["Return ApiResponse(200)"]
+A["Token Generation"] --> B["generateAccessToken()"]
+B --> C["JWT Sign with ACCESS_TOKEN_SECRET"]
+C --> D["Set 15min expiry"]
+D --> E["generateRefreshToken()"]
+E --> F["JWT Sign with REFRESH_TOKEN_SECRET"]
+F --> G["Set 7day expiry"]
+G --> H["generateTokens()"]
+H --> I["Return {accessToken, refreshToken}"]
+J["Token Verification"] --> K["verifyAccessToken()"]
+K --> L["jwt.verify()"]
+L --> M["verifyRefreshToken()"]
+M --> N["jwt.verify()"]
+O["Cookie Options"] --> P["accessTokenCookieOptions"]
+P --> Q["httpOnly, secure, strict, 15min"]
+O --> R["refreshTokenCookieOptions"]
+R --> S["httpOnly, secure, strict, 7days"]
 ```
 
 **Diagram sources**
-- [user.controller.js:84-161](file://Backend/src/controllers/user.controller.js#L84-L161)
-- [user.controller.js:164-236](file://Backend/src/controllers/user.controller.js#L164-L236)
-- [user.controller.js:239-278](file://Backend/src/controllers/user.controller.js#L239-L278)
+- [Token.js:3-71](file://Backend/src/utils/Token.js#L3-L71)
 
 **Section sources**
-- [user.controller.js:84-161](file://Backend/src/controllers/user.controller.js#L84-L161)
-- [user.controller.js:164-236](file://Backend/src/controllers/user.controller.js#L164-L236)
-- [user.controller.js:239-278](file://Backend/src/controllers/user.controller.js#L239-L278)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 
-### Role Assignment and Validation
-- Role is validated against an enumerated set of values and stored in lowercase.
-- Role assignment occurs during registration and can be updated via the update endpoint.
+### Authentication Middleware Implementation
+Role-based authorization and JWT verification middleware for route protection.
+
+```mermaid
+flowchart TD
+A["verifyJWT Middleware"] --> B["Extract token from cookies/header"]
+B --> C["Verify JWT token"]
+C --> D["Find user by decoded ID"]
+D --> E["Check user isActive"]
+E --> F["Attach user to req.user"]
+F --> G["Call next()"]
+H["authorizeRoles Middleware"] --> I["Check req.user exists"]
+I --> J["Verify role in allowed roles"]
+J --> K["Allow access or throw 403"]
+L["isAdmin Middleware"] --> M["Check req.user.role === 'admin'"]
+M --> N["Allow or restrict access"]
+O["isFacultyOrAdmin Middleware"] --> P["Check allowed roles array"]
+P --> Q["Allow faculty, admin, coordinator, hod"]
+```
+
+**Diagram sources**
+- [auth.middleware.js:6-121](file://Backend/src/middlewares/auth.middleware.js#L6-L121)
 
 **Section sources**
-- [user.models.js:19-28](file://Backend/src/models/user.models.js#L19-L28)
-- [user.controller.js:239-278](file://Backend/src/controllers/user.controller.js#L239-L278)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 
-### Password Handling
-- Passwords are stored as plaintext and compared directly during login.
-- No hashing mechanism is implemented in the current codebase.
+### Enhanced Profile Management
+Comprehensive user profile management with role-based access control and detailed data aggregation.
+
+```mermaid
+flowchart TD
+A["getAllUsers Entry"] --> B["User.aggregate()"]
+B --> C["$lookup students & faculties"]
+C --> D["$addFields user_data condition"]
+D --> E["$project consolidated fields"]
+E --> F["Return ApiResponse(200)"]
+G["getUserById Entry"] --> H["Match by ObjectId"]
+H --> I["Join student/faculty data"]
+I --> J["Project consolidated fields"]
+J --> K["Return ApiResponse(200)"]
+L["updateUser Entry"] --> M["Validate ID & data"]
+M --> N["Build update object"]
+N --> O["Handle password separately"]
+O --> P["Hash password with bcryptjs"]
+P --> Q["Update user fields"]
+Q --> R["Return ApiResponse(200)"]
+S["deleteUser Entry"] --> T["Validate ID"]
+T --> U["Find and delete user"]
+U --> V["Return ApiResponse(200)"]
+```
+
+**Diagram sources**
+- [user.controller.js:134-208](file://Backend/src/controllers/user.controller.js#L134-L208)
+- [user.controller.js:210-284](file://Backend/src/controllers/user.controller.js#L210-L284)
+- [user.controller.js:286-340](file://Backend/src/controllers/user.controller.js#L286-L340)
+- [user.controller.js:342-357](file://Backend/src/controllers/user.controller.js#L342-L357)
 
 **Section sources**
-- [user.models.js:13-17](file://Backend/src/models/user.models.js#L13-L17)
-- [user.controller.js:289-295](file://Backend/src/controllers/user.controller.js#L289-L295)
+- [user.controller.js:134-208](file://Backend/src/controllers/user.controller.js#L134-L208)
+- [user.controller.js:210-284](file://Backend/src/controllers/user.controller.js#L210-L284)
+- [user.controller.js:286-340](file://Backend/src/controllers/user.controller.js#L286-L340)
+- [user.controller.js:342-357](file://Backend/src/controllers/user.controller.js#L342-L357)
 
-### Token Expiration and Security Measures
-- No JWT token generation or middleware is implemented.
-- No token expiration handling exists.
-- No session management or CSRF protection is present.
+### Enhanced Password Handling
+Secure password management with bcryptjs integration and comprehensive validation.
+
+**Updated** Password handling now includes bcryptjs integration with configurable salt rounds, automatic password hashing in pre-save hooks, and secure password comparison methods.
 
 **Section sources**
-- [user.controller.js:281-354](file://Backend/src/controllers/user.controller.js#L281-L354)
+- [user.models.js:67-94](file://Backend/src/models/user.models.js#L67-L94)
+- [user.controller.js:312-327](file://Backend/src/controllers/user.controller.js#L312-L327)
+
+### Role-Based Authorization
+Comprehensive role management with validation and access control.
+
+**Updated** Role assignment now includes validation against enumerated values (admin, faculty, student, coordinator, hod) with automatic lowercase conversion and role-based route protection.
+
+**Section sources**
+- [user.models.js:21-30](file://Backend/src/models/user.models.js#L21-L30)
+- [auth.middleware.js:47-92](file://Backend/src/middlewares/auth.middleware.js#L47-L92)
+
+### Enhanced Error Handling
+Structured error responses with comprehensive status codes and debugging support.
+
+**Updated** Error handling now includes comprehensive ApiError implementations with consistent HTTP status codes, detailed error messages, and development environment stack traces for debugging.
+
+**Section sources**
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [user.controller.js:26-44](file://Backend/src/controllers/user.controller.js#L26-L44)
+- [user.controller.js:366-391](file://Backend/src/controllers/user.controller.js#L366-L391)
+
+### Enhanced Debugging Capabilities
+Extensive console logging for troubleshooting and monitoring.
+
+**Updated** The controller now includes comprehensive console logging throughout all major operations including request processing, database queries, token generation, and user actions for enhanced debugging and monitoring capabilities.
+
+**Section sources**
+- [user.controller.js:17-18](file://Backend/src/controllers/user.controller.js#L17-L18)
+- [user.controller.js:119-123](file://Backend/src/controllers/user.controller.js#L119-L123)
+- [user.controller.js:213](file://Backend/src/controllers/user.controller.js#L213)
+- [user.controller.js:363](file://Backend/src/controllers/user.controller.js#L363)
+- [user.controller.js:454](file://Backend/src/controllers/user.controller.js#L454)
 
 ### Route Protection Strategies
-- No authentication middleware is applied to protect routes.
-- All user endpoints are publicly exposed.
+Comprehensive authentication and authorization middleware.
+
+**Updated** Routes are now protected with JWT authentication and role-based authorization middleware, providing granular access control with different permission levels for various operations.
 
 **Section sources**
-- [user.routers.js:14-16](file://Backend/src/routes/user.routers.js#L14-L16)
+- [user.routers.js:17-36](file://Backend/src/routes/user.routers.js#L17-L36)
+- [auth.middleware.js:6-121](file://Backend/src/middlewares/auth.middleware.js#L6-L121)
 
 ## Dependency Analysis
-The controller depends on Mongoose models, shared utilities, and Express routing. The server initializes middleware and mounts routes.
+The enhanced controller now depends on JWT utilities, authentication middleware, bcryptjs for password hashing, and comprehensive error/response handling utilities.
 
 ```mermaid
 graph LR
@@ -279,44 +401,71 @@ UC["user.controller.js"] --> UM["user.models.js"]
 UC --> AH["asyncHandler.js"]
 UC --> AE["ApiError.js"]
 UC --> AR["ApiResponse.js"]
+UC --> TK["Token.js"]
 UR["user.routers.js"] --> UC
+UR --> AM["auth.middleware.js"]
+AM --> TK
 SRV["server.js"] --> UR
 SRV --> DBIDX["db/index.js"]
 DBIDX --> CN["constenets.js"]
+UM --> BC["bcryptjs"]
 ```
 
 **Diagram sources**
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [server.js:1-54](file://Backend/src/server.js#L1-L54)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [server.js:1-106](file://Backend/src/server.js#L1-L106)
 - [db/index.js:1-19](file://Backend/src/db/index.js#L1-L19)
 - [constenets.js:1-2](file://Backend/src/constenets.js#L1-L2)
 
 **Section sources**
-- [user.controller.js:1-355](file://Backend/src/controllers/user.controller.js#L1-L355)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [user.routers.js:1-19](file://Backend/src/routes/user.routers.js#L1-L19)
-- [server.js:1-54](file://Backend/src/server.js#L1-L54)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
+- [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
+- [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [server.js:1-106](file://Backend/src/server.js#L1-L106)
 - [db/index.js:1-19](file://Backend/src/db/index.js#L1-L19)
 - [constenets.js:1-2](file://Backend/src/constenets.js#L1-L2)
 
 ## Performance Considerations
-- Aggregation pipelines for user retrieval and login involve joins with student and faculty collections; ensure appropriate indexes exist on student_id and faculty_id for optimal performance.
-- The registration endpoint inserts many documents in a single operation; batching large arrays can help avoid timeouts and improve throughput.
-- Avoid returning sensitive fields in responses; the current projections exclude passwords, which is good.
+- **JWT Token Caching**: Consider implementing token caching for frequently accessed user data to reduce database queries.
+- **Password Hashing**: Bcryptjs hashing is computationally intensive; consider adjusting salt rounds based on performance requirements.
+- **Database Indexes**: Ensure proper indexing on student_id, faculty_id, and user_id fields for optimal query performance.
+- **Token Expiration**: Configure appropriate token expiration times to balance security and user experience.
+- **Logging Overhead**: Console logging provides excellent debugging but may impact performance in production; consider log level configuration.
 
 ## Troubleshooting Guide
-Common issues and resolutions:
-- Registration fails with duplicate entries: Ensure unique student_id or faculty_id values are provided; the controller filters duplicates before insertion.
-- Login returns invalid credentials: Verify that user_id matches either student_id or faculty_id and that the plaintext password matches the stored value.
-- Empty user lists: Confirm that student or faculty records exist and that the user’s associated IDs are populated.
-- Error responses: The controller throws ApiError with appropriate status codes; inspect the error message and status to diagnose issues.
+Common issues and resolutions with enhanced debugging capabilities:
+
+**Authentication Issues:**
+- **Login fails with invalid credentials**: Check username format (student_id or faculty_id), verify password hashing, and review console logs for detailed error information.
+- **Token generation failures**: Verify JWT secret keys are properly configured in environment variables and check token utility functions.
+- **Account deactivation**: Users with isActive=false will receive 403 Forbidden errors; verify user status in database.
+
+**Authorization Issues:**
+- **Role-based access denied**: Verify user role assignments and ensure proper middleware configuration for protected routes.
+- **Token verification failures**: Check token expiration, verify JWT signatures, and confirm token storage in database.
+
+**Database Issues:**
+- **Duplicate user registration**: Review existing user detection logic and ensure unique constraints are properly enforced.
+- **Password comparison failures**: Verify bcryptjs installation and check password hashing configuration.
+
+**Debugging Tips:**
+- **Enable detailed logging**: Use console.log statements throughout controller methods to trace execution flow.
+- **Check environment variables**: Verify JWT secrets, database connection strings, and application settings.
+- **Monitor token lifecycle**: Track token generation, refresh, and expiration events for troubleshooting authentication flows.
 
 **Section sources**
-- [user.controller.js:8-81](file://Backend/src/controllers/user.controller.js#L8-L81)
-- [user.controller.js:281-354](file://Backend/src/controllers/user.controller.js#L281-L354)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [user.controller.js:17-18](file://Backend/src/controllers/user.controller.js#L17-L18)
+- [user.controller.js:119-123](file://Backend/src/controllers/user.controller.js#L119-L123)
+- [user.controller.js:213](file://Backend/src/controllers/user.controller.js#L213)
+- [user.controller.js:363](file://Backend/src/controllers/user.controller.js#L363)
+- [user.controller.js:454](file://Backend/src/controllers/user.controller.js#L454)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 ## Conclusion
-The backend authentication controller provides user registration, login, and profile management using Mongoose and Express. While the current implementation lacks password hashing, token generation, and middleware-based route protection, it offers a clear foundation for extending with JWT-based authentication, middleware, and robust security measures. The aggregation-based queries enable flexible user profile retrieval by joining with student or faculty data.
+The enhanced backend authentication controller now provides a comprehensive, secure, and feature-rich authentication system. Key improvements include JWT-based authentication with token refresh cycles, bcryptjs password hashing, role-based authorization, extensive debugging capabilities, and comprehensive error handling. The system supports username-based login with student_id or faculty_id validation, secure token management with secure cookies, and granular access control through middleware. The addition of console logging throughout the authentication flow enables thorough debugging and monitoring capabilities. This implementation provides a solid foundation for enterprise-level authentication with scalability, security, and maintainability considerations built-in.

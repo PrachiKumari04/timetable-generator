@@ -1,11 +1,25 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import apiClient from "../../services/apiClient";
 
 const initialState = {
-  isAuthenticated: localStorage.getItem("isAuthenticated") ? true : false,
-  userData: localStorage.getItem("userData")
-    ? JSON.parse(localStorage.getItem("userData"))
-    : null,
+  isAuthenticated: false,
+  userData: null,
+  loading: false,
+  error: null,
 };
+
+// Async thunk to verify session on app load
+export const verifySession = createAsyncThunk(
+  "auth/verifySession",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get("/users/me");
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Session verification failed");
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: "auth",
@@ -14,15 +28,30 @@ const authSlice = createSlice({
     login: (state, action) => {
       state.isAuthenticated = true;
       state.userData = action.payload;
-      localStorage.setItem("isAuthenticated", true);
-      localStorage.setItem("userData", JSON.stringify(action.payload));
+      state.error = null;
     },
     logout: (state) => {
       state.isAuthenticated = false;
       state.userData = null;
-      localStorage.removeItem("isAuthenticated");
-      localStorage.removeItem("userData");
+      state.error = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(verifySession.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifySession.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.userData = action.payload.user;
+      })
+      .addCase(verifySession.rejected, (state) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.userData = null;
+      });
   },
 });
 

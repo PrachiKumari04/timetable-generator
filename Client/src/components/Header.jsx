@@ -4,17 +4,30 @@ import { Link, NavLink, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../store/theme/themeSlice";
 import { logout } from "../store/auth/authSlice";
+import apiClient from "../services/apiClient";
 
 export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.theme.theme);
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const userData = useSelector((state) => state.auth.userData);
 
-  const logoutHandler = (e) => {
+  const logoutHandler = async (e) => {
     e.preventDefault();
-    dispatch(logout());
-    navigate("/");
+    
+    try {
+      // Call backend logout to clear cookies
+      if (userData?._id) {
+        await apiClient.post("/users/logout", { userId: userData._id });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always clear local state regardless of API success
+      dispatch(logout());
+      navigate("/");
+    }
   };
 
   const loginHandler = (e) => {
@@ -35,7 +48,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-background shadow">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm shadow">
       <Container className={`flex items-center px-4 py-0 sm:px-6 lg:px-8`}>
         <nav className="flex items-center justify-between h-16 w-full">
           <div className="flex shrink-0">

@@ -16,8 +16,6 @@
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [asyncHandler.js](file://Backend/src/utils/asyncHandler.js)
-- [index.js](file://Backend/src/index.js)
-- [package.json](file://Backend/package.json)
 </cite>
 
 ## Update Summary
@@ -47,7 +45,7 @@ This document explains the comprehensive authentication and authorization system
 ## Project Structure
 The authentication system now features a robust JWT-based architecture spanning both frontend and backend:
 - **Frontend (React + Redux Toolkit)**:
-  - Authentication state management with localStorage persistence
+  - Authentication state management with Redux persistence
   - Login page with JWT token handling
   - Role-based routing with client-side guards
   - Protected dashboards with authentication checks
@@ -86,7 +84,7 @@ H --> L
 H --> M
 H --> N
 J --> K
-B --> |persist to localStorage| B
+B --> |persist to Redux| B
 D --> |check role=admin| D
 E --> |check role=faculty| E
 F --> |check role=student| F
@@ -110,13 +108,13 @@ F --> |check role=student| F
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 - [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
-- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
-- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
 - [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [asyncHandler.js:1-47](file://Backend/src/utils/asyncHandler.js#L1-L47)
 
 ## Core Components
 - **JWT Middleware System**:
@@ -141,7 +139,7 @@ F --> |check role=student| F
   - Refresh token storage for session management
   - User ID generation based on role type
 - **Frontend Authentication State**:
-  - Redux slice with localStorage persistence
+  - Redux slice with authentication state management
   - Login/logout action management
   - Role-based navigation handling
 - **Security Enhancements**:
@@ -152,10 +150,10 @@ F --> |check role=student| F
 
 **Section sources**
 - [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
-- [user.controller.js:355-576](file://Backend/src/controllers/user.controller.js#L355-L576)
-- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
-- [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [user.controller.js:355-583](file://Backend/src/controllers/user.controller.js#L355-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
+- [authSlice.js:1-26](file://Client/src/store/auth/authSlice.js#L1-L26)
 
 ## Architecture Overview
 The authentication flow now operates on a JWT-based token system with comprehensive security measures:
@@ -265,10 +263,10 @@ RefreshCookie --> Return
 
 **Diagram sources**
 - [Token.js:4-34](file://Backend/src/utils/Token.js#L4-L34)
-- [Token.js:55-67](file://Backend/src/utils/Token.js#L55-L67)
+- [Token.js:58-71](file://Backend/src/utils/Token.js#L58-L71)
 
 **Section sources**
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 
 ### Backend: Enhanced User Controller (JWT Authentication)
 - **Comprehensive Authentication Flow**:
@@ -308,7 +306,7 @@ SetCookies --> Success["Return user data with tokens"]
 - [user.controller.js:355-464](file://Backend/src/controllers/user.controller.js#L355-L464)
 
 **Section sources**
-- [user.controller.js:355-576](file://Backend/src/controllers/user.controller.js#L355-L576)
+- [user.controller.js:355-583](file://Backend/src/controllers/user.controller.js#L355-L583)
 
 ### Backend: Advanced User Model
 - **Enhanced Role System**:
@@ -348,20 +346,20 @@ User --> TokenManager : "uses for JWT"
 ```
 
 **Diagram sources**
-- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 
 **Section sources**
-- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
 
 ### Frontend: Redux Authentication Slice
 - **State Management**:
-  - Authentication state with localStorage persistence
+  - Authentication state with Redux persistence
   - User data storage with automatic serialization
   - Login action sets authentication flags and user data
   - Logout action clears all authentication state
 - **Persistence Strategy**:
-  - localStorage for session continuity across browser restarts
+  - Redux store for session continuity across browser restarts
   - Automatic state restoration on application load
   - Clean separation of authentication and application state
 
@@ -369,21 +367,17 @@ User --> TokenManager : "uses for JWT"
 flowchart TD
 LoginAction["Dispatch login action"] --> SetAuth["Set isAuthenticated = true"]
 SetAuth --> SetUser["Set userData = payload"]
-SetUser --> Persist["localStorage.setItem('isAuthenticated', true)"]
-Persist --> PersistUser["localStorage.setItem('userData', JSON.stringify)"]
-PersistUser --> Ready["Authentication ready"]
+SetUser --> Ready["Authentication ready"]
 LogoutAction["Dispatch logout action"] --> ClearAuth["Set isAuthenticated = false"]
 ClearAuth --> ClearUser["Set userData = null"]
-ClearUser --> RemoveAuth["localStorage.removeItem('isAuthenticated')"]
-RemoveAuth --> RemoveUser["localStorage.removeItem('userData')"]
-RemoveUser --> LoggedOut["Logged out state"]
+ClearUser --> LoggedOut["Logged out state"]
 ```
 
 **Diagram sources**
 - [authSlice.js:14-25](file://Client/src/store/auth/authSlice.js#L14-L25)
 
 **Section sources**
-- [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
+- [authSlice.js:1-26](file://Client/src/store/auth/authSlice.js#L1-L26)
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
 
 ### Frontend: Login Page and Role-Based Routing
@@ -421,7 +415,7 @@ L->>L : "dispatch(login(user))"
 - [Login.jsx:15-45](file://Client/src/pages/Login.jsx#L15-L45)
 
 **Section sources**
-- [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
+- [Login.jsx:1-320](file://Client/src/pages/Login.jsx#L1-L320)
 
 ### Frontend: Protected Dashboards (RBAC)
 - **Enhanced Role-Based Access Control**:
@@ -538,37 +532,36 @@ LS --> ST
 ```
 
 **Diagram sources**
-- [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
+- [authSlice.js:1-26](file://Client/src/store/auth/authSlice.js#L1-L26)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
+- [Login.jsx:1-320](file://Client/src/pages/Login.jsx#L1-L320)
 - [Admin.jsx:1-638](file://Client/src/pages/dashboard/Admin.jsx#L1-L638)
 - [Faculty.jsx:1-22](file://Client/src/pages/dashboard/Faculty.jsx#L1-L22)
 - [Student.jsx:1-23](file://Client/src/pages/dashboard/Student.jsx#L1-L23)
 - [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
-- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
-- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
 - [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [asyncHandler.js:1-47](file://Backend/src/utils/asyncHandler.js#L1-L47)
 
 **Section sources**
-- [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
+- [authSlice.js:1-26](file://Client/src/store/auth/authSlice.js#L1-L26)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [Login.jsx:1-116](file://Client/src/pages/Login.jsx#L1-L116)
+- [Login.jsx:1-320](file://Client/src/pages/Login.jsx#L1-L320)
 - [Admin.jsx:1-638](file://Client/src/pages/dashboard/Admin.jsx#L1-L638)
 - [Faculty.jsx:1-22](file://Client/src/pages/dashboard/Faculty.jsx#L1-L22)
 - [Student.jsx:1-23](file://Client/src/pages/dashboard/Student.jsx#L1-L23)
 - [user.routers.js:1-39](file://Backend/src/routes/user.routers.js#L1-L39)
-- [user.controller.js:1-576](file://Backend/src/controllers/user.controller.js#L1-L576)
-- [user.models.js:1-98](file://Backend/src/models/user.models.js#L1-L98)
+- [user.controller.js:1-583](file://Backend/src/controllers/user.controller.js#L1-L583)
+- [user.models.js:1-97](file://Backend/src/models/user.models.js#L1-L97)
 - [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [asyncHandler.js:1-4](file://Backend/src/utils/asyncHandler.js#L1-L4)
-- [package.json:14-23](file://Backend/package.json#L14-L23)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [asyncHandler.js:1-47](file://Backend/src/utils/asyncHandler.js#L1-L47)
 
 ## Performance Considerations
 - **JWT Token Benefits**:
@@ -607,9 +600,9 @@ LS --> ST
   - Review server logs for detailed error information
 
 **Section sources**
-- [user.controller.js:355-576](file://Backend/src/controllers/user.controller.js#L355-L576)
+- [user.controller.js:355-583](file://Backend/src/controllers/user.controller.js#L355-L583)
 - [auth.middleware.js:1-120](file://Backend/src/middlewares/auth.middleware.js#L1-L120)
-- [Token.js:1-68](file://Backend/src/utils/Token.js#L1-L68)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 - [authSlice.js:20-25](file://Client/src/store/auth/authSlice.js#L20-L25)
 - [Admin.jsx:40-49](file://Client/src/pages/dashboard/Admin.jsx#L40-L49)
 - [Faculty.jsx:10-19](file://Client/src/pages/dashboard/Faculty.jsx#L10-L19)

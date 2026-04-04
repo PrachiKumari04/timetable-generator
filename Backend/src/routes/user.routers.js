@@ -9,6 +9,7 @@ import {
   logoutUser,
   refreshAccessToken,
   changePassword,
+  getCurrentUser,
 } from "../controllers/user.controller.js";
 import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
@@ -27,6 +28,7 @@ router
     authorizeRoles("admin", "faculty", "coordinator", "hod"),
     getAllUsers,
   );
+router.route("/me").get(verifyJWT, getCurrentUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/change-password").post(verifyJWT, changePassword);
 router

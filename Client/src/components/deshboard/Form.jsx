@@ -13,19 +13,42 @@ function Form({ currentEntityConfig, activeEntity }) {
         if (editingEntityId && activeEntity && masterData[activeEntity]) {
             const entityToEdit = masterData[activeEntity].find(e => e._id === editingEntityId || e.id === editingEntityId);
             if (entityToEdit) {
-                setEntityForm(entityToEdit);
+                // Format date fields for input type="date"
+                const formattedData = { ...entityToEdit };
+                currentEntityConfig.fields.forEach(field => {
+                    if (field.type === 'date' && formattedData[field.name]) {
+                        const date = new Date(formattedData[field.name]);
+                        if (!isNaN(date.getTime())) {
+                            formattedData[field.name] = date.toISOString().split('T')[0];
+                        }
+                    }
+                });
+                setEntityForm(formattedData);
             }
         } else {
             setEntityForm({});
         }
-    }, [editingEntityId, activeEntity, masterData]);
+    }, [editingEntityId, activeEntity, masterData, currentEntityConfig]);
 
     const handleEntityInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setEntityForm(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        
+        // Handle nested object fields (e.g., ltpHours.l)
+        if (name.includes('.')) {
+            const [parent, child] = name.split('.');
+            setEntityForm(prev => ({
+                ...prev,
+                [parent]: {
+                    ...(prev[parent] || {}),
+                    [child]: type === 'checkbox' ? checked : value
+                }
+            }));
+        } else {
+            setEntityForm(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
     };
 
     const resetEntityForm = () => {
@@ -79,11 +102,26 @@ function Form({ currentEntityConfig, activeEntity }) {
                                     onChange={handleEntityInputChange}
                                     className="h-4 w-4 text-primary border-border rounded focus:ring-primary bg-background focus:ring-offset-background"
                                 />
-                                <span className="ml-2 text-sm text-text/80">Is Active</span>
+                                <span className="ml-2 text-sm text-text/80">Yes</span>
                             </div>
+                        ) : field.type === 'select' ? (
+                            <select
+                                name={field.name}
+                                value={entityForm[field.name] || ""}
+                                onChange={handleEntityInputChange}
+                                required={field.required}
+                                className="w-full px-4 py-2 text-sm text-text bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow duration-200"
+                            >
+                                <option value="">Select {field.label}</option>
+                                {field.options?.map((option) => (
+                                    <option key={option} value={option}>
+                                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
                         ) : (
                             <input
-                                type="text"
+                                type={field.type || 'text'}
                                 name={field.name}
                                 value={entityForm[field.name] || ""}
                                 onChange={handleEntityInputChange}
