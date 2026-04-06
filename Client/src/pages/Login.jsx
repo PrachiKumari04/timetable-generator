@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, useEffect, memo } from "react";
 import Container from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
@@ -55,7 +55,7 @@ const EyeIcon = memo(({ visible }) => (
 
 function Login() {
   const dispatch = useDispatch();
-  const authLoading = useSelector((state) => state.auth.loading);
+  const { isAuthenticated, userData, loading: authLoading } = useSelector((state) => state.auth);
   const theme = useSelector((state) => state.theme.theme);
   const navigate = useNavigate();
 
@@ -69,8 +69,21 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Show loading while verifying session
-  if (authLoading) {
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && userData?.role) {
+      const userRole = userData.role.toLowerCase();
+      const redirectPath = {
+        admin: "/admin",
+        student: "/student",
+        faculty: "/faculty",
+      }[userRole] || "/";
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, userData, navigate]);
+
+  // Show loading while verifying session (only on initial app load, not during login)
+  if (authLoading && !isSubmitting) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="flex items-center space-x-2">
@@ -142,9 +155,11 @@ function Login() {
         return;
       }
 
-      const { user, accessToken, refreshToken } = apiResponse.data || {};
+      // Backend returns user data directly in data, not wrapped in 'user' property
+      const responseData = apiResponse.data || {};
+      const { accessToken, refreshToken, ...user } = responseData;
       
-      if (!user || !accessToken) {
+      if (!user._id || !accessToken) {
         setErrors({ submit: "Invalid response from server." });
         setIsSubmitting(false);
         return;
@@ -164,18 +179,7 @@ function Login() {
       toast.dismiss(loadingToastId);
       toast.success(`Welcome back, ${user.user_name || user.user_id || "User"}!`);
       
-      // Navigate based on role - use lowercase role for consistency
-      const userRole = user.role?.toLowerCase();
-      const redirectPath = {
-        admin: "/admin",
-        student: "/student",
-        faculty: "/faculty",
-      }[userRole] || "/";
-      
-      // Small delay to ensure Redux state is updated before navigation
-      setTimeout(() => {
-        navigate(redirectPath, { replace: true });
-      }, 100);
+      // Navigation is handled by useEffect that watches isAuthenticated
       
     } catch (error) {
       toast.dismiss(loadingToastId);
@@ -185,7 +189,7 @@ function Login() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [values, dispatch, navigate]);
+  }, [values, dispatch]);
 
 
 
