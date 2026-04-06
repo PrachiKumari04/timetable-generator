@@ -2,6 +2,7 @@ import { Timetable } from "../models/timetable.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 // Add timetables
 export const addTimetables = asyncHandler(async (req, res) => {
@@ -41,17 +42,50 @@ export const addTimetables = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, ttRecords, "Timetables added successfully"));
 });
 
-// Get all timetables
+// Get all timetables with pagination
 export const getAllTimetables = asyncHandler(async (req, res) => {
-  const timetables = await Timetable.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!timetables || timetables.length === 0) {
-    throw new ApiError(404, "No timetables found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { timetable_id: { $regex: search, $options: "i" } },
+      { semester_id: { $regex: search, $options: "i" } },
+      { academicYear: { $regex: search, $options: "i" } },
+      { generatedBy: { $regex: search, $options: "i" } },
+    ];
   }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(Timetable, filter, page, limit, { sort });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, timetables, "Timetables fetched successfully"));
+    .json(new ApiResponse(200, result, "Timetables retrieved successfully"));
 });
 
 // Get timetable by ID

@@ -2,6 +2,7 @@ import { SubjectAllocation } from "../models/subjectAllocation.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 // Add subject allocations
 export const addSubjectAllocations = asyncHandler(async (req, res) => {
@@ -46,17 +47,51 @@ export const addSubjectAllocations = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, allocRecords, "Subject allocations added successfully"));
 });
 
-// Get all subject allocations
+// Get all subject allocations with pagination
 export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
-  const allocations = await SubjectAllocation.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!allocations || allocations.length === 0) {
-    throw new ApiError(404, "No subject allocations found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { subjectAllocation_id: { $regex: search, $options: "i" } },
+      { semester_id: { $regex: search, $options: "i" } },
+      { program_id: { $regex: search, $options: "i" } },
+      { faculty_id: { $regex: search, $options: "i" } },
+      { course_id: { $regex: search, $options: "i" } },
+    ];
   }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(SubjectAllocation, filter, page, limit, { sort });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, allocations, "Subject allocations fetched successfully"));
+    .json(new ApiResponse(200, result, "Subject allocations retrieved successfully"));
 });
 
 // Get subject allocation by ID

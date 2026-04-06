@@ -1,6 +1,8 @@
 import { Semester } from "../models/semester.models.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 //Add semester
 export const addSemester = asyncHandler(async (req, res) => {
@@ -41,17 +43,48 @@ export const addSemester = asyncHandler(async (req, res) => {
   });
 });
 
-//Get all semesters
+// Get all semesters with pagination
 export const getAllSemesters = asyncHandler(async (req, res) => {
-  const semesters = await Semester.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (semesters.length === 0) throw new ApiError(404, "No semesters found");
-
-  res.status(200).json({
-    success: true,
-    message: "Semesters fetched successfully",
-    data: semesters,
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { semester_id: { $regex: search, $options: "i" } },
+      { semester_name: { $regex: search, $options: "i" } },
+    ];
+  }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
   });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(Semester, filter, page, limit, { sort });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Semesters retrieved successfully"));
 });
 
 //Update semester

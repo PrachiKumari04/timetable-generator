@@ -29,19 +29,13 @@ function Admin() {
   // Verify session first, then fetch data
   useEffect(() => {
     if (isAuthenticated && userData?.role === "admin") {
-      dispatch(fetchMasterData("program"));
-      dispatch(fetchMasterData("course"));
-      dispatch(fetchMasterData("room"));
-      dispatch(fetchMasterData("division"));
-      dispatch(fetchMasterData("specialization"));
-      dispatch(fetchMasterData("faculty"));
-      dispatch(fetchMasterData("student"));
-      dispatch(fetchMasterData("qualification_type"));
-      dispatch(fetchMasterData("subject_allocation"));
-      dispatch(fetchMasterData("time_slot"));
-      dispatch(fetchMasterData("timetable"));
-      dispatch(fetchMasterData("timetable_entry"));
-      dispatch(fetchMasterData("user"));
+      // Fetch initial data for all entities with default pagination
+      const entities = ["program", "course", "room", "division", "specialization", 
+                       "faculty", "student", "qualification_type", "subject_allocation", 
+                       "time_slot", "timetable", "timetable_entry", "user"];
+      entities.forEach(entityKey => {
+        dispatch(fetchMasterData({ entityKey, params: { page: 1, limit: 10 } }));
+      });
     }
   }, [dispatch, isAuthenticated, userData]);
 
@@ -364,7 +358,8 @@ function Admin() {
           name: "gender",
           label: "Gender",
           placeholder: "e.g. Male/Female/Other",
-          type: "text",
+          type: "select",
+          options: ["male", "female", "other"],
           required: true,
         },
         {
@@ -746,7 +741,7 @@ function Admin() {
 
   useEffect(() => {
     if (activeEntity && !masterData[activeEntity]) {
-      dispatch(fetchMasterData(activeEntity));
+      dispatch(fetchMasterData({ entityKey: activeEntity, params: { page: 1, limit: 10 } }));
     }
   }, [activeEntity, dispatch, masterData]);
 

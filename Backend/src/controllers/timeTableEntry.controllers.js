@@ -2,6 +2,7 @@ import { TimeTableEntry } from "../models/timeTableEntry.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 // Add timetable entries
 export const addTimeTableEntries = asyncHandler(async (req, res) => {
@@ -44,17 +45,51 @@ export const addTimeTableEntries = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, entryRecords, "Timetable entries added successfully"));
 });
 
-// Get all timetable entries
+// Get all timetable entries with pagination
 export const getAllTimeTableEntries = asyncHandler(async (req, res) => {
-  const entries = await TimeTableEntry.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!entries || entries.length === 0) {
-    throw new ApiError(404, "No timetable entries found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { entry_id: { $regex: search, $options: "i" } },
+      { faculty_id: { $regex: search, $options: "i" } },
+      { course_id: { $regex: search, $options: "i" } },
+      { class_group: { $regex: search, $options: "i" } },
+      { room_no: { $regex: search, $options: "i" } },
+    ];
   }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(TimeTableEntry, filter, page, limit, { sort });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, entries, "Timetable entries fetched successfully"));
+    .json(new ApiResponse(200, result, "Timetable entries retrieved successfully"));
 });
 
 // Get timetable entry by ID

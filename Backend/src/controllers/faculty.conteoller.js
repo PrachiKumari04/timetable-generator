@@ -2,6 +2,7 @@ import { Faculty } from "../models/faculty.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 //  Register new faculty
 export const registerFaculty = asyncHandler(async (req, res) => {
@@ -82,19 +83,50 @@ export const registerFaculty = asyncHandler(async (req, res) => {
     );
 });
 
-// Get all Faculty
+// Get all faculties with pagination
 export const getAllFaculties = asyncHandler(async (req, res) => {
-  const faculties = await Faculty.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!faculties || faculties.length === 0) {
-    throw new ApiError(404, "No faculties found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { faculty_id: { $regex: search, $options: "i" } },
+      { faculty_name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { specialization: { $regex: search, $options: "i" } },
+    ];
+  }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
   }
 
-  console.table("Faculties -->", faculties);
+  const result = await paginateMongoose(Faculty, filter, page, limit, { sort });
 
-  res
+  return res
     .status(200)
-    .json(new ApiResponse(200, faculties, "Faculties fetched successfully"));
+    .json(new ApiResponse(200, result, "Faculties retrieved successfully"));
 });
 
 // Get faculty by ID

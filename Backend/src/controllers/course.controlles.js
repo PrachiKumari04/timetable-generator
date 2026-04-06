@@ -1,5 +1,8 @@
 import { Course } from "../models/course.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 // Add courses
 export const addCourses = asyncHandler(async (req, res) => {
@@ -39,17 +42,48 @@ export const addCourses = asyncHandler(async (req, res) => {
     );
 });
 
-// get courses
+// Get all courses with pagination and filtering
 export const getAllCourses = asyncHandler(async (req, res) => {
-  const courses = await Course.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!courses || courses.length === 0) {
-    throw new ApiError(404, "No courses found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { course_id: { $regex: search, $options: "i" } },
+      { course_name: { $regex: search, $options: "i" } },
+    ];
   }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(Course, filter, page, limit, { sort });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, courses, "Courses retrieved successfully"));
+    .json(new ApiResponse(200, result, "Courses retrieved successfully"));
 });
 
 // Get course by id

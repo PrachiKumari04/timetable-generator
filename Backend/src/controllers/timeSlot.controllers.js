@@ -2,6 +2,7 @@ import { TimeSlot } from "../models/timeSlot.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 // Add time slots
 export const addTimeSlots = asyncHandler(async (req, res) => {
@@ -42,17 +43,49 @@ export const addTimeSlots = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, slotRecords, "Time slots added successfully"));
 });
 
-// Get all time slots
+// Get all time slots with pagination
 export const getAllTimeSlots = asyncHandler(async (req, res) => {
-  const timeSlots = await TimeSlot.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!timeSlots || timeSlots.length === 0) {
-    throw new ApiError(404, "No time slots found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { slot_id: { $regex: search, $options: "i" } },
+      { day_of_week: { $regex: search, $options: "i" } },
+      { slot_type: { $regex: search, $options: "i" } },
+    ];
   }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(TimeSlot, filter, page, limit, { sort });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, timeSlots, "Time slots fetched successfully"));
+    .json(new ApiResponse(200, result, "Time slots retrieved successfully"));
 });
 
 // Get time slot by ID

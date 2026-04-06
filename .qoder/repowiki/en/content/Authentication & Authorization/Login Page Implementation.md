@@ -12,16 +12,16 @@
 - [user.routers.js](file://Backend/src/routes/user.routers.js)
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
+- [user.models.js](file://Backend/src/models/user.models.js)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Removed remember me functionality and simplified authentication flow
-- Implemented direct API calls with enhanced error handling and toast notifications
-- Added password visibility toggle with custom SVG icons
-- Enhanced form validation with comprehensive client-side validation rules
-- Improved user feedback mechanisms with loading states and success/error notifications
-- Streamlined Redux integration with direct dispatch patterns
+- Updated validation rules to reflect the change from username to user_id field
+- Modified form submission to use user_id instead of username for authentication
+- Enhanced backend integration to support user_id-based authentication
+- Updated error handling to work with user_id validation
+- Maintained backward compatibility with existing UI components
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -39,6 +39,8 @@
 ## Introduction
 
 The login page implementation in the Timetable Project demonstrates a modern, streamlined React-based authentication system with comprehensive form validation, enhanced error handling, and improved user feedback mechanisms. This documentation covers the updated login page component that now features a simplified authentication flow with direct API calls, enhanced error handling with toast notifications, and improved user experience through password visibility controls and form validation improvements.
+
+**Updated** The authentication system has been updated to use user_id instead of username for login purposes, reflecting the new authentication system where users log in with their manually assigned user_id instead of username. The form validation and API integration have been updated to use the user_id field throughout the authentication flow.
 
 The implementation showcases React best practices with Redux Toolkit for state management, featuring proper separation of concerns between UI presentation, business logic, and data persistence. The system supports role-based navigation with automatic redirection based on user roles (admin, student, faculty) and includes sophisticated error handling with user-friendly feedback mechanisms through toast notifications.
 
@@ -66,6 +68,7 @@ subgraph "Enhanced Backend API"
 K[user.controller.js] --> L[ApiResponse.js]
 K --> M[ApiError.js]
 N[user.routers.js] --> K
+O[user.models.js] --> K
 end
 C --> N
 ```
@@ -75,8 +78,9 @@ C --> N
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 - [apiClient.js:1-213](file://Client/src/services/apiClient.js#L1-L213)
 - [toast.js:1-136](file://Client/src/utils/toast.js#L1-L136)
-- [user.controller.js:360-471](file://Backend/src/controllers/user.controller.js#L360-L471)
+- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 
 **Section sources**
 - [Login.jsx:1-322](file://Client/src/pages/Login.jsx#L1-L322)
@@ -86,7 +90,7 @@ C --> N
 
 ### Streamlined Login Component Architecture
 
-The Login component now implements a focused authentication flow with enhanced validation, error handling, and user feedback:
+The Login component now implements a focused authentication flow with enhanced validation, error handling, and user feedback using user_id field:
 
 ```mermaid
 classDiagram
@@ -145,7 +149,7 @@ The component leverages React hooks for state management, implements comprehensi
 
 ## Architecture Overview
 
-The streamlined authentication flow incorporates enhanced validation, comprehensive error handling, and improved user feedback mechanisms:
+The streamlined authentication flow incorporates enhanced validation, comprehensive error handling, and improved user feedback mechanisms using user_id field:
 
 ```mermaid
 sequenceDiagram
@@ -155,13 +159,13 @@ participant V as Form Validation
 participant A as ApiClient
 participant B as Backend API
 participant R as Redux Store
-U->>L : Fill streamlined login form
-L->>V : Validate form fields
+U->>L : Fill streamlined login form with user_id
+L->>V : Validate form fields (user_id)
 V-->>L : Validation results
 alt Validation Passes
 U->>L : Submit form
 L->>L : Show loading toast
-L->>A : POST /api/v1/users/login
+L->>A : POST /api/v1/users/login with user_id
 A->>B : Forward request with cookies
 B-->>A : Authentication response
 A-->>L : Processed response
@@ -181,30 +185,30 @@ end
 
 **Diagram sources**
 - [Login.jsx:111-188](file://Client/src/pages/Login.jsx#L111-L188)
-- [user.controller.js:360-471](file://Backend/src/controllers/user.controller.js#L360-L471)
+- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 - [authSlice.js:28-37](file://Client/src/store/auth/authSlice.js#L28-L37)
 
-The architecture ensures comprehensive validation with real-time feedback, robust error handling with user-friendly messaging, and streamlined authentication flow with direct API integration.
+The architecture ensures comprehensive validation with real-time feedback, robust error handling with user-friendly messaging, and streamlined authentication flow with direct API integration using user_id field.
 
 **Section sources**
 - [Login.jsx:111-188](file://Client/src/pages/Login.jsx#L111-L188)
-- [user.controller.js:360-471](file://Backend/src/controllers/user.controller.js#L360-L471)
+- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 
 ## Detailed Component Analysis
 
 ### Streamlined Form Handling and Validation
 
-The login form now implements comprehensive validation with real-time feedback and enhanced error handling:
+The login form now implements comprehensive validation with real-time feedback and enhanced error handling using user_id field:
 
 #### Enhanced Form Submission Flow
 
 ```mermaid
 flowchart TD
 A[Streamlined Form Submission] --> B[Prevent Default]
-B --> C[Comprehensive Validation]
+B --> C[Comprehensive Validation (user_id)]
 C --> D[Extract Form Data]
 D --> E[Trim & Sanitize Input]
-E --> F[Prepare Request Payload]
+E --> F[Prepare Request Payload with user_id]
 F --> G[Show Loading Toast]
 G --> H[Direct API Request]
 H --> I{Response Success?}
@@ -224,7 +228,7 @@ O --> P[Update Form Errors]
 
 The form includes enhanced input fields with advanced validation and user experience improvements:
 
-- **Username Field**: Text input with required validation, minimum length requirement, and proper ARIA attributes
+- **User ID Field**: Text input with required validation, minimum length requirement, and proper ARIA attributes
 - **Password Field**: Secure password input with visibility toggle, required validation, and masking support
 - **Submit Button**: Disabled state handling during submission with loading indicator and enhanced feedback
 
@@ -313,7 +317,7 @@ The authentication process integrates with a comprehensive backend API featuring
 The backend provides a dedicated login endpoint (`/api/v1/users/login`) with streamlined security and comprehensive error handling:
 
 1. **Input Validation**: Validates required fields with detailed error messages
-2. **User Verification**: Searches for user records with flexible ID matching
+2. **User Verification**: Searches for user records with flexible user_id matching
 3. **Password Security**: Implements secure password comparison
 4. **Token Generation**: Creates both access and refresh tokens
 5. **User Data Retrieval**: Aggregates comprehensive user information
@@ -330,7 +334,7 @@ The backend uses a standardized response format through the `ApiResponse` utilit
 
 **Section sources**
 - [Login.jsx:134-151](file://Client/src/pages/Login.jsx#L134-L151)
-- [user.controller.js:360-471](file://Backend/src/controllers/user.controller.js#L360-L471)
+- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 - [ApiResponse.js:5-74](file://Backend/src/utils/ApiResponse.js#L5-L74)
 
 ## Advanced Features
@@ -341,14 +345,16 @@ The login component implements a streamlined validation system with real-time fe
 
 #### Validation Rules Implementation
 
+**Updated** The validation system now uses user_id field instead of username:
+
 ```mermaid
 flowchart TD
-A[Form Validation] --> B[Username Validation]
-B --> C{Username Empty?}
-C --> |Yes| D[Username Required]
+A[Form Validation] --> B[User ID Validation]
+B --> C{User ID Empty?}
+C --> |Yes| D[User ID Required]
 C --> |No| E{Length < 3?}
-E --> |Yes| F[Username Too Short]
-E --> |No| G[Username Valid]
+E --> |Yes| F[User ID Too Short]
+E --> |No| G[User ID Valid]
 A --> H[Password Validation]
 H --> I{Password Empty?}
 I --> |Yes| J[Password Required]
@@ -583,7 +589,7 @@ The streamlined login component implements extensive accessibility features:
 ```mermaid
 graph TB
 subgraph "Accessibility Features"
-A[ARIA Labels] --> B[Username Field]
+A[ARIA Labels] --> B[User ID Field]
 A --> C[Password Field]
 A --> D[Submit Button]
 A --> E[Theme Toggle]
@@ -672,7 +678,7 @@ U --> Z[Retry Later]
 ```
 
 **Diagram sources**
-- [user.controller.js:360-471](file://Backend/src/controllers/user.controller.js#L360-L471)
+- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 - [ApiError.js:28-80](file://Backend/src/utils/ApiError.js#L28-L80)
 
 #### Enhanced Error Handling Implementation
@@ -703,7 +709,7 @@ Common performance issues with solutions:
 - **Network Optimization**: Retry logic and exponential backoff for reliability
 
 **Section sources**
-- [user.controller.js:360-471](file://Backend/src/controllers/user.controller.js#L360-L471)
+- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 - [ApiError.js:28-80](file://Backend/src/utils/ApiError.js#L28-L80)
 - [apiClient.js:105-152](file://Client/src/services/apiClient.js#L105-L152)
 
@@ -711,11 +717,13 @@ Common performance issues with solutions:
 
 The streamlined login page implementation demonstrates a sophisticated and comprehensive authentication system that successfully combines modern React patterns with enhanced validation, accessibility compliance, and improved user feedback mechanisms. The implementation now includes major enhancements that significantly improve user experience, streamline authentication flow, and maintain code quality.
 
+**Updated** The authentication system has been successfully updated to use user_id instead of username for login purposes, reflecting the new authentication system where users log in with their manually assigned user_id instead of username. The form validation and API integration have been updated to use the user_id field throughout the authentication flow.
+
 Key strengths of the streamlined implementation include:
-- **Streamlined Form Validation**: Comprehensive client-side validation with real-time feedback
+- **Streamlined Form Validation**: Comprehensive client-side validation with real-time feedback using user_id field
 - **Password Visibility Control**: User-friendly password management with accessibility support
 - **Enhanced Error Handling**: Comprehensive error management with user-friendly toast notifications
-- **Direct API Integration**: Streamlined authentication flow with direct API calls
+- **Direct API Integration**: Streamlined authentication flow with direct API calls using user_id
 - **Improved User Feedback**: Non-blocking user feedback for all actions through toast notifications
 - **Persistent Theme Support**: Seamless theme switching with localStorage persistence
 - **Robust Backend Integration**: Secure token-based authentication with comprehensive error handling

@@ -1,6 +1,8 @@
 import { Specialization } from "../models/specialization.models.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 //Add specialization
 export const addSpecialization = asyncHandler(async (req, res) => {
@@ -46,18 +48,48 @@ export const addSpecialization = asyncHandler(async (req, res) => {
   });
 });
 
-//Get all specialization
+// Get all specializations with pagination
 export const getAllSpecialization = asyncHandler(async (req, res) => {
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  const specialization = await Specialization.find();
-
-  if (specialization.length === 0) throw new ApiError(404, "No specialization found");
-
-  res.status(200).json({
-    success: true,
-    message: "Specialization fetched successfully",
-    data: specialization,
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { specialization_id: { $regex: search, $options: "i" } },
+      { specialization_name: { $regex: search, $options: "i" } },
+    ];
+  }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
   });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(Specialization, filter, page, limit, { sort });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Specializations retrieved successfully"));
 });
 
 //Get specialization by id

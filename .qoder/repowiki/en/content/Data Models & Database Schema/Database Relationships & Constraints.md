@@ -7,9 +7,9 @@
 - [faculty.models.js](file://Backend/src/models/faculty.models.js)
 - [role.models.js](file://Backend/src/models/role.models.js)
 - [program.models.js](file://Backend/src/models/program.models.js)
-- [class.models.js](file://Backend/src/models/class.models.js)
+- [division.models.js](file://Backend/src/models/division.models.js)
 - [course.models.js](file://Backend/src/models/course.models.js)
-- [section.models.js](file://Backend/src/models/section.models.js)
+- [division.models.js](file://Backend/src/models/division.models.js)
 - [subject.models.js](file://Backend/src/models/subject.models.js)
 - [semester.models.js](file://Backend/src/models/semester.models.js)
 - [specialization.models.js](file://Backend/src/models/specialization.models.js)
@@ -18,6 +18,13 @@
 - [index.js](file://Backend/src/db/index.js)
 - [constenets.js](file://Backend/src/constenets.js)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated User model documentation to reflect the new manual user_id field as the primary identifier
+- Added documentation for the new user_id generation logic and role-based prefix system
+- Revised relationship explanations to account for the transition from dual-student_id/faculty_id to single user_id approach
+- Updated architectural diagrams to reflect the current user identification strategy
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -34,6 +41,7 @@
 ## Introduction
 This document focuses on the database relationships, foreign key constraints, and referential integrity across the academic timetable models. It explains:
 - Self-referencing relationships in the User model via created_by and updated_by
+- The new user_id generation system and its role-based prefix approach
 - Linking mechanisms between User and Personnel models via student_id and faculty_id
 - Hierarchical relationships among academic entities and their impact on data integrity
 - Indexing strategies and query optimization patterns
@@ -69,11 +77,11 @@ CNAME --> CONN
 ## Core Components
 This section outlines the primary models and their roles in the academic timetable domain.
 
-- User: Central identity and access model with role and self-referencing audit fields.
+- User: Central identity and access model with role-based user_id generation and self-referencing audit fields.
 - Student: Academic persona with unique identifiers and personal attributes.
 - Faculty: Academic staff persona with professional attributes.
 - Role: Permission and access control model with self-referencing audit fields.
-- Academic hierarchy: Program → Class → Course → Section → Subject → Semester → Specialization → Room → Hod
+- Academic hierarchy: Program → Division → Course → Division → Subject → Semester → Specialization → Room → Hod
 
 Key constraints observed:
 - Unique identifiers enforced at schema level for entities requiring uniqueness.
@@ -82,14 +90,14 @@ Key constraints observed:
 - Reference fields linking to parent entities via ObjectId and ref.
 
 **Section sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
 - [program.models.js:1-24](file://Backend/src/models/program.models.js#L1-L24)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
+- [division.models.js:1-32](file://Backend/src/models/division.models.js#L1-L32)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
-- [section.models.js:1-31](file://Backend/src/models/section.models.js#L1-L31)
+- [division.models.js:1-31](file://Backend/src/models/division.models.js#L1-L31)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
 - [semester.models.js:1-28](file://Backend/src/models/semester.models.js#L1-L28)
 - [specialization.models.js:1-39](file://Backend/src/models/specialization.models.js#L1-L39)
@@ -101,11 +109,10 @@ The academic timetable architecture forms a hierarchical graph of entities. Fore
 
 ```mermaid
 erDiagram
-PROGRAM ||--o{ CLASS : "has_many"
-CLASS ||--o{ SECTION : "has_many"
-SECTION ||--o{ SUBJECT : "associates_with"
+PROGRAM ||--o{ DIVISION : "has_many"
+DIVISION ||--o{ SUBJECT : "has_many"
 SUBJECT ||--o{ COURSE : "mapped_to"
-SEMESTER ||--o{ CLASS : "organizes"
+SEMESTER ||--o{ DIVISION : "organizes"
 SPECIALIZATION ||--o{ COURSE : "aligns_to"
 ROOM ||--o{ HOD : "allocated_for"
 FACULTY ||--o{ HOD : "assigned_as"
@@ -115,16 +122,11 @@ USER ||--o{ USER : "created_by/updated_by"
 PROGRAM {
 string program_id PK
 }
-CLASS {
-string class_id PK
+DIVISION {
+string division_id PK
 string program_id
 number year
 string course_id
-}
-SECTION {
-string section_name PK
-string class_id
-string discraption
 }
 SUBJECT {
 string subject_id PK
@@ -182,6 +184,7 @@ string role_name
 string role_description
 }
 USER {
+string user_id PK
 string password
 string role
 string student_id
@@ -194,39 +197,48 @@ object updated_by
 
 **Diagram sources**
 - [program.models.js:1-24](file://Backend/src/models/program.models.js#L1-L24)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [section.models.js:1-31](file://Backend/src/models/section.models.js#L1-L31)
+- [division.models.js:1-32](file://Backend/src/models/division.models.js#L1-L32)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [semester.models.js:1-28](file://Backend/src/models/semester.models.js#L1-L28)
 - [specialization.models.js:1-39](file://Backend/src/models/specialization.models.js#L1-L39)
 - [room.models.js:1-28](file://Backend/src/models/room.models.js#L1-L28)
 - [hod.models.js:1-57](file://Backend/src/models/hod.models.js#L1-L57)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 
 ## Detailed Component Analysis
 
 ### User Model: Identity, Roles, and Self-Referencing Audit
 - Purpose: Stores user credentials, role, and audit trail via created_by and updated_by.
+- Primary Identifier: user_id (manual string field) serves as the primary identifier, replacing the previous dual-student_id/faculty_id approach.
 - Self-referencing fields:
   - created_by: ObjectId referencing User
   - updated_by: ObjectId referencing User
 - Linking to Personnels:
   - student_id: Optional string identifier linking to Student
   - faculty_id: Optional string identifier linking to Faculty
+- User ID Generation Logic:
+  - Role-based prefix system: First 3 characters of role in uppercase (e.g., "ADM", "FAC", "STU")
+  - Student-based IDs: `${rolePrefix}${student_id}` (e.g., "STU12345")
+  - Faculty-based IDs: `${rolePrefix}${faculty_id}` (e.g., "FAC98765")
+  - System-generated IDs: `${rolePrefix}${timestamp}${random}` for non-personnel roles
 - Constraints:
   - role enum supports admin, faculty, student, coordinator, hod
+  - user_id is unique and required
   - timestamps enabled for createdAt/updatedAt
 - Referential Integrity:
   - created_by/updated_by are optional; absence implies system or anonymous creation.
   - No explicit MongoDB-level foreign key constraints; referential integrity relies on application-level checks.
 
+**Updated** The User model now uses a manual user_id field as the primary identifier with role-based generation logic, replacing the previous dual-student_id/faculty_id approach.
+
 ```mermaid
 classDiagram
 class User {
++string user_id PK
 +string password
 +string role
 +string student_id
@@ -247,12 +259,12 @@ User --> User : "self-reference created_by/updated_by"
 ```
 
 **Diagram sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 
 **Section sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 
 ### Role Model: Access Control with Audit Trail
 - Purpose: Defines roles and their descriptions with isActive flag.
@@ -283,26 +295,27 @@ Role --> User : "audit trail via created_by/updated_by"
 
 **Diagram sources**
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 
 **Section sources**
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
 
-### Academic Hierarchy: Program → Class → Course → Section → Subject
+### Academic Hierarchy: Program → Division → Course → Division → Subject
 - Program defines academic programs with unique identifiers.
-- Class links to Program and Course; year indicates academic year.
-- Section belongs to Class; description field present.
-- Subject represents subjects with credits; Course-subject mapping implied via shared identifiers.
+- Division links to Program and Course; year indicates academic year.
+- Subject belongs to Division; description field present.
+- Course represents courses with duration; Division-course mapping implied via shared identifiers.
 - Semester organizes academic terms; Specialization aligns with Program and Course.
 - Room provides physical allocation; Hod coordinates allocations across entities.
 
+**Updated** The academic hierarchy now uses Division consistently instead of Class, maintaining the same structural relationships.
+
 ```mermaid
 flowchart TD
-P["Program(program_id)"] --> C["Class(class_id)<br/>refs Program<br/>year, course_id"]
-C --> S["Section(section_name)<br/>refs Class"]
-S --> Sub["Subject(subject_id)<br/>refs Course implicitly"]
+P["Program(program_id)"] --> D["Division(division_id)<br/>refs Program<br/>year, course_id"]
+D --> S["Subject(subject_id)<br/>refs Course implicitly"]
 P --> Sp["Specialization(specilization_id)<br/>refs Program, Course"]
-Sem["Semester(semester_name)"] --> C
+Sem["Semester(semester_name)"] --> D
 R["Room(room_no)"] --> H["Hod(...)"]
 F["Faculty(faculty_id)"] --> H
 St["Student(student_id)"] --> H
@@ -310,21 +323,19 @@ St["Student(student_id)"] --> H
 
 **Diagram sources**
 - [program.models.js:1-24](file://Backend/src/models/program.models.js#L1-L24)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [section.models.js:1-31](file://Backend/src/models/section.models.js#L1-L31)
+- [division.models.js:1-32](file://Backend/src/models/division.models.js#L1-L32)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [semester.models.js:1-28](file://Backend/src/models/semester.models.js#L1-L28)
 - [specialization.models.js:1-39](file://Backend/src/models/specialization.models.js#L1-L39)
 - [room.models.js:1-28](file://Backend/src/models/room.models.js#L1-L28)
 - [hod.models.js:1-57](file://Backend/src/models/hod.models.js#L1-L57)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
 
 **Section sources**
 - [program.models.js:1-24](file://Backend/src/models/program.models.js#L1-L24)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [section.models.js:1-31](file://Backend/src/models/section.models.js#L1-L31)
+- [division.models.js:1-32](file://Backend/src/models/division.models.js#L1-L32)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [semester.models.js:1-28](file://Backend/src/models/semester.models.js#L1-L28)
@@ -334,7 +345,7 @@ St["Student(student_id)"] --> H
 
 ### Data Integrity and Referential Integrity
 - Unique constraints:
-  - Entities enforce unique identifiers at schema level (e.g., student_id, faculty_id, room_no, course_id, subject_id, program_id).
+  - Entities enforce unique identifiers at schema level (e.g., student_id, faculty_id, room_no, course_id, subject_id, program_id, user_id).
 - Enumerations:
   - role and program_name restrict values to predefined sets.
 - Self-referencing:
@@ -343,11 +354,13 @@ St["Student(student_id)"] --> H
   - No MongoDB-level ON DELETE CASCADE or referential actions are defined in the schema.
   - Application-level validation and transactional patterns should ensure referential integrity.
 
+**Updated** Added user_id to the list of unique constraints, reflecting the new primary identifier approach.
+
 **Section sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 - [room.models.js:1-28](file://Backend/src/models/room.models.js#L1-L28)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
@@ -360,9 +373,12 @@ Observed indexes:
 - Role.role_name: indexed for role-based filtering.
 - Subject.subject_name: indexed for subject lookups.
 - Program.program_name: constrained via enum; combined with unique program_id for fast joins.
+- User.user_id: unique index for efficient user lookups by generated identifier.
 - Composite and multi-key optimizations:
-  - Consider compound indexes on frequently filtered pairs (e.g., Program + Year in Class, or Semester + Program for scheduling).
+  - Consider compound indexes on frequently filtered pairs (e.g., Program + Year in Division, or Semester + Program for scheduling).
   - Ensure consistent casing policies (uppercase/lowercase) to maximize index effectiveness.
+
+**Updated** Added user_id to the indexing considerations, highlighting its importance as the primary user identifier.
 
 **Section sources**
 - [student.models.js:18-18](file://Backend/src/models/student.models.js#L18-L18)
@@ -370,18 +386,19 @@ Observed indexes:
 - [role.models.js:17-17](file://Backend/src/models/role.models.js#L17-L17)
 - [subject.models.js:17-17](file://Backend/src/models/subject.models.js#L17-L17)
 - [program.models.js:14-14](file://Backend/src/models/program.models.js#L14-L14)
+- [user.models.js:6-11](file://Backend/src/models/user.models.js#L6-L11)
 
 ### Cascading Behavior and Enforcement
 - No explicit cascade delete/update rules are defined in the schema.
 - Recommended application-level behavior:
-  - Prevent deletion of referenced entities (e.g., deleting a Program should fail if Classes exist).
+  - Prevent deletion of referenced entities (e.g., deleting a Program should fail if Divisions exist).
   - On soft deletes, propagate isActive=false and block dependent writes.
   - Enforce that User.student_id or User.faculty_id references must exist prior to enabling access.
 
 **Section sources**
 - [user.models.js:30-38](file://Backend/src/models/user.models.js#L30-L38)
-- [class.models.js:13-16](file://Backend/src/models/class.models.js#L13-L16)
-- [section.models.js:17-20](file://Backend/src/models/section.models.js#L17-L20)
+- [division.models.js:13-16](file://Backend/src/models/division.models.js#L13-L16)
+- [subject.models.js:17-20](file://Backend/src/models/subject.models.js#L17-L20)
 - [hod.models.js:7-46](file://Backend/src/models/hod.models.js#L7-L46)
 
 ### Data Validation Rules and Business Constraints
@@ -392,25 +409,27 @@ Observed indexes:
   - Subject: subject_id, subject_name, credit.
   - Program: program_id, program_name.
   - Room: room_no, floor_no, wing.
-  - Section: section_name, class_id, discraption.
+  - Division: division_id, class_id, discraption.
   - Semester: semester_name.
   - Specialization: specilization_id, specilization_name, program_id, course_id.
 - Enumerations:
   - User.role restricted to admin, faculty, student, coordinator, hod.
   - Program.program_name restricted to Under_Graduate, Post_Graduate, Diploma, Post_Diploma.
 - Uniqueness:
-  - student_id, faculty_id, room_no, course_id, subject_id, program_id are unique.
+  - student_id, faculty_id, room_no, course_id, subject_id, program_id, user_id are unique.
 - Case normalization:
   - Fields normalized to lowercase/uppercase as per schema to maintain consistency.
 
+**Updated** Added user_id to the uniqueness constraints and updated Division to use division_id instead of class_id.
+
 **Section sources**
-- [student.models.js:5-61](file://Backend/src/models/student.models.js#L5-L61)
-- [faculty.models.js:5-72](file://Backend/src/models/faculty.models.js#L5-L72)
+- [student.models.js:5-66](file://Backend/src/models/student.models.js#L5-L66)
+- [faculty.models.js:5-76](file://Backend/src/models/faculty.models.js#L5-L76)
 - [course.models.js:5-31](file://Backend/src/models/course.models.js#L5-L31)
 - [subject.models.js:5-28](file://Backend/src/models/subject.models.js#L5-L28)
 - [program.models.js:5-19](file://Backend/src/models/program.models.js#L5-L19)
 - [room.models.js:5-23](file://Backend/src/models/room.models.js#L5-L23)
-- [section.models.js:11-27](file://Backend/src/models/section.models.js#L11-L27)
+- [division.models.js:11-27](file://Backend/src/models/division.models.js#L11-L27)
 - [semester.models.js:12-22](file://Backend/src/models/semester.models.js#L12-L22)
 - [specialization.models.js:5-34](file://Backend/src/models/specialization.models.js#L5-L34)
 - [user.models.js:13-28](file://Backend/src/models/user.models.js#L13-L28)
@@ -418,9 +437,9 @@ Observed indexes:
 ### Complex Queries and Relationship Demonstrations
 Below are example query patterns that leverage the defined relationships. Replace placeholders with actual values and ensure proper middleware validation.
 
-- Find all Sections for a given Class:
-  - Filter: { class_id: ObjectId("...") }
-  - Populate: class_id to Class
+- Find all Divisions for a given Program:
+  - Filter: { program_id: ObjectId("...") }
+  - Populate: program_id to Program
 
 - Retrieve Subjects associated with a Course (via shared identifiers):
   - Filter: { subject_id: { $in: [ "...", "..." ] } }
@@ -438,16 +457,21 @@ Below are example query patterns that leverage the defined relationships. Replac
   - Filter: { role_id: "..." }
   - Populate: created_by and updated_by to User
 
-- Find a User’s audit trail:
+- Find a User's audit trail:
   - Filter: { created_by: ObjectId("...") } or { updated_by: ObjectId("...") }
 
-- Retrieve a Faculty member’s profile and related Hods:
+- Retrieve a Faculty member's profile and related Hods:
   - Filter: { faculty_id: ObjectId("...") }
   - Populate: related fields to Hod, Course, Specialization, Room
 
-Note: These are conceptual examples. Use your application’s controller and service layers to construct robust queries with error handling and population.
+- Find User by generated user_id:
+  - Filter: { user_id: "STU12345" } (for student user)
+  - Filter: { user_id: "FAC98765" } (for faculty user)
+  - Filter: { user_id: "ADM2024ABCD" } (for admin user)
 
-[No sources needed since this section provides conceptual examples]
+**Updated** Added examples for querying users by the new user_id field, demonstrating the role-based prefix system.
+
+Note: These are conceptual examples. Use your application's controller and service layers to construct robust queries with error handling and population.
 
 ## Dependency Analysis
 This section maps inter-model dependencies and highlights potential circular or cross-module references.
@@ -459,14 +483,12 @@ U --> F["Faculty"]
 R["Role"] --> U
 H["Hod"] --> P["Program"]
 H --> C["Course"]
-H --> Cl["Class"]
-H --> Sec["Section"]
+H --> D["Division"]
 H --> Sub["Subject"]
 H --> Ro["Room"]
 H --> Fa["Faculty"]
 H --> St["Student"]
-Cl --> P
-Sec --> Cl
+D --> P
 Sub --> C
 Sp["Specialization"] --> P
 Sp --> C
@@ -474,14 +496,13 @@ Ro --> H
 ```
 
 **Diagram sources**
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
 - [hod.models.js:1-57](file://Backend/src/models/hod.models.js#L1-L57)
 - [program.models.js:1-24](file://Backend/src/models/program.models.js#L1-L24)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [section.models.js:1-31](file://Backend/src/models/section.models.js#L1-L31)
+- [division.models.js:1-32](file://Backend/src/models/division.models.js#L1-L32)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [specialization.models.js:1-39](file://Backend/src/models/specialization.models.js#L1-L39)
@@ -489,21 +510,20 @@ Ro --> H
 
 **Section sources**
 - [hod.models.js:1-57](file://Backend/src/models/hod.models.js#L1-L57)
-- [class.models.js:1-32](file://Backend/src/models/class.models.js#L1-L32)
-- [section.models.js:1-31](file://Backend/src/models/section.models.js#L1-L31)
+- [division.models.js:1-32](file://Backend/src/models/division.models.js#L1-L32)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [program.models.js:1-24](file://Backend/src/models/program.models.js#L1-L24)
 - [specialization.models.js:1-39](file://Backend/src/models/specialization.models.js#L1-L39)
 - [room.models.js:1-28](file://Backend/src/models/room.models.js#L1-L28)
-- [user.models.js:1-61](file://Backend/src/models/user.models.js#L1-L61)
-- [student.models.js:1-66](file://Backend/src/models/student.models.js#L1-L66)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
+- [student.models.js:1-71](file://Backend/src/models/student.models.js#L1-L71)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 - [role.models.js:1-43](file://Backend/src/models/role.models.js#L1-L43)
 
 ## Performance Considerations
 - Index selection:
-  - Ensure indexes on fields used in frequent filters and joins (e.g., student_id, faculty_id, class_id, course_id, subject_id).
+  - Ensure indexes on fields used in frequent filters and joins (e.g., student_id, faculty_id, division_id, course_id, subject_id, user_id).
   - Consider compound indexes for multi-field queries (e.g., Program + Year).
 - Population strategies:
   - Limit population depth to avoid N+1 problems; fetch only required fields.
@@ -512,15 +532,15 @@ Ro --> H
 - Query pagination:
   - Apply skip/take or cursor-based pagination for large result sets.
 - Data normalization:
-  - Keep denormalized identifiers (e.g., student_id, faculty_id) consistent with normalized ObjectId references to optimize lookups.
+  - Keep denormalized identifiers (e.g., student_id, faculty_id, user_id) consistent with normalized ObjectId references to optimize lookups.
 
-[No sources needed since this section provides general guidance]
+**Updated** Added user_id to the index considerations, emphasizing its role as the primary user identifier.
 
 ## Troubleshooting Guide
 Common issues and resolutions grounded in schema constraints:
 
 - Duplicate unique identifiers:
-  - Symptoms: Insert failures for student_id, faculty_id, room_no, course_id, subject_id, program_id.
+  - Symptoms: Insert failures for student_id, faculty_id, room_no, course_id, subject_id, program_id, user_id.
   - Resolution: Validate uniqueness before insert; handle duplicate key errors gracefully.
 
 - Invalid role values:
@@ -539,6 +559,12 @@ Common issues and resolutions grounded in schema constraints:
   - Symptoms: Lookup failures due to inconsistent casing.
   - Resolution: Normalize stored values to lowercase/uppercase as per schema; apply consistent casing in queries.
 
+- User ID generation issues:
+  - Symptoms: Inconsistent user_id formats or conflicts in role-based prefixes.
+  - Resolution: Ensure role values are properly validated and that student_id/faculty_id are correctly formatted before user creation.
+
+**Updated** Added troubleshooting guidance for the new user_id generation system and role-based prefix logic.
+
 **Section sources**
 - [user.models.js:13-28](file://Backend/src/models/user.models.js#L13-L28)
 - [student.models.js:5-11](file://Backend/src/models/student.models.js#L5-L11)
@@ -551,9 +577,9 @@ Common issues and resolutions grounded in schema constraints:
 - [role.models.js:29-37](file://Backend/src/models/role.models.js#L29-L37)
 
 ## Conclusion
-The academic timetable models define a clear, hierarchical structure with strong uniqueness and enumeration constraints. Self-referencing audit fields in User and Role enable provenance tracking. While MongoDB does not enforce foreign key constraints by default, the schema’s design and the outlined validation and application-level strategies ensure robust referential integrity. Proper indexing and query patterns further support performance and scalability.
+The academic timetable models define a clear, hierarchical structure with strong uniqueness and enumeration constraints. The User model now uses a sophisticated user_id generation system with role-based prefixes, replacing the previous dual-student_id/faculty_id approach. Self-referencing audit fields in User and Role enable provenance tracking. While MongoDB does not enforce foreign key constraints by default, the schema's design and the outlined validation and application-level strategies ensure robust referential integrity. Proper indexing and query patterns further support performance and scalability.
 
-[No sources needed since this section summarizes without analyzing specific files]
+**Updated** Enhanced conclusion to reflect the new user_id generation system and its benefits for user identification and management.
 
 ## Appendices
 - Connection Details:

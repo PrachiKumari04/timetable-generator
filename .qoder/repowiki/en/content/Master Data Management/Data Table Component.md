@@ -18,6 +18,7 @@
 - Added conditional row styling based on account status (green for active, red for inactive)
 - Implemented visual feedback system for user status management
 - Updated data formatting logic to handle boolean fields with badge display
+- Added comprehensive filtering support for isActive field with dedicated filter controls
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -34,7 +35,7 @@
 ## Introduction
 This document describes the data table component responsible for displaying and managing master data records in the administrative dashboard. It covers table rendering logic, column configuration, data formatting, sorting, filtering, pagination, row selection, bulk operations, inline editing, Redux integration, real-time refresh patterns, customization examples, responsive behavior, and accessibility features.
 
-**Updated** Enhanced with specialized formatting for the isActive field with color-coded badges (green for active, red for inactive) and conditional row styling based on account status for improved visual feedback in user status management.
+**Updated** Enhanced with specialized formatting for the isActive field with color-coded badges (green for active, red for inactive) and conditional row styling based on account status for improved visual feedback in user status management. The table now includes comprehensive filtering capabilities specifically designed for boolean fields like isActive.
 
 ## Project Structure
 The data table resides within the dashboard module alongside related components for forms, sidebar navigation, and Excel import/export. Redux state manages data lifecycle and UI state.
@@ -131,9 +132,9 @@ Store-->>Table : useSelector(masterData[activeEntity]) updated
   - isActive field displays color-coded badges: green for active, red for inactive.
   - Other values are shown as-is from entity data.
 - Sorting, filtering, pagination:
-  - Not implemented in the current component.
-  - Sorting and filtering would require adding handlers and state in Admin or DataTable.
-  - Pagination would require slicing data and adding controls.
+  - Enhanced with comprehensive filtering support including dedicated boolean filters for isActive field.
+  - Sorting implemented with visual indicators and toggle functionality.
+  - Pagination with configurable items per page and navigation controls.
 - Row selection and bulk operations:
   - Not implemented in the current component.
   - Would require checkboxes, selection state, and batch action handlers.
@@ -146,7 +147,7 @@ Store-->>Table : useSelector(masterData[activeEntity]) updated
   - Basic semantic table structure with headers and labels.
   - Suggested improvements: aria-labels, keyboard navigation, focus management.
 
-**Updated** Enhanced with specialized formatting for the isActive field using color-coded badges and conditional row styling for improved visual feedback.
+**Updated** Enhanced with specialized formatting for the isActive field using color-coded badges and conditional row styling for improved visual feedback. Added comprehensive filtering capabilities with dedicated boolean filter controls for isActive field.
 
 ```mermaid
 flowchart TD
@@ -361,7 +362,7 @@ ExcelBtn --> Utils
   - Lazy loading of entity data on demand.
   - Optimized CSS class concatenation for conditional styling.
 
-**Updated** Enhanced formatting and styling are optimized for performance with efficient conditional rendering and CSS class application.
+**Updated** Enhanced formatting and styling are optimized for performance with efficient conditional rendering and CSS class application. The new isActive field formatting uses lightweight badge components with minimal DOM overhead.
 
 ## Troubleshooting Guide
 - Data not loading:
@@ -379,8 +380,13 @@ ExcelBtn --> Utils
   - Verify entity data contains proper boolean values for isActive field.
   - Check CSS class names for badge styling and conditional row classes.
   - Ensure proper dark mode support with dark:bg-* variants.
+  - Verify that filter controls are properly configured for boolean fields.
+- Conditional styling problems:
+  - Confirm that entity data includes proper boolean values for isActive.
+  - Check that CSS utility classes are available in the build.
+  - Verify that dark mode variants are properly applied.
 
-**Updated** Added troubleshooting guidance for the new isActive field formatting and conditional styling features.
+**Updated** Added troubleshooting guidance for the new isActive field formatting, conditional styling, and enhanced filtering features.
 
 **Section sources**
 - [Admin.jsx:510-530](file://Client/src/pages/dashboard/Admin.jsx#L510-L530)
@@ -390,9 +396,9 @@ ExcelBtn --> Utils
 - [HandelExcelFile.js:16-34](file://Client/src/utils/HandelExcelFile.js#L16-L34)
 
 ## Conclusion
-The DataTable component provides a straightforward, configuration-driven rendering of master data with integrated CRUD actions via Redux. The enhanced version now includes specialized formatting for the isActive field with color-coded badges (green for active, red for inactive) and conditional row styling based on account status, providing improved visual feedback for user status management. While sorting, filtering, pagination, and bulk operations are not implemented, the architecture supports easy extension. The Admin page orchestrates data loading and configuration, while the Form component enables inline editing. Excel utilities facilitate bulk operations. Performance and accessibility can be improved with virtualization, memoization, and semantic enhancements.
+The DataTable component provides a straightforward, configuration-driven rendering of master data with integrated CRUD actions via Redux. The enhanced version now includes specialized formatting for the isActive field with color-coded badges (green for active, red for inactive) and conditional row styling based on account status, providing improved visual feedback for user status management. The table now features comprehensive filtering capabilities with dedicated boolean filter controls for isActive field, along with enhanced sorting and pagination features. While bulk operations are not implemented, the architecture supports easy extension. The Admin page orchestrates data loading and configuration, while the Form component enables inline editing. Excel utilities facilitate bulk operations. Performance and accessibility can be improved with virtualization, memoization, and semantic enhancements.
 
-**Updated** Enhanced with improved visual feedback system for user status management through color-coded badges and conditional row styling.
+**Updated** Enhanced with improved visual feedback system for user status management through color-coded badges, conditional row styling, and comprehensive filtering capabilities for boolean fields.
 
 ## Appendices
 
@@ -406,8 +412,9 @@ The DataTable component provides a straightforward, configuration-driven renderi
 - Special handling for isActive field:
   - Displays color-coded badges instead of boolean text.
   - Green badge for active users, red badge for inactive users.
+  - Integrated with filtering system for boolean value selection.
 
-**Updated** Added special handling for isActive field with color-coded badge formatting.
+**Updated** Added special handling for isActive field with color-coded badge formatting and enhanced filtering integration.
 
 **Section sources**
 - [Admin.jsx:52-406](file://Client/src/pages/dashboard/Admin.jsx#L52-L406)
@@ -419,17 +426,47 @@ The DataTable component provides a straightforward, configuration-driven renderi
   - Add a switch/case in DataTable to render specialized components.
 - Color-coded status badges:
   - isActive field automatically renders colored badges based on boolean value.
-  - Customize badge colors by modifying CSS classes in formatCellValue function.
+  - Green badges for active users, red badges for inactive users.
+  - Uses Tailwind CSS utility classes for consistent styling across themes.
 - Conditional row styling:
   - Rows receive background color based on entity.isActive status.
   - Green background for active entities, red background for inactive entities.
+  - Includes dark mode support with appropriate variants.
+- Enhanced filtering:
+  - Dedicated boolean filter controls for isActive field.
+  - Filter panel with expandable interface for multiple field filtering.
+  - Real-time filter application with visual indicators.
 - Responsive behavior:
   - Wrap table container with overflow-x-auto and adjust grid layouts for small screens.
   - Consider horizontal scrolling on narrow devices.
+  - Filter panel adapts to mobile screen sizes.
 - Accessibility:
   - Add aria-labels to buttons and inputs.
   - Implement keyboard navigation for actions.
   - Ensure sufficient color contrast and focus indicators.
   - Badge elements maintain proper semantic meaning for screen readers.
+  - Filter controls include proper labeling and keyboard interaction.
 
-**Updated** Added examples for color-coded status badges and conditional row styling customization.
+**Updated** Added examples for color-coded status badges, conditional row styling, and enhanced filtering customization with comprehensive accessibility considerations.
+
+### isActive Field Styling Implementation
+The isActive field now includes sophisticated visual styling:
+
+**Badge Styling:**
+- Active users: Green badges with `bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300`
+- Inactive users: Red badges with `bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300`
+
+**Conditional Row Styling:**
+- Active users: Light green background with `bg-green-50/50 dark:bg-green-900/10`
+- Inactive users: Light red background with `bg-red-50/50 dark:bg-red-900/10`
+
+**Filter Integration:**
+- Dedicated boolean filter controls in filter panel
+- "Active" and "Inactive" options for quick filtering
+- Visual indicators showing active filters
+
+**Section sources**
+- [DataTable.jsx:109-140](file://Client/src/components/deshboard/DataTable.jsx#L109-L140)
+- [DataTable.jsx:377-385](file://Client/src/components/deshboard/DataTable.jsx#L377-L385)
+- [DataTable.jsx:288-297](file://Client/src/components/deshboard/DataTable.jsx#L288-L297)
+- [Admin.jsx:732-736](file://Client/src/pages/dashboard/Admin.jsx#L732-L736)

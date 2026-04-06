@@ -20,11 +20,11 @@ const ENTITY_ENDPOINTS = {
 
 export const fetchMasterData = createAsyncThunk(
   "admin/fetchMasterData",
-  async (entityKey, { rejectWithValue }) => {
+  async ({ entityKey, params = {} }, { rejectWithValue }) => {
     try {
       const endpoint = ENTITY_ENDPOINTS[entityKey];
       if (!endpoint) throw new Error("Invalid entity key");
-      const response = await apiClient.get(endpoint);
+      const response = await apiClient.get(endpoint, { params });
       return { entityKey, data: response.data.data || response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -75,6 +75,7 @@ export const deleteMasterData = createAsyncThunk(
 
 const initialState = {
   masterData: {},
+  pagination: {},
   activeEntity: null,
   editingEntityId: null,
   loading: false,
@@ -123,7 +124,15 @@ const adminSlice = createSlice({
       })
       .addCase(fetchMasterData.fulfilled, (state, action) => {
         state.loading = false;
-        state.masterData[action.payload.entityKey] = action.payload.data;
+        const { entityKey, data } = action.payload;
+        // Handle paginated response
+        if (data.data && data.pagination) {
+          state.masterData[entityKey] = data.data;
+          state.pagination[entityKey] = data.pagination;
+        } else {
+          // Handle non-paginated response (fallback)
+          state.masterData[entityKey] = data;
+        }
       })
       .addCase(fetchMasterData.rejected, (state, action) => {
         state.loading = false;

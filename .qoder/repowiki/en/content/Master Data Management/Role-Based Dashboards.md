@@ -19,7 +19,6 @@
 - [user.controller.js](file://Backend/src/controllers/user.controller.js)
 - [user.models.js](file://Backend/src/models/user.models.js)
 - [user.routers.js](file://Backend/src/routes/user.routers.js)
-- [role.models.js](file://Backend/src/models/role.models.js)
 </cite>
 
 ## Update Summary
@@ -30,6 +29,7 @@
 - Updated backend user controller with complete user management endpoints
 - Added user authentication, authorization, and role-based access control
 - Implemented user-specific features including password management and account status control
+- Expanded entity configuration to include user management fields: user_name, user_id, password, role selection, student_id, faculty_id, and isActive status
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -70,7 +70,6 @@ subgraph "Backend"
 UC["user.controller.js"]
 UM["user.models.js"]
 UR["user.routers.js"]
-RM["role.models.js"]
 end
 APP --> LYT
 LYT --> HDR
@@ -88,25 +87,23 @@ ST --> ASL
 UC --> UM
 UC --> UR
 UR --> UM
-UC --> RM
 ```
 
 **Diagram sources**
 - [App.jsx:13-38](file://Client/src/App.jsx#L13-L38)
 - [Layout.jsx:7-20](file://Client/src/components/Layout.jsx#L7-L20)
 - [Header.jsx:8-121](file://Client/src/components/Header.jsx#L8-L121)
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-950](file://Client/src/pages/dashboard/Admin.jsx#L17-L950)
 - [SideBar.jsx:3-49](file://Client/src/components/deshboard/SideBar.jsx#L3-L49)
-- [DataTable.jsx:5-86](file://Client/src/components/deshboard/DataTable.jsx#L5-L86)
-- [Form.jsx:5-127](file://Client/src/components/deshboard/Form.jsx#L5-L127)
+- [DataTable.jsx:5-537](file://Client/src/components/deshboard/DataTable.jsx#L5-L537)
+- [Form.jsx:5-165](file://Client/src/components/deshboard/Form.jsx#L5-L165)
 - [TimeTable.jsx:62-370](file://Client/src/components/deshboard/TimeTable.jsx#L62-L370)
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
+- [adminSlice.js:1-201](file://Client/src/store/admin/adminSlice.js#L1-L201)
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
-- [user.models.js:19-28](file://Backend/src/models/user.models.js#L19-L28)
+- [user.controller.js:14-702](file://Backend/src/controllers/user.controller.js#L14-L702)
+- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
-- [role.models.js:5-11](file://Backend/src/models/role.models.js#L5-L11)
 
 **Section sources**
 - [App.jsx:13-38](file://Client/src/App.jsx#L13-L38)
@@ -132,14 +129,14 @@ Key responsibilities:
 - Backend user controller: validates and authenticates users, aggregates role-specific profiles, and provides comprehensive user management endpoints.
 
 **Section sources**
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-950](file://Client/src/pages/dashboard/Admin.jsx#L17-L950)
 - [SideBar.jsx:3-49](file://Client/src/components/deshboard/SideBar.jsx#L3-L49)
-- [DataTable.jsx:5-86](file://Client/src/components/deshboard/DataTable.jsx#L5-L86)
-- [Form.jsx:5-127](file://Client/src/components/deshboard/Form.jsx#L5-L127)
+- [DataTable.jsx:5-537](file://Client/src/components/deshboard/DataTable.jsx#L5-L537)
+- [Form.jsx:5-165](file://Client/src/components/deshboard/Form.jsx#L5-L165)
 - [TimeTable.jsx:62-370](file://Client/src/components/deshboard/TimeTable.jsx#L62-L370)
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
+- [adminSlice.js:1-201](file://Client/src/store/admin/adminSlice.js#L1-L201)
+- [user.controller.js:14-702](file://Backend/src/controllers/user.controller.js#L14-L702)
 
 ## Architecture Overview
 The client-side dashboards are protected by route guards that check authentication and role. Admin dashboards use Redux to orchestrate asynchronous data fetching and updates. The backend enforces role constraints and exposes comprehensive user-related endpoints including authentication, authorization, and user management.
@@ -171,7 +168,7 @@ Page->>Page : Render SideBar, Form, DataTable, TimeTable
 - [Admin.jsx:28-44](file://Client/src/pages/dashboard/Admin.jsx#L28-L44)
 - [authSlice.js:14-25](file://Client/src/store/auth/authSlice.js#L14-L25)
 - [adminSlice.js:24-36](file://Client/src/store/admin/adminSlice.js#L24-L36)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
+- [user.controller.js:136-263](file://Backend/src/controllers/user.controller.js#L136-L263)
 
 ## Detailed Component Analysis
 
@@ -201,7 +198,7 @@ UI composition:
 - Optional timetable overlay.
 
 **Section sources**
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-950](file://Client/src/pages/dashboard/Admin.jsx#L17-L950)
 - [adminSlice.js:6-16](file://Client/src/store/admin/adminSlice.js#L6-L16)
 - [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
 
@@ -232,7 +229,7 @@ Behavior:
 - Displays user status with visual indicators (Active/Inactive).
 
 **Section sources**
-- [DataTable.jsx:5-86](file://Client/src/components/deshboard/DataTable.jsx#L5-L86)
+- [DataTable.jsx:5-537](file://Client/src/components/deshboard/DataTable.jsx#L5-L537)
 - [adminSlice.js:91-102](file://Client/src/store/admin/adminSlice.js#L91-L102)
 
 ### Form Component
@@ -247,7 +244,7 @@ Behavior:
 - Handles user-specific fields like password, role assignment, and status management.
 
 **Section sources**
-- [Form.jsx:5-127](file://Client/src/components/deshboard/Form.jsx#L5-L127)
+- [Form.jsx:5-165](file://Client/src/components/deshboard/Form.jsx#L5-L165)
 - [adminSlice.js:91-102](file://Client/src/store/admin/adminSlice.js#L91-L102)
 
 ### TimeTable Component
@@ -283,7 +280,7 @@ Behavior:
 - [Student.jsx:10-14](file://Client/src/pages/dashboard/Student.jsx#L10-L14)
 - [Admin.jsx:40-44](file://Client/src/pages/dashboard/Admin.jsx#L40-L44)
 
-### Backend Role Model and User Controller
+### Backend User Management System
 Responsibilities:
 - Define supported roles and enforce role enums including admin, faculty, student, coordinator, and hod.
 - Authenticate users with password validation and account status checks.
@@ -298,7 +295,7 @@ Behavior:
 
 **Section sources**
 - [user.models.js:19-28](file://Backend/src/models/user.models.js#L19-L28)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
+- [user.controller.js:14-702](file://Backend/src/controllers/user.controller.js#L14-L702)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 
 ## Architecture Overview
@@ -363,14 +360,14 @@ AdminPage --> UserController : "uses endpoints"
 ```
 
 **Diagram sources**
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-950](file://Client/src/pages/dashboard/Admin.jsx#L17-L950)
 - [SideBar.jsx:3-49](file://Client/src/components/deshboard/SideBar.jsx#L3-L49)
-- [DataTable.jsx:5-86](file://Client/src/components/deshboard/DataTable.jsx#L5-L86)
-- [Form.jsx:5-127](file://Client/src/components/deshboard/Form.jsx#L5-L127)
+- [DataTable.jsx:5-537](file://Client/src/components/deshboard/DataTable.jsx#L5-L537)
+- [Form.jsx:5-165](file://Client/src/components/deshboard/Form.jsx#L5-L165)
 - [TimeTable.jsx:62-370](file://Client/src/components/deshboard/TimeTable.jsx#L62-L370)
 - [authSlice.js:14-25](file://Client/src/store/auth/authSlice.js#L14-L25)
 - [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
+- [user.controller.js:14-702](file://Backend/src/controllers/user.controller.js#L14-L702)
 
 ## Detailed Component Analysis
 
@@ -495,11 +492,13 @@ The user management system provides:
 - User authentication and session management
 - Profile aggregation for different user types
 - Bulk user registration capabilities
+- User search and filtering capabilities
+- Audit trail for user activities
 
 User entity configuration includes fields for user identification, authentication, role assignment, and status management. The system integrates seamlessly with the existing master data infrastructure and provides full CRUD operations for user administration.
 
 **Section sources**
-- [Admin.jsx:694-744](file://Client/src/pages/dashboard/Admin.jsx#L694-L744)
+- [Admin.jsx:688-738](file://Client/src/pages/dashboard/Admin.jsx#L688-L738)
 - [user.controller.js:14-132](file://Backend/src/controllers/user.controller.js#L14-L132)
 - [user.models.js:4-63](file://Backend/src/models/user.models.js#L4-L63)
 - [user.routers.js:18-38](file://Backend/src/routes/user.routers.js#L18-L38)
@@ -537,14 +536,14 @@ USER_ROUTER["user.routers.js"] --> USER_CONTROLLER
 
 **Diagram sources**
 - [authSlice.js:14-25](file://Client/src/store/auth/authSlice.js#L14-L25)
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-950](file://Client/src/pages/dashboard/Admin.jsx#L17-L950)
 - [SideBar.jsx:3-49](file://Client/src/components/deshboard/SideBar.jsx#L3-L49)
-- [DataTable.jsx:5-86](file://Client/src/components/deshboard/DataTable.jsx#L5-L86)
-- [Form.jsx:5-127](file://Client/src/components/deshboard/Form.jsx#L5-L127)
+- [DataTable.jsx:5-537](file://Client/src/components/deshboard/DataTable.jsx#L5-L537)
+- [Form.jsx:5-165](file://Client/src/components/deshboard/Form.jsx#L5-L165)
 - [TimeTable.jsx:62-370](file://Client/src/components/deshboard/TimeTable.jsx#L62-L370)
 - [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
-- [user.controller.js:280-355](file://Backend/src/controllers/user.controller.js#L280-L355)
+- [user.controller.js:14-702](file://Backend/src/controllers/user.controller.js#L14-L702)
 - [user.models.js:19-28](file://Backend/src/models/user.models.js#L19-L28)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 
@@ -604,7 +603,7 @@ The role-based dashboard system provides a clear separation of concerns between 
 - Audit trail for user activities
 
 **Section sources**
-- [Admin.jsx:694-744](file://Client/src/pages/dashboard/Admin.jsx#L694-L744)
-- [user.controller.js:14-132](file://Backend/src/controllers/user.controller.js#L14-L132)
+- [Admin.jsx:688-738](file://Client/src/pages/dashboard/Admin.jsx#L688-L738)
+- [user.controller.js:14-702](file://Backend/src/controllers/user.controller.js#L14-L702)
 - [user.models.js:4-63](file://Backend/src/models/user.models.js#L4-L63)
 - [user.routers.js:18-38](file://Backend/src/routes/user.routers.js#L18-L38)

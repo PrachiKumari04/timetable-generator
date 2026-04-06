@@ -2,6 +2,7 @@ import { User } from "../models/user.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { parsePaginationParams } from "../utils/pagination.js";
 import {
   generateTokens,
   accessTokenCookieOptions,
@@ -131,10 +132,51 @@ export const registerUser = asyncHandler(async (req, res) => {
   );
 });
 
-//Get all users
+// Get all users with pagination
 export const getAllUsers = asyncHandler(async (req, res) => {
-  // Get all users with their name and email
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
+  const skip = (page - 1) * limit;
+
+  // Build match filter for search
+  let matchFilter = {};
+  if (search) {
+    matchFilter.$or = [
+      { role: { $regex: search, $options: "i" } },
+      { student_id: { $regex: search, $options: "i" } },
+      { faculty_id: { $regex: search, $options: "i" } },
+    ];
+  }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        matchFilter[fieldName] = value === 'true';
+      } else {
+        matchFilter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  } else {
+    sort = { createdAt: -1 };
+  }
+
+  // Get total count
+  const totalCount = await User.countDocuments(matchFilter);
+
+  // Get paginated users with their name and email
   const usersWithDetails = await User.aggregate([
+    { $match: matchFilter },
     {
       $lookup: {
         from: "students",
@@ -196,15 +238,28 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         _id: 1,
       },
     },
+    { $sort: sort },
+    { $skip: skip },
+    { $limit: limit },
   ]);
 
-  if (usersWithDetails.length === 0) {
-    throw ApiError.notFound("No users found");
-  }
+  const totalPages = Math.ceil(totalCount / limit);
 
-  return ApiResponse.ok(usersWithDetails, "Users fetched successfully").send(
-    res,
-  );
+  const result = {
+    data: usersWithDetails,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: totalCount,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+      startIndex: skip,
+      endIndex: skip + usersWithDetails.length,
+    },
+  };
+
+  return ApiResponse.ok(result, "Users retrieved successfully").send(res);
 });
 
 // Get user by ID

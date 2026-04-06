@@ -2,6 +2,7 @@ import { Room } from "../models/room.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 //Add rooms
 export const addRoom = asyncHandler(async (req, res) => {
@@ -45,17 +46,49 @@ export const addRoom = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, createdRooms, "Rooms added successfully"));
 });
 
-//get all rooms
+// Get all rooms with pagination and filtering
 export const getAllRooms = asyncHandler(async (req, res) => {
-  const rooms = await Room.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!rooms || rooms.length === 0) {
-    throw new ApiError(404, "No rooms found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { room_no: { $regex: search, $options: "i" } },
+      { block: { $regex: search, $options: "i" } },
+      { floor_no: { $regex: search, $options: "i" } },
+    ];
+  }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
   }
 
-  res
+  const result = await paginateMongoose(Room, filter, page, limit, { sort });
+
+  return res
     .status(200)
-    .json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
+    .json(new ApiResponse(200, result, "Rooms retrieved successfully"));
 });
 
 //get room by id

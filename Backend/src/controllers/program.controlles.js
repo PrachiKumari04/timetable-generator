@@ -1,5 +1,8 @@
 import { Program } from "../models/program.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
+import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
 //Add programs
 export const addPrograms = asyncHandler(async (req, res) => {
@@ -45,17 +48,49 @@ export const addPrograms = asyncHandler(async (req, res) => {
     );
 });
 
-// Get all programs
+// Get all programs with pagination and filtering
 export const getAllPrograms = asyncHandler(async (req, res) => {
-  const programs = await Program.find();
+  const { page, limit } = parsePaginationParams(req.query);
+  const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  if (!programs || programs.length === 0) {
-    throw new ApiError(404, "No programs found");
+  // Build filter
+  let filter = {};
+  
+  // Search filter
+  if (search) {
+    filter.$or = [
+      { program_id: { $regex: search, $options: "i" } },
+      { program_name: { $regex: search, $options: "i" } },
+    ];
   }
+  
+  // Field-specific filters
+  Object.keys(fieldFilters).forEach(key => {
+    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
+      const fieldName = key.replace('filter_', '');
+      const value = fieldFilters[key];
+      
+      // Handle boolean filters
+      if (value === 'true' || value === 'false') {
+        filter[fieldName] = value === 'true';
+      } else {
+        // Handle string filters (exact match for select fields)
+        filter[fieldName] = value;
+      }
+    }
+  });
+
+  // Build sort
+  let sort = {};
+  if (sortBy) {
+    sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+  }
+
+  const result = await paginateMongoose(Program, filter, page, limit, { sort });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, programs, "Programs retrieved successfully"));
+    .json(new ApiResponse(200, result, "Programs retrieved successfully"));
 });
 
 // Get program by id
