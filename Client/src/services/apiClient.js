@@ -7,6 +7,21 @@ const API_BASE_URL = "/api/v1";
 const requestCache = new Map();
 const pendingRequests = new Map();
 
+// Token refresh state
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+// Subscribe to token refresh
+const subscribeTokenRefresh = (callback) => {
+  refreshSubscribers.push(callback);
+};
+
+// Notify all subscribers with new token
+const onTokenRefreshed = () => {
+  refreshSubscribers.forEach((callback) => callback());
+  refreshSubscribers = [];
+};
+
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const CACHEABLE_METHODS = ["GET"];
@@ -105,6 +120,47 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 401 Unauthorized - Token expired
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          subscribeTokenRefresh(() => {
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        // Call refresh token endpoint
+        const response = await axios.post(
+          `${API_BASE_URL}/users/refresh-token`,
+          {},
+          { withCredentials: true }
+        );
+
+        if (response.data?.success) {
+          console.log("[API] Token refreshed successfully");
+          onTokenRefreshed();
+          isRefreshing = false;
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("[API] Token refresh failed:", refreshError);
+        isRefreshing = false;
+        refreshSubscribers = [];
+        
+        // Clear cache and redirect to login
+        requestCache.clear();
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
     // Handle network errors with retry logic
     if (!error.response && originalRequest && !originalRequest._retry) {
       originalRequest._retry = (originalRequest._retry || 0) + 1;
@@ -123,9 +179,8 @@ apiClient.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Unauthorized - let the auth slice handle this
-          // Don't redirect here to avoid interfering with React Router
-          console.error("[API] Unauthorized request");
+          // Token refresh failed or invalid token
+          console.error("[API] Unauthorized request - redirecting to login");
           break;
         case 403:
           console.error("[API] Access forbidden:", error.response.data?.message);

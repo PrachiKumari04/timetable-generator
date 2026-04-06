@@ -10,7 +10,7 @@
 - [auth.middleware.js](file://Backend/src/middlewares/auth.middleware.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
-- [asyncHandler.js](file://Backend/src/utils/asyncHandler.js)
+- [Token.js](file://Backend/src/utils/Token.js)
 </cite>
 
 ## Update Summary
@@ -58,7 +58,7 @@ end
 subgraph "Utilities"
 AE["ApiError<br/>ApiError.js"]
 AR["ApiResponse<br/>ApiResponse.js"]
-AH["Async Handler<br/>asyncHandler.js"]
+TK["Token<br/>Token.js"]
 end
 UR --> UC
 UC --> UM
@@ -67,18 +67,18 @@ UM --> FM
 UC --> AM
 UC --> AE
 UC --> AR
-UC --> AH
+UC --> TK
 ```
 
 **Diagram sources**
 - [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
-- [user.controller.js:1-689](file://Backend/src/controllers/user.controller.js#L1-L689)
+- [user.controller.js:1-702](file://Backend/src/controllers/user.controller.js#L1-L702)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 
 **Section sources**
 - [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
-- [user.controller.js:1-689](file://Backend/src/controllers/user.controller.js#L1-L689)
+- [user.controller.js:1-702](file://Backend/src/controllers/user.controller.js#L1-L702)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 
 ## Core Components
@@ -339,10 +339,10 @@ Note over Client,Model : Authentication successful with auto-generated user_id
 ```
 
 **Diagram sources**
-- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
+- [user.controller.js:415-519](file://Backend/src/controllers/user.controller.js#L415-L519)
 
 **Section sources**
-- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
+- [user.controller.js:415-519](file://Backend/src/controllers/user.controller.js#L415-L519)
 
 ### Audit Trail Implementation
 The self-referencing created_by and updated_by fields implement comprehensive audit trails:
@@ -415,6 +415,7 @@ UR["user.routers.js"]
 SM["student.models.js"]
 FM["faculty.models.js"]
 AM["auth.middleware.js"]
+TK["Token.js"]
 end
 subgraph "External Dependencies"
 MONGOOSE["mongoose"]
@@ -428,6 +429,7 @@ UC --> UM
 UC --> SM
 UC --> FM
 UC --> AM
+UC --> TK
 UR --> UC
 UR --> EXPRESS
 ```
@@ -444,6 +446,7 @@ Key dependency relationships:
 - User controller depends on User, Student, and Faculty models for data operations
 - Router module depends on controller functions for endpoint handling
 - Auth middleware provides role-based access control
+- Token utility provides JWT token generation and verification
 - Utility modules (ApiError, ApiResponse, asyncHandler) provide error handling and response formatting
 
 **Section sources**
@@ -504,11 +507,18 @@ Several performance optimizations are implemented in the user model and controll
 - Validate random user_id generation for administrative roles
 - Confirm that user_id uniqueness is maintained through database constraints
 
+**Authentication Flow Issues**
+- **Updated** Verify that login requests use user_id instead of username
+- Check that JWT tokens contain user_id in payload
+- Ensure token verification uses correct secret keys
+- Validate that user_id format matches pre-save hook generation
+
 **Section sources**
-- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
+- [user.controller.js:415-519](file://Backend/src/controllers/user.controller.js#L415-L519)
 - [user.models.js:65-97](file://Backend/src/models/user.models.js#L65-L97)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 
 ## Conclusion
 The User model provides a robust foundation for the timetable management system's authentication and authorization needs. The enhanced pre-save hook system eliminates the need for manual user_id generation while maintaining strong data integrity and security. The implementation includes comprehensive validation, role-based access control, audit trails, efficient data retrieval mechanisms, and intelligent user_id generation through automatic prefixing and relationship integration. The modular architecture supports future enhancements while maintaining clear separation of concerns and consistent user identification across all user types.

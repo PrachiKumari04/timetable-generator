@@ -5,6 +5,7 @@
 - [SideBar.jsx](file://Client/src/components/deshboard/SideBar.jsx)
 - [DataTable.jsx](file://Client/src/components/deshboard/DataTable.jsx)
 - [Form.jsx](file://Client/src/components/deshboard/Form.jsx)
+- [TimeTable.jsx](file://Client/src/components/deshboard/TimeTable.jsx)
 - [adminSlice.js](file://Client/src/store/admin/adminSlice.js)
 - [authSlice.js](file://Client/src/store/auth/authSlice.js)
 - [formSlice.js](file://Client/src/store/formSlice.js)
@@ -14,6 +15,16 @@
 - [HandelExcelFile.js](file://Client/src/utils/HandelExcelFile.js)
 - [themeSlice.js](file://Client/src/store/theme/themeSlice.js)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated DataTable component documentation to reflect sophisticated pagination, search, sorting, and filtering capabilities
+- Added comprehensive coverage of new pagination system with page numbers, items per page selector, and navigation controls
+- Documented advanced search functionality with real-time filtering and clear search button
+- Added detailed explanation of multi-field filtering system with boolean, select, and dynamic dropdown filters
+- Enhanced sorting capabilities with column-wise sorting and visual indicators
+- Updated CSV export functionality to work with filtered and paginated data
+- Added comprehensive styling and UX considerations for the enhanced DataTable
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -27,7 +38,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document provides comprehensive documentation for the dashboard-specific components: SideBar, DataTable, and Form. It explains the SideBar component's navigation structure, active state management, and role-based visibility. It details the DataTable component's data rendering, sorting, filtering, pagination, and CSV export functionality. It explains the Form component's input validation, field mapping, submission handling, and error management. Additionally, it covers props interfaces, event handling patterns, styling approaches, and integration with Redux state management for data operations.
+This document provides comprehensive documentation for the dashboard-specific components: SideBar, DataTable, and Form. It explains the SideBar component's navigation structure, active state management, and role-based visibility. It details the sophisticated DataTable component's data rendering, pagination, search, sorting, filtering, and CSV export functionality. It explains the Form component's input validation, field mapping, submission handling, and error management. Additionally, it covers props interfaces, event handling patterns, styling approaches, and integration with Redux state management for data operations.
 
 ## Project Structure
 The dashboard components reside under Client/src/components/deshboard and integrate with Redux slices under Client/src/store. The Admin page orchestrates these components and manages entity configurations.
@@ -36,12 +47,14 @@ The dashboard components reside under Client/src/components/deshboard and integr
 graph TB
 subgraph "Pages"
 AdminPage["Admin.jsx"]
+TimeTable["TimeTable.jsx"]
 end
 subgraph "Components"
 SideBar["SideBar.jsx"]
 DataTable["DataTable.jsx"]
 Form["Form.jsx"]
 ExcelButton["ExcelHendelButton.jsx"]
+TimeTableComp["TimeTable.jsx"]
 end
 subgraph "Redux Store"
 Store["store.js"]
@@ -57,6 +70,7 @@ AdminPage --> SideBar
 AdminPage --> DataTable
 AdminPage --> Form
 AdminPage --> ExcelButton
+AdminPage --> TimeTableComp
 SideBar --> AdminSlice
 DataTable --> AdminSlice
 Form --> AdminSlice
@@ -68,36 +82,37 @@ Store --> FormSlice
 ```
 
 **Diagram sources**
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-951](file://Client/src/pages/dashboard/Admin.jsx#L17-L951)
 - [SideBar.jsx:1-49](file://Client/src/components/deshboard/SideBar.jsx#L1-L49)
-- [DataTable.jsx:1-86](file://Client/src/components/deshboard/DataTable.jsx#L1-L86)
-- [Form.jsx:1-127](file://Client/src/components/deshboard/Form.jsx#L1-L127)
+- [DataTable.jsx:1-563](file://Client/src/components/deshboard/DataTable.jsx#L1-L563)
+- [Form.jsx:1-165](file://Client/src/components/deshboard/Form.jsx#L1-L165)
+- [TimeTable.jsx:1-722](file://Client/src/components/deshboard/TimeTable.jsx#L1-L722)
 - [ExcelHendelButton.jsx:1-85](file://Client/src/components/ExcelHendelButton.jsx#L1-L85)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
+- [adminSlice.js:1-201](file://Client/src/store/admin/adminSlice.js#L1-L201)
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
 - [themeSlice.js:1-29](file://Client/src/store/theme/themeSlice.js#L1-L29)
 - [formSlice.js:1-24](file://Client/src/store/formSlice.js#L1-L24)
 - [HandelExcelFile.js:1-35](file://Client/src/utils/HandelExcelFile.js#L1-L35)
 
 **Section sources**
-- [Admin.jsx:17-617](file://Client/src/pages/dashboard/Admin.jsx#L17-L617)
+- [Admin.jsx:17-951](file://Client/src/pages/dashboard/Admin.jsx#L17-L951)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 
 ## Core Components
 This section documents the three primary dashboard components and their responsibilities.
 
 - SideBar: Provides navigation among master entities, displays counts, and manages active selection.
-- DataTable: Renders tabular data for the selected entity, supports edit and delete actions.
+- DataTable: Renders sophisticated tabular data for the selected entity with pagination, search, sorting, and filtering capabilities.
 - Form: Handles entity creation/editing with field mapping and submission to backend via Redux.
 
 **Section sources**
 - [SideBar.jsx:1-49](file://Client/src/components/deshboard/SideBar.jsx#L1-L49)
-- [DataTable.jsx:1-86](file://Client/src/components/deshboard/DataTable.jsx#L1-L86)
-- [Form.jsx:1-127](file://Client/src/components/deshboard/Form.jsx#L1-L127)
+- [DataTable.jsx:1-563](file://Client/src/components/deshboard/DataTable.jsx#L1-L563)
+- [Form.jsx:1-165](file://Client/src/components/deshboard/Form.jsx#L1-L165)
 
 ## Architecture Overview
-The Admin page composes SideBar, DataTable, and Form. SideBar updates the active entity and clears editing state. DataTable reads from Redux masterData and dispatches delete actions. Form reads editingEntityId and masterData to prefill edits, then dispatches add/update actions. Redux slices manage async operations and state transitions.
+The Admin page composes SideBar, DataTable, and Form. SideBar updates the active entity and clears editing state. DataTable reads from Redux masterData with sophisticated pagination and dispatches delete actions. Form reads editingEntityId and masterData to prefill edits, then dispatches add/update actions. Redux slices manage async operations and state transitions with enhanced pagination support.
 
 ```mermaid
 sequenceDiagram
@@ -113,6 +128,9 @@ Admin->>Store : dispatch(setActiveEntity)
 Store-->>Admin : state.activeEntity updated
 Admin->>Store : dispatch(setEditingEntityId(null))
 Store-->>Admin : state.editingEntityId cleared
+User->>DataTable : Enter search query
+DataTable->>Store : dispatch(fetchMasterData with search params)
+Store-->>DataTable : state.masterData updated with pagination
 User->>DataTable : Click Edit/Delete
 DataTable->>Store : dispatch(setEditingEntityId | deleteMasterData)
 Store-->>DataTable : state.editingEntityId updated or entity removed
@@ -123,11 +141,11 @@ Form->>Admin : resetEntityForm()
 ```
 
 **Diagram sources**
-- [Admin.jsx:414-419](file://Client/src/pages/dashboard/Admin.jsx#L414-L419)
+- [Admin.jsx:742-757](file://Client/src/pages/dashboard/Admin.jsx#L742-L757)
 - [SideBar.jsx:30-37](file://Client/src/components/deshboard/SideBar.jsx#L30-L37)
 - [adminSlice.js:91-102](file://Client/src/store/admin/adminSlice.js#L91-L102)
-- [DataTable.jsx:10-18](file://Client/src/components/deshboard/DataTable.jsx#L10-L18)
-- [Form.jsx:37-50](file://Client/src/components/deshboard/Form.jsx#L37-L50)
+- [DataTable.jsx:28-46](file://Client/src/components/deshboard/DataTable.jsx#L28-L46)
+- [Form.jsx:60-73](file://Client/src/components/deshboard/Form.jsx#L60-L73)
 
 ## Detailed Component Analysis
 
@@ -170,57 +188,92 @@ ApplyHover --> End
 
 **Section sources**
 - [SideBar.jsx:1-49](file://Client/src/components/deshboard/SideBar.jsx#L1-L49)
-- [Admin.jsx:52-406](file://Client/src/pages/dashboard/Admin.jsx#L52-L406)
+- [Admin.jsx:742-757](file://Client/src/pages/dashboard/Admin.jsx#L742-L757)
 
 ### DataTable Component
-The DataTable component renders a table of entities for the active entity. It displays fields defined in the entity configuration and provides Edit/Delete actions. It reads entities from Redux masterData and dispatches delete actions.
+The DataTable component renders sophisticated tabular data for the selected entity with comprehensive pagination, search, sorting, and filtering capabilities. It displays fields defined in the entity configuration and provides Edit/Delete actions with enhanced user experience.
+
+**Updated** Enhanced with sophisticated pagination system, advanced search functionality, multi-field filtering, and improved sorting capabilities.
+
+#### Advanced Pagination System
+The DataTable implements a comprehensive pagination system with:
+- Page navigation with numbered buttons and ellipsis for large datasets
+- Items per page selector (5, 10, 20, 50, 100)
+- Current page information display
+- Responsive design for mobile and desktop
+
+#### Sophisticated Search and Filtering
+The DataTable provides:
+- Real-time search with instant filtering
+- Multi-field filtering with boolean, select, and dynamic dropdown filters
+- Filter persistence across pages
+- Clear filters functionality
+- Active filter indicators
+
+#### Enhanced Sorting Capabilities
+The DataTable supports:
+- Column-wise sorting with visual indicators
+- Ascending and descending order toggling
+- Sort state persistence across filters and pagination
+
+#### Data Rendering Enhancements
+- Improved cell formatting for boolean fields with status badges
+- Enhanced date and time display formatting
+- Better handling of nested field values
+- Visual indicators for entity status (active/inactive)
 
 - Props interface:
   - currentEntityConfig: configuration object for the active entity
   - activeEntity: key of the active entity
 
-- Data rendering:
-  - Reads entities from state.admin.masterData[activeEntity]
-  - Renders headers from currentEntityConfig.fields
-  - Renders rows with field values; boolean fields display Yes/No
+- State Management:
+  - Local state for pagination (page, limit)
+  - Search state (searchQuery)
+  - Sorting state (sortField, sortOrder)
+  - Filtering state (showFilters, activeFilters)
+
+- Data fetching:
+  - Automatic data fetching with pagination parameters
+  - Parameterized queries for search, sort, and filters
+  - Redux integration for masterData and pagination state
 
 - Actions:
   - Edit: dispatches setEditingEntityId with entity id
   - Delete: dispatches deleteMasterData after confirmation
-
-- Pagination and filtering:
-  - Not implemented in DataTable; all entities are rendered
-
-- Sorting:
-  - Not implemented in DataTable; order follows Redux state
-
-- CSV export:
-  - Implemented via ExcelHendelButton integration in Admin page
 
 ```mermaid
 sequenceDiagram
 participant User as "User"
 participant DataTable as "DataTable.jsx"
 participant Store as "admin/adminSlice.js"
-User->>DataTable : Click Edit
-DataTable->>Store : dispatch(setEditingEntityId(entityId))
-User->>DataTable : Click Delete
-DataTable->>User : Confirm dialog
-alt Confirmed
-DataTable->>Store : dispatch(deleteMasterData({entityKey, id}))
-Store-->>DataTable : state.masterData updated
-else Cancelled
-DataTable-->>User : No action
-end
+User->>DataTable : Enter search query
+DataTable->>Store : dispatch(fetchMasterData with search params)
+Store-->>DataTable : state.masterData updated with pagination
+User->>DataTable : Click filter toggle
+DataTable->>DataTable : Show/hide filter panel
+User->>DataTable : Select filter values
+DataTable->>Store : dispatch(fetchMasterData with filter params)
+Store-->>DataTable : state.masterData updated with filters
+User->>DataTable : Click sort column
+DataTable->>Store : dispatch(fetchMasterData with sort params)
+Store-->>DataTable : state.masterData sorted
+User->>DataTable : Navigate pages
+DataTable->>Store : dispatch(fetchMasterData with page params)
+Store-->>DataTable : state.masterData updated for page
+User->>DataTable : Click Edit/Delete
+DataTable->>Store : dispatch(setEditingEntityId | deleteMasterData)
+Store-->>DataTable : state.editingEntityId updated or entity removed
 ```
 
 **Diagram sources**
-- [DataTable.jsx:10-18](file://Client/src/components/deshboard/DataTable.jsx#L10-L18)
-- [adminSlice.js:67-78](file://Client/src/store/admin/adminSlice.js#L67-L78)
+- [DataTable.jsx:28-46](file://Client/src/components/deshboard/DataTable.jsx#L28-L46)
+- [DataTable.jsx:149-165](file://Client/src/components/deshboard/DataTable.jsx#L149-L165)
+- [DataTable.jsx:100-104](file://Client/src/components/deshboard/DataTable.jsx#L100-L104)
+- [adminSlice.js:125-135](file://Client/src/store/admin/adminSlice.js#L125-L135)
 
 **Section sources**
-- [DataTable.jsx:1-86](file://Client/src/components/deshboard/DataTable.jsx#L1-L86)
-- [adminSlice.js:80-173](file://Client/src/store/admin/adminSlice.js#L80-L173)
+- [DataTable.jsx:1-563](file://Client/src/components/deshboard/DataTable.jsx#L1-L563)
+- [adminSlice.js:121-195](file://Client/src/store/admin/adminSlice.js#L121-L195)
 
 ### Form Component
 The Form component handles entity creation and editing. It maps fields from currentEntityConfig, manages local form state, and dispatches Redux actions for add/update. It also integrates with Redux for error clearing and editing state.
@@ -236,7 +289,8 @@ The Form component handles entity creation and editing. It maps fields from curr
 
 - Input handling:
   - handleEntityInputChange updates entityForm based on input type
-  - Supports text inputs and checkbox inputs
+  - Supports nested object fields (e.g., ltpHours.l)
+  - Handles date formatting for input type="date"
 
 - Validation:
   - Uses HTML5 required attribute for required fields
@@ -270,12 +324,12 @@ LogError --> Done
 ```
 
 **Diagram sources**
-- [Form.jsx:37-50](file://Client/src/components/deshboard/Form.jsx#L37-L50)
-- [adminSlice.js:38-78](file://Client/src/store/admin/adminSlice.js#L38-L78)
+- [Form.jsx:60-73](file://Client/src/components/deshboard/Form.jsx#L60-L73)
+- [adminSlice.js:159-178](file://Client/src/store/admin/adminSlice.js#L159-L178)
 
 **Section sources**
-- [Form.jsx:1-127](file://Client/src/components/deshboard/Form.jsx#L1-L127)
-- [adminSlice.js:80-173](file://Client/src/store/admin/adminSlice.js#L80-L173)
+- [Form.jsx:1-165](file://Client/src/components/deshboard/Form.jsx#L1-L165)
+- [adminSlice.js:141-195](file://Client/src/store/admin/adminSlice.js#L141-L195)
 
 ### CSV Export and Import Integration
 The Admin page integrates CSV export/import functionality via ExcelHendelButton and HandelExcelFile utilities. The ExcelHendelButton component allows downloading templates and uploading Excel files, which are parsed and dispatched to Redux for bulk additions.
@@ -311,13 +365,33 @@ Store-->>Admin : state.masterData updated
 **Diagram sources**
 - [ExcelHendelButton.jsx:19-31](file://Client/src/components/ExcelHendelButton.jsx#L19-L31)
 - [HandelExcelFile.js:6-34](file://Client/src/utils/HandelExcelFile.js#L6-L34)
-- [Admin.jsx:421-423](file://Client/src/pages/dashboard/Admin.jsx#L421-L423)
-- [adminSlice.js:38-50](file://Client/src/store/admin/adminSlice.js#L38-L50)
+- [Admin.jsx:755-757](file://Client/src/pages/dashboard/Admin.jsx#L755-L757)
+- [adminSlice.js:35-47](file://Client/src/store/admin/adminSlice.js#L35-L47)
 
 **Section sources**
 - [ExcelHendelButton.jsx:1-85](file://Client/src/components/ExcelHendelButton.jsx#L1-L85)
 - [HandelExcelFile.js:1-35](file://Client/src/utils/HandelExcelFile.js#L1-L35)
-- [Admin.jsx:421-423](file://Client/src/pages/dashboard/Admin.jsx#L421-L423)
+- [Admin.jsx:755-757](file://Client/src/pages/dashboard/Admin.jsx#L755-L757)
+
+### TimeTable Component
+The TimeTable component provides a sophisticated timetable visualization system with week and day views, color-coded subjects, and export capabilities.
+
+- Features:
+  - Week view with color-coded subject blocks
+  - Day view with detailed time slot information
+  - Color mapping for different subjects
+  - Lab session detection and handling
+  - Print and export functionality
+  - Refresh capability from API
+
+- Styling:
+  - Responsive design for different screen sizes
+  - Color-coded subject blocks with appropriate contrast
+  - Break and lunch period highlighting
+  - Interactive elements with hover effects
+
+**Section sources**
+- [TimeTable.jsx:1-722](file://Client/src/components/deshboard/TimeTable.jsx#L1-L722)
 
 ## Dependency Analysis
 The dashboard components depend on Redux slices for state management and on the Admin page for orchestration and configuration.
@@ -327,10 +401,12 @@ graph TB
 SideBar --> AdminSlice
 DataTable --> AdminSlice
 Form --> AdminSlice
+TimeTable --> AdminSlice
 AdminPage --> SideBar
 AdminPage --> DataTable
 AdminPage --> Form
 AdminPage --> ExcelButton
+AdminPage --> TimeTable
 ExcelButton --> ExcelUtils
 Store --> AdminSlice
 Store --> AuthSlice
@@ -340,42 +416,60 @@ Store --> FormSlice
 
 **Diagram sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
+- [adminSlice.js:1-201](file://Client/src/store/admin/adminSlice.js#L1-L201)
 - [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
 - [themeSlice.js:1-29](file://Client/src/store/theme/themeSlice.js#L1-L29)
 - [formSlice.js:1-24](file://Client/src/store/formSlice.js#L1-L24)
 
 **Section sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
+- [adminSlice.js:1-201](file://Client/src/store/admin/adminSlice.js#L1-L201)
 
 ## Performance Considerations
-- Rendering lists: DataTable renders all entities without pagination. For large datasets, consider implementing pagination or virtualization.
-- Re-renders: SideBar recomputes counts on each render; memoization could reduce unnecessary re-renders.
-- Async operations: Redux async thunks handle network requests; ensure loading states are displayed to improve perceived performance.
-- Styling: Utility-first CSS reduces bundle size; avoid excessive inline styles.
+- **Enhanced Pagination**: DataTable now implements client-side pagination with configurable items per page, reducing DOM rendering overhead for large datasets
+- **Smart Data Fetching**: DataTable uses useEffect to automatically fetch data when pagination, search, sort, or filter parameters change, optimizing network requests
+- **State Management**: Local state management for UI interactions reduces unnecessary Redux updates
+- **Memoization Opportunities**: Potential for adding useMemo/useCallback hooks for expensive computations
+- **Virtualization**: Consider implementing virtualized lists for extremely large datasets
+- **Re-renders**: DataTable re-renders only when relevant state changes, improving performance
+- **Async Operations**: Redux async thunks handle network requests efficiently with loading states
 
 ## Troubleshooting Guide
-- Active entity not updating:
-  - Verify setActiveEntity is called from SideBar and that activeEntity prop is passed correctly.
-  - Check that setEditingEntityId is invoked to clear editing state.
+- **Pagination issues**:
+  - Verify that pagination state is properly initialized in Redux
+  - Check that fetchMasterData thunk correctly handles pagination parameters
+  - Ensure page navigation buttons are properly disabled/enabled
 
-- Edit/Delete actions not working:
-  - Ensure activeEntity is set before dispatching actions.
-  - Confirm that masterData contains the expected entity arrays.
+- **Search functionality not working**:
+  - Confirm that searchQuery state updates trigger useEffect
+  - Verify that search parameters are correctly passed to fetchMasterData
+  - Check that search results are properly stored in masterData
 
-- Form submission errors:
-  - Check Redux error state in adminSlice; errors are stored in state.error.
-  - Verify that currentEntityConfig matches the entity structure.
+- **Filter not applying**:
+  - Ensure activeFilters state updates correctly
+  - Verify that filter parameters are included in fetchMasterData calls
+  - Check that filter dropdowns render correctly for boolean/select fields
 
-- CSV upload failures:
-  - Validate that uploaded file conforms to the template columns.
-  - Inspect console logs for parse errors from parseExcelFile.
+- **Sorting not working**:
+  - Confirm that sortField and sortOrder state updates trigger data fetch
+  - Verify that sortBy and sortOrder parameters are correctly passed
+  - Check that sort indicators display properly
+
+- **Edit/Delete actions not working**:
+  - Ensure activeEntity is set before dispatching actions
+  - Confirm that masterData contains the expected entity arrays
+  - Verify that entity IDs are correctly extracted for operations
+
+- **CSV upload failures**:
+  - Validate that uploaded file conforms to the template columns
+  - Inspect console logs for parse errors from parseExcelFile
+  - Check that handleUplode function receives properly parsed data
 
 **Section sources**
-- [adminSlice.js:104-168](file://Client/src/store/admin/adminSlice.js#L104-L168)
-- [Form.jsx:37-50](file://Client/src/components/deshboard/Form.jsx#L37-L50)
+- [DataTable.jsx:28-46](file://Client/src/components/deshboard/DataTable.jsx#L28-L46)
+- [adminSlice.js:121-195](file://Client/src/store/admin/adminSlice.js#L121-L195)
+- [Form.jsx:60-73](file://Client/src/components/deshboard/Form.jsx#L60-L73)
 - [HandelExcelFile.js:16-34](file://Client/src/utils/HandelExcelFile.js#L16-L34)
 
 ## Conclusion
-The dashboard components provide a cohesive interface for managing master entities. SideBar offers intuitive navigation with active state management, DataTable presents data with essential actions, and Form enables efficient entity creation and editing. Integration with Redux ensures predictable state updates and robust async handling. Future enhancements could include pagination, advanced filtering/sorting, and role-based visibility controls.
+The dashboard components provide a sophisticated and cohesive interface for managing master entities. SideBar offers intuitive navigation with active state management, DataTable presents data with comprehensive pagination, search, sorting, and filtering capabilities, and Form enables efficient entity creation and editing. The enhanced DataTable component now supports advanced data manipulation features that significantly improve user experience for large datasets. Integration with Redux ensures predictable state updates and robust async handling. The addition of TimeTable component provides specialized timetable visualization capabilities. Future enhancements could include virtualization for extremely large datasets, advanced search operators, and role-based visibility controls.
