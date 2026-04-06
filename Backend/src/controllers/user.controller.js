@@ -356,48 +356,45 @@ export const deleteUser = asyncHandler(async (req, res) => {
   return ApiResponse.ok(user, "User deleted successfully").send(res);
 });
 
-// Login with password hashing and JWT tokens
-export const userLogin = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-  const user_id = username;
+// * Login with password hashing and JWT tokens
+export const userLogin = async (req, res) => {
+  const { user_id, password } = req.body;
   console.log(req.body);
 
-  // Validate input
+  // ? Validate input
   if (!user_id?.trim() || !password?.trim()) {
     throw ApiError.badRequest("User ID and password are required");
   }
 
   console.log("User Id -->", user_id);
 
-  // Find user by student_id or faculty_id
-  const user = await User.findOne({
-    $or: [{ student_id: user_id }, { faculty_id: user_id }],
-  });
+  // ? Find user by user_id
+  const user = await User.findOne({ user_id });
 
   if (!user) {
     throw ApiError.unauthorized("Invalid credentials");
   }
 
-  // Check if user is active
+  // ? Check if user is active
   if (!user.isActive) {
     throw ApiError.forbidden("Account is deactivated. Please contact admin.");
   }
 
-  // Verify password
+  // ! Verify password
   const isPasswordValid = await user.comparePassword(password);
 
   if (!isPasswordValid) {
     throw ApiError.unauthorized("Invalid credentials");
   }
 
-  // Generate tokens
+  // * Generate tokens
   const { accessToken, refreshToken } = generateTokens(user);
 
-  // Save refresh token to database
+  // * Save refresh token to database
   user.refreshToken = refreshToken;
   await user.save({ validateBeforeSave: false });
 
-  // Get user details with student/faculty info
+  // * Get user details with student/faculty info
   const userWithDetails = await User.aggregate([
     { $match: { _id: user._id } },
     {
@@ -432,13 +429,9 @@ export const userLogin = asyncHandler(async (req, res) => {
         _id: 1,
         role: 1,
         isActive: 1,
-        user_id: {
-          $cond: {
-            if: { $ne: ["$student_id", null] },
-            then: "$student_id",
-            else: "$faculty_id",
-          },
-        },
+        user_id: 1,
+        student_id: 1,
+        faculty_id: 1,
         user_name: {
           $cond: {
             if: { $ne: ["$student_id", null] },
@@ -461,16 +454,16 @@ export const userLogin = asyncHandler(async (req, res) => {
     .json(
       ApiResponse.ok(
         {
-          user: userWithDetails[0],
+          ...userWithDetails[0],
           accessToken,
           refreshToken,
         },
         "User logged in successfully",
       ).toJSON(),
     );
-});
+};
 
-// Logout user
+// * Logout user
 export const logoutUser = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -478,7 +471,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
     throw ApiError.badRequest("User ID is required");
   }
 
-  // Clear refresh token from database
+  // ? Clear refresh token from database
   await User.findByIdAndUpdate(
     userId,
     { $set: { refreshToken: null } },

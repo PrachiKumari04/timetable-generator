@@ -125,7 +125,7 @@ function Login() {
     const loadingToastId = toast.loading("Signing in...");
 
     const loginData = {
-      username: values.username.trim(),
+      user_id: values.username.trim(),
       password: values.password,
     };
 

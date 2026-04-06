@@ -9,9 +9,19 @@
 - [formSlice.js](file://Client/src/store/formSlice.js)
 - [main.jsx](file://Client/src/main.jsx)
 - [App.jsx](file://Client/src/App.jsx)
+- [Admin.jsx](file://Client/src/pages/dashboard/Admin.jsx)
 - [Form.jsx](file://Client/src/components/deshboard/Form.jsx)
+- [apiClient.js](file://Client/src/services/apiClient.js)
 - [package.json](file://Client/package.json)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive documentation for user management functionality in the admin dashboard
+- Updated admin slice documentation to reflect user entity endpoints and cache invalidation mechanisms
+- Enhanced store architecture overview to include user data synchronization
+- Added new sections covering user entity CRUD operations and cache management
+- Updated troubleshooting guide with user-specific scenarios
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -19,22 +29,24 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+6. [User Management System](#user-management-system)
+7. [Cache Invalidation Mechanisms](#cache-invalidation-mechanisms)
+8. [Dependency Analysis](#dependency-analysis)
+9. [Performance Considerations](#performance-considerations)
+10. [Troubleshooting Guide](#troubleshooting-guide)
+11. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the Redux store configuration and setup for the client-side application. It covers the store creation via configureStore, reducer composition, and initialization. It documents the store structure with auth, theme, admin, and form reducers, and details how the store integrates with the React application using Provider. Best practices for middleware setup, development tools integration, performance considerations, debugging setup, and store enhancers are addressed. The relationship between the store configuration and individual slices is explained, along with practical guidance for maintainable Redux usage.
+This document explains the Redux store configuration and setup for the client-side application. It covers the store creation via configureStore, reducer composition, and initialization. It documents the store structure with auth, theme, admin, and form reducers, and details how the store integrates with the React application using Provider. The store now includes comprehensive user management functionality with dedicated user entity endpoints and sophisticated cache invalidation mechanisms for real-time data synchronization. Best practices for middleware setup, development tools integration, performance considerations, debugging setup, and store enhancers are addressed. The relationship between the store configuration and individual slices is explained, along with practical guidance for maintainable Redux usage.
 
 ## Project Structure
 The Redux store is centralized under Client/src/store. The store composes four domain-specific reducers:
-- auth: user authentication state and actions
+- auth: user authentication state and actions with session verification
 - theme: light/dark theme preference
-- admin: master data CRUD operations and async flows
+- admin: master data CRUD operations and async flows including user management
 - form: form state for dynamic forms
 
-The store is exported as a singleton and consumed by wrapping the React application with Provider in main.jsx.
+The store is exported as a singleton and consumed by wrapping the React application with Provider in main.jsx. The admin slice now includes comprehensive user management capabilities with dedicated endpoints for user CRUD operations and cache invalidation for real-time data synchronization.
 
 ```mermaid
 graph TB
@@ -48,7 +60,11 @@ end
 subgraph "Client/src"
 M["main.jsx"]
 APP["App.jsx"]
+ADMIN["pages/dashboard/Admin.jsx"]
 FORM["components/deshboard/Form.jsx"]
+end
+subgraph "Client/src/services"
+API["services/apiClient.js"]
 end
 S --> A
 S --> T
@@ -56,18 +72,22 @@ S --> AD
 S --> F
 M --> S
 APP --> S
+ADMIN --> S
 FORM --> S
+AD --> API
 ```
 
 **Diagram sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [authSlice.js:1-32](file://Client/src/store/auth/authSlice.js#L1-L32)
+- [authSlice.js:1-61](file://Client/src/store/auth/authSlice.js#L1-L61)
 - [themeSlice.js:1-29](file://Client/src/store/theme/themeSlice.js#L1-L29)
-- [adminSlice.js:1-173](file://Client/src/store/admin/adminSlice.js#L1-L173)
+- [adminSlice.js:1-192](file://Client/src/store/admin/adminSlice.js#L1-L192)
 - [formSlice.js:1-24](file://Client/src/store/formSlice.js#L1-L24)
 - [main.jsx:1-18](file://Client/src/main.jsx#L1-L18)
-- [App.jsx:1-41](file://Client/src/App.jsx#L1-L41)
-- [Form.jsx:1-127](file://Client/src/components/deshboard/Form.jsx#L1-L127)
+- [App.jsx:1-119](file://Client/src/App.jsx#L1-L119)
+- [Admin.jsx:1-956](file://Client/src/pages/dashboard/Admin.jsx#L1-L956)
+- [Form.jsx:1-165](file://Client/src/components/deshboard/Form.jsx#L1-L165)
+- [apiClient.js:1-213](file://Client/src/services/apiClient.js#L1-L213)
 
 **Section sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
@@ -75,41 +95,52 @@ FORM --> S
 
 ## Core Components
 - Store configuration: The store is created with configureStore and composed of four reducers: auth, theme, admin, and form. No middleware or enhancers are configured in the store file.
-- Authentication slice: Provides login/logout actions and persists state to localStorage.
+- Authentication slice: Provides login/logout actions, session verification via `/users/me` endpoint, and persists state to localStorage.
 - Theme slice: Manages theme selection with persistence and prefers OS theme by default.
-- Admin slice: Implements async CRUD operations via createAsyncThunk and manages loading/error states.
+- Admin slice: Implements async CRUD operations via createAsyncThunk for multiple entities including user management with cache invalidation support.
 - Form slice: Centralizes form state for dynamic forms and active entity selection.
 
 **Section sources**
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
-- [authSlice.js:10-31](file://Client/src/store/auth/authSlice.js#L10-L31)
+- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
 - [themeSlice.js:15-28](file://Client/src/store/theme/themeSlice.js#L15-L28)
-- [adminSlice.js:88-173](file://Client/src/store/admin/adminSlice.js#L88-L173)
+- [adminSlice.js:21-74](file://Client/src/store/admin/adminSlice.js#L21-L74)
 - [formSlice.js:3-24](file://Client/src/store/formSlice.js#L3-L24)
 
 ## Architecture Overview
-The store is initialized once and exported as a singleton. The React application is wrapped with Provider so components can access state and dispatch actions. Components use useSelector to read slices and useDispatch to trigger actions. Async flows in the admin slice integrate with an API client configured for credentials.
+The store is initialized once and exported as a singleton. The React application is wrapped with Provider so components can access state and dispatch actions. Components use useSelector to read slices and useDispatch to trigger actions. Async flows in the admin slice integrate with an API client configured for credentials and include sophisticated cache invalidation mechanisms for real-time data synchronization. The user management system provides comprehensive CRUD operations with automatic cache updates.
 
 ```mermaid
 sequenceDiagram
 participant Root as "main.jsx"
 participant Provider as "Provider"
 participant App as "App.jsx"
-participant Comp as "Any Component"
+participant Admin as "Admin.jsx"
 participant Store as "Redux Store"
-participant Slice as "Slice Reducer"
+participant AdminSlice as "Admin Slice"
+participant APIClient as "API Client"
 Root->>Provider : "wrap app with store"
-App->>Comp : "render components"
-Comp->>Store : "dispatch action"
-Store->>Slice : "reduce state"
-Slice-->>Store : "new state"
-Store-->>Comp : "selected state via useSelector"
+App->>Admin : "render admin dashboard"
+Admin->>Store : "dispatch fetchMasterData('user')"
+Store->>AdminSlice : "execute pending"
+AdminSlice->>APIClient : "GET /users endpoint"
+APIClient-->>AdminSlice : "cached data or fresh response"
+AdminSlice-->>Store : "fulfilled action with user data"
+Store-->>Admin : "state updated with user list"
+Admin->>Store : "dispatch addMasterData/updateMasterData"
+Store->>AdminSlice : "execute mutation"
+AdminSlice->>APIClient : "POST/PUT with invalidateCache"
+APIClient->>APIClient : "invalidate cache for user entity"
+AdminSlice-->>Store : "success action"
+Store-->>Admin : "state updated with refreshed data"
 ```
 
 **Diagram sources**
 - [main.jsx:6-16](file://Client/src/main.jsx#L6-L16)
 - [App.jsx:14-24](file://Client/src/App.jsx#L14-L24)
-- [store.js:7-14](file://Client/src/store/store.js#L7-L14)
+- [Admin.jsx:29-46](file://Client/src/pages/dashboard/Admin.jsx#L29-L46)
+- [adminSlice.js:21-74](file://Client/src/store/admin/adminSlice.js#L21-L74)
+- [apiClient.js:182-210](file://Client/src/services/apiClient.js#L182-L210)
 
 ## Detailed Component Analysis
 
@@ -137,20 +168,21 @@ Use --> End(["Ready for useSelector/useDispatch"])
 ### Authentication Slice
 - Purpose: Manage authentication state and persist user data and authentication flag to localStorage.
 - Actions: login and logout update state and synchronize localStorage.
+- Session Verification: Uses `/users/me` endpoint for automatic session verification on app load.
 - Integration: Used by pages and components that require user session awareness.
 
 ```mermaid
 flowchart TD
-Dispatch["Dispatch login/logout"] --> Reduce["auth reducer updates state"]
+Dispatch["Dispatch verifySession"] --> Reduce["auth reducer updates state"]
 Reduce --> Persist["localStorage updated"]
 Persist --> NextRender["Components re-render with new auth state"]
 ```
 
 **Diagram sources**
-- [authSlice.js:14-26](file://Client/src/store/auth/authSlice.js#L14-L26)
+- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
 
 **Section sources**
-- [authSlice.js:10-31](file://Client/src/store/auth/authSlice.js#L10-L31)
+- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
 
 ### Theme Slice
 - Purpose: Track and toggle theme preference with persistence and OS preference fallback.
@@ -172,36 +204,41 @@ Persist --> Apply["App.jsx applies 'dark' class to document"]
 - [themeSlice.js:15-28](file://Client/src/store/theme/themeSlice.js#L15-L28)
 - [App.jsx:14-24](file://Client/src/App.jsx#L14-L24)
 
-### Admin Slice (Async CRUD)
-- Purpose: Manage master data CRUD operations for multiple entities via async thunks.
-- Async Thunks: fetchMasterData, addMasterData, updateMasterData, deleteMasterData.
+### Admin Slice (Enhanced with User Management)
+- Purpose: Manage master data CRUD operations for multiple entities including user management via async thunks.
+- Async Thunks: fetchMasterData, addMasterData, updateMasterData, deleteMasterData with cache invalidation support.
 - State Management: Tracks loading, error, active entity, editing ID, and masterData map keyed by entity.
+- User Management: Comprehensive CRUD operations for user entities with role-based access control.
+- Cache Invalidation: Automatic cache clearing and refresh mechanisms for real-time data synchronization.
 - Integration: Components dispatch thunks and read state to render lists and forms.
 
 ```mermaid
 sequenceDiagram
-participant UI as "Form.jsx"
+participant UI as "Admin.jsx"
 participant Store as "Redux Store"
 participant Thunk as "admin async thunk"
 participant API as "Axios Client"
+participant Cache as "API Cache"
 UI->>Store : "dispatch addMasterData / updateMasterData"
 Store->>Thunk : "execute pending"
-Thunk->>API : "HTTP request"
+Thunk->>API : "HTTP request with invalidateCache"
+API->>Cache : "invalidate cache for user entity"
 API-->>Thunk : "response payload"
 Thunk-->>Store : "fulfilled action"
 Store-->>UI : "state updated (loading=false, data)"
 ```
 
 **Diagram sources**
-- [Form.jsx:37-50](file://Client/src/components/deshboard/Form.jsx#L37-L50)
-- [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
-- [adminSlice.js:104-168](file://Client/src/store/admin/adminSlice.js#L104-L168)
+- [Admin.jsx:760-762](file://Client/src/pages/dashboard/Admin.jsx#L760-L762)
+- [adminSlice.js:35-74](file://Client/src/store/admin/adminSlice.js#L35-L74)
+- [adminSlice.js:109-115](file://Client/src/store/admin/adminSlice.js#L109-L115)
+- [apiClient.js:182-210](file://Client/src/services/apiClient.js#L182-L210)
 
 **Section sources**
-- [adminSlice.js:18-22](file://Client/src/store/admin/adminSlice.js#L18-L22)
-- [adminSlice.js:24-78](file://Client/src/store/admin/adminSlice.js#L24-L78)
-- [adminSlice.js:80-173](file://Client/src/store/admin/adminSlice.js#L80-L173)
-- [Form.jsx:1-127](file://Client/src/components/deshboard/Form.jsx#L1-L127)
+- [adminSlice.js:5-19](file://Client/src/store/admin/adminSlice.js#L5-L19)
+- [adminSlice.js:21-74](file://Client/src/store/admin/adminSlice.js#L21-L74)
+- [adminSlice.js:76-192](file://Client/src/store/admin/adminSlice.js#L76-L192)
+- [Admin.jsx:694-744](file://Client/src/pages/dashboard/Admin.jsx#L694-L744)
 
 ### Form Slice
 - Purpose: Centralize form state for dynamic forms, including entityForm, editingEntityId, and activeEntity.
@@ -231,23 +268,98 @@ App --> Components["Components use useSelector/useDispatch"]
 **Section sources**
 - [store.js:7-14](file://Client/src/store/store.js#L7-L14)
 - [main.jsx:1-18](file://Client/src/main.jsx#L1-L18)
-- [App.jsx:1-41](file://Client/src/App.jsx#L1-L41)
+- [App.jsx:1-119](file://Client/src/App.jsx#L1-L119)
+
+## User Management System
+
+### User Entity Configuration
+The admin dashboard now includes comprehensive user management functionality with dedicated entity configuration:
+
+- **User Roles**: Supports multiple roles including admin, faculty, student, coordinator, and hod
+- **User Fields**: Comprehensive user profile management with username, user_id, password, role assignment, and role-specific identifiers
+- **Role-Based Access Control**: Automatic redirection based on user roles to appropriate dashboards
+- **User CRUD Operations**: Full create, read, update, and delete operations for user accounts
+
+### User Management Features
+- **Role Assignment**: Users can be assigned specific roles with appropriate permissions
+- **Profile Management**: Complete user profile management with validation
+- **Account Status**: Active/inactive status control for user accounts
+- **Integration with Other Entities**: User accounts linked to faculty or student records when applicable
+
+```mermaid
+flowchart TD
+UserConfig["User Entity Config"] --> RoleField["Role Field<br/>admin | faculty | student | coordinator | hod"]
+RoleField --> StudentLink["Student ID Link<br/>(if student role)"]
+RoleField --> FacultyLink["Faculty ID Link<br/>(if faculty role)"]
+RoleField --> PasswordField["Password Field<br/>Min 6 characters"]
+RoleField --> ActiveField["Active Status<br/>boolean"]
+StudentLink --> StudentEntity["Student Entity<br/>Linked Records"]
+FacultyLink --> FacultyEntity["Faculty Entity<br/>Linked Records"]
+```
+
+**Diagram sources**
+- [Admin.jsx:694-744](file://Client/src/pages/dashboard/Admin.jsx#L694-L744)
+
+**Section sources**
+- [Admin.jsx:694-744](file://Client/src/pages/dashboard/Admin.jsx#L694-L744)
+- [adminSlice.js:5-19](file://Client/src/store/admin/adminSlice.js#L5-L19)
+
+## Cache Invalidation Mechanisms
+
+### Cache Management Architecture
+The admin slice implements sophisticated cache invalidation mechanisms for real-time data synchronization:
+
+- **Automatic Cache Invalidation**: Cache clearing on successful mutations (POST, PUT, DELETE)
+- **Entity-Specific Cache Management**: Targeted cache invalidation for specific entities
+- **Cache Statistics**: Built-in cache monitoring and statistics collection
+- **Duplicate Request Handling**: Prevention of duplicate requests during cache operations
+
+### Cache Invalidation Flow
+When user data is modified, the system automatically invalidates the cache for the user entity to ensure real-time data synchronization across all components:
+
+```mermaid
+sequenceDiagram
+participant Admin as "Admin Component"
+participant AdminSlice as "Admin Slice"
+participant APIClient as "API Client"
+participant Cache as "Cache System"
+Admin->>AdminSlice : "dispatch addMasterData('user')"
+AdminSlice->>APIClient : "POST /users with invalidateCache"
+APIClient->>Cache : "invalidate('user')"
+Cache-->>APIClient : "cache cleared for user entity"
+APIClient-->>AdminSlice : "success response"
+AdminSlice-->>Admin : "state updated with new user data"
+```
+
+**Diagram sources**
+- [adminSlice.js:35-74](file://Client/src/store/admin/adminSlice.js#L35-L74)
+- [apiClient.js:182-210](file://Client/src/services/apiClient.js#L182-L210)
+- [apiClient.js:155-180](file://Client/src/services/apiClient.js#L155-L180)
+
+**Section sources**
+- [adminSlice.js:99-115](file://Client/src/store/admin/adminSlice.js#L99-L115)
+- [apiClient.js:155-180](file://Client/src/services/apiClient.js#L155-L180)
+- [apiClient.js:182-210](file://Client/src/services/apiClient.js#L182-L210)
 
 ## Dependency Analysis
 - Internal dependencies:
-  - store.js depends on each slice’s reducer export.
+  - store.js depends on each slice's reducer export.
   - main.jsx depends on store.js and react-redux Provider.
-  - App.jsx and Form.jsx depend on the store for state and actions.
+  - App.jsx and Admin.jsx depend on the store for state and actions.
+  - Admin.jsx depends on Form.jsx for user management interface.
+  - adminSlice.js depends on apiClient.js for HTTP operations.
 - External dependencies:
   - @reduxjs/toolkit for configureStore and createSlice/createAsyncThunk.
   - react-redux for Provider and hooks.
-  - axios for admin async thunks.
+  - axios for admin async thunks with custom cache management.
+  - react-hot-toast for user feedback notifications.
 
 ```mermaid
 graph TB
 Pkg["package.json: dependencies"] --> RTK["@reduxjs/toolkit"]
 Pkg --> RR["react-redux"]
 Pkg --> AX["axios"]
+Pkg --> HT["react-hot-toast"]
 StoreJS["store.js"] --> RTK
 StoreJS --> Auth["authSlice.js"]
 StoreJS --> Theme["themeSlice.js"]
@@ -256,7 +368,10 @@ StoreJS --> Form["formSlice.js"]
 MainJSX["main.jsx"] --> RR
 MainJSX --> StoreJS
 AppJSX["App.jsx"] --> StoreJS
-FormJSX["Form.jsx"] --> Admin
+AdminJSX["Admin.jsx"] --> StoreJS
+AdminJSX --> FormJSX["Form.jsx"]
+Admin["adminSlice.js"] --> APIClient["apiClient.js"]
+APIClient --> AX
 ```
 
 **Diagram sources**
@@ -264,14 +379,20 @@ FormJSX["Form.jsx"] --> Admin
 - [store.js:1-5](file://Client/src/store/store.js#L1-L5)
 - [main.jsx:6-7](file://Client/src/main.jsx#L6-L7)
 - [App.jsx:5](file://Client/src/App.jsx#L5)
-- [Form.jsx:2-3](file://Client/src/components/deshboard/Form.jsx#L2-L3)
+- [Admin.jsx:1-16](file://Client/src/pages/dashboard/Admin.jsx#L1-L16)
+- [Form.jsx:1-4](file://Client/src/components/deshboard/Form.jsx#L1-L4)
+- [adminSlice.js:1-4](file://Client/src/store/admin/adminSlice.js#L1-L4)
+- [apiClient.js:1-2](file://Client/src/services/apiClient.js#L1-L2)
 
 **Section sources**
 - [package.json:12-22](file://Client/package.json#L12-L22)
 - [store.js:1-5](file://Client/src/store/store.js#L1-L5)
 - [main.jsx:6-7](file://Client/src/main.jsx#L6-L7)
 - [App.jsx:5](file://Client/src/App.jsx#L5)
-- [Form.jsx:2-3](file://Client/src/components/deshboard/Form.jsx#L2-L3)
+- [Admin.jsx:1-16](file://Client/src/pages/dashboard/Admin.jsx#L1-L16)
+- [Form.jsx:1-4](file://Client/src/components/deshboard/Form.jsx#L1-L4)
+- [adminSlice.js:1-4](file://Client/src/store/admin/adminSlice.js#L1-L4)
+- [apiClient.js:1-2](file://Client/src/services/apiClient.js#L1-L2)
 
 ## Performance Considerations
 - Keep slices focused: Each slice manages a single domain (auth, theme, admin, form). This improves readability and reduces unnecessary re-renders.
@@ -280,6 +401,8 @@ FormJSX["Form.jsx"] --> Admin
 - Memoized selectors: Use memoized selectors (e.g., createSelector) for derived computations to avoid recomputation.
 - Minimize deep object mutations: Prefer immutable updates in reducers to prevent accidental shared references.
 - Lazy loading and chunking: For large admin lists, consider pagination or virtualization in UI components to reduce rendering overhead.
+- Cache optimization: The API client implements intelligent caching with cache invalidation to balance performance and data freshness.
+- Network efficiency: Duplicate request prevention and exponential backoff for failed requests improve network efficiency.
 
 ## Troubleshooting Guide
 - Symptom: Theme not applying on initial load
@@ -292,13 +415,26 @@ FormJSX["Form.jsx"] --> Admin
   - Verify dispatch of setEditingEntityId(null) and clearError() after successful unwrap.
 - Symptom: Missing Provider in main.jsx
   - Ensure Provider wraps the application and the imported store is passed correctly.
+- Symptom: User data not updating after modifications
+  - Check that cache invalidation is working correctly for user entity operations.
+  - Verify that invalidateCache option is being used in POST/PUT/DELETE requests.
+- Symptom: User role assignments not working
+  - Ensure user entity configuration includes proper role field definitions.
+  - Verify that role-based navigation is functioning correctly in the admin dashboard.
+- Symptom: Cache not clearing properly
+  - Check cache invalidation logic in admin slice reducers.
+  - Verify that apiCache.invalidate is being called with correct entity keys.
 
 **Section sources**
 - [themeSlice.js:3-9](file://Client/src/store/theme/themeSlice.js#L3-L9)
 - [App.jsx:16-24](file://Client/src/App.jsx#L16-L24)
-- [adminSlice.js:104-168](file://Client/src/store/admin/adminSlice.js#L104-L168)
-- [Form.jsx:31-35](file://Client/src/components/deshboard/Form.jsx#L31-L35)
+- [adminSlice.js:109-115](file://Client/src/store/admin/adminSlice.js#L109-L115)
+- [Form.jsx:54-58](file://Client/src/components/deshboard/Form.jsx#L54-L58)
 - [main.jsx:6-7](file://Client/src/main.jsx#L6-L7)
+- [Admin.jsx:694-744](file://Client/src/pages/dashboard/Admin.jsx#L694-L744)
+- [apiClient.js:155-180](file://Client/src/services/apiClient.js#L155-L180)
 
 ## Conclusion
-The Redux store is configured as a minimal, focused setup using configureStore with four domain-specific reducers. The store is exported as a singleton and integrated with the React application via Provider. The auth and theme slices demonstrate persistence and UI synchronization, while the admin slice handles complex async flows with clear loading and error handling. The form slice centralizes transient form state. For future enhancements, consider adding middleware for async flows, store enhancers for development tools, and memoized selectors for performance. The current structure supports maintainability and scalability across the application.
+The Redux store is configured as a minimal, focused setup using configureStore with four domain-specific reducers. The store is exported as a singleton and integrated with the React application via Provider. The auth and theme slices demonstrate persistence and UI synchronization, while the admin slice handles complex async flows with clear loading and error handling. The form slice centralizes transient form state. 
+
+**Updated** The store now includes comprehensive user management functionality with dedicated user entity endpoints and sophisticated cache invalidation mechanisms for real-time data synchronization. The admin slice supports full CRUD operations for user accounts with role-based access control, automatic cache management, and seamless integration with the existing master data management system. For future enhancements, consider adding middleware for async flows, store enhancers for development tools, and memoized selectors for performance. The current structure supports maintainability and scalability across the application with robust user management capabilities.

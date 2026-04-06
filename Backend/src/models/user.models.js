@@ -3,6 +3,12 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new Schema(
   {
+    user_id: {
+      type: String,
+      required: [true, "User ID is required"],
+      trim: true,
+      unique: true,
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -56,15 +62,34 @@ const userSchema = new Schema(
   { timestamps: true },
 );
 
-// Pre-save hook to hash password
+// * Pre-save hook to generate user_id and hash password
 userSchema.pre("save", async function () {
   try {
+    // * Generate user_id based on role and student/faculty id
+
+    if (this.isNew && !this.user_id) {
+      const rolePrefix = this.role
+        ? this.role.substring(0, 3).toUpperCase()
+        : "USR";
+
+      if (this.student_id) {
+        this.user_id = `${rolePrefix}${this.student_id}`;
+      } else if (this.faculty_id) {
+        this.user_id = `${rolePrefix}${this.faculty_id}`;
+      } else {
+        // * For roles without student/faculty id, generate unique id
+
+        const timestamp = Date.now().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        this.user_id = `${rolePrefix}${timestamp}${random}`;
+      }
+    }
+
     // Hash password if modified
     if (this.isModified("password")) {
       const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
       this.password = await bcrypt.hash(this.password, saltRounds);
     }
-
   } catch (error) {
     // Handle error
     console.error("Error in userSchema pre-save hook:", error);
