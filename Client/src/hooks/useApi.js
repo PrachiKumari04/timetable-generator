@@ -33,6 +33,7 @@ export const useApi = (url, options = {}) => {
     };
   }, []);
 
+// * Fetch data function with caching and cancellation support
   const fetchData = useCallback(
     async (fetchOptions = {}) => {
       const { forceRefresh = false, silent = false } = fetchOptions;

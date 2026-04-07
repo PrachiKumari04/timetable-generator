@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, memo } from "react";
 import Container from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import toast from "react-hot-toast";
 import { login } from "../store/auth/authSlice";
 import { toggleTheme } from "../store/theme/themeSlice";
@@ -195,7 +195,19 @@ function Login() {
 
   return (
     <div className="relative h-screen bg-background transition-colors duration-200">
-      {/* Theme Toggle Button */}
+      {/* Home Button */}
+      <Link
+        to="/"
+        className="absolute top-4 left-4 p-2 rounded-full hover:bg-surface-hover text-text transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+        title="Go to Home"
+        aria-label="Go to Home"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+        </svg>
+      </Link>
+
+      {/* Toggle Theme Button */}
       <button
         onClick={() => dispatch(toggleTheme())}
         className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover text-text transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
@@ -205,6 +217,7 @@ function Login() {
         <ThemeToggleIcon theme={theme} />
       </button>
 
+      {/* Login Form */}
       <Container className="flex items-center justify-center h-full">
         <div className="w-full max-w-md p-8 space-y-6 bg-surface rounded-lg shadow-xl border border-border">
           <div className="text-center">
