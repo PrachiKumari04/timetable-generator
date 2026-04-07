@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-//Add programs
+//* Add programs
 export const addPrograms = asyncHandler(async (req, res) => {
   // recieve data form clint in array of object
   const program = req.body;
@@ -13,14 +13,14 @@ export const addPrograms = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Program data is required and must be an array");
   }
 
-  // Validate each program field
+  //* Validate each program field
   program.forEach((prog) => {
     if (!prog.program_id) throw new ApiError(400, "Program ID is required");
     if (!prog.program_name) throw new ApiError(400, "Program Name is required");
     if (!prog.program_duration) throw new ApiError(400, "Program Duration is required");
   });
 
-  // Filter out existing programs by program_id
+  //* Filter out existing programs by program_id
   const programIds = program.map((prog) => prog.program_id);
   const existingPrograms = await Program.find({
     program_id: { $in: programIds },
@@ -48,15 +48,15 @@ export const addPrograms = asyncHandler(async (req, res) => {
     );
 });
 
-// Get all programs with pagination and filtering
+//! Get all programs with pagination and filtering
 export const getAllPrograms = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { program_id: { $regex: search, $options: "i" } },
@@ -70,17 +70,17 @@ export const getAllPrograms = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
-        // Handle string filters (exact match for select fields)
+        //! Handle string filters (exact match for select fields)
         filter[fieldName] = value;
       }
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -93,7 +93,7 @@ export const getAllPrograms = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Programs retrieved successfully"));
 });
 
-// Get program by id
+//! Get program by id
 export const getProgramById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -110,7 +110,7 @@ export const getProgramById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, program, "Program retrieved successfully"));
 });
 
-// Get program by program_id
+//! Get program by program_id
 export const getProgramByProgramId = asyncHandler(async (req, res) => {
     const { program_id } = req.params;
 
@@ -123,7 +123,7 @@ export const getProgramByProgramId = asyncHandler(async (req, res) => {
     res.status(200).json(200, program, "Program retrieved successfully");
 })
 
-// Update program
+//* Update program
 export const updateProgram = asyncHandler(async (req, res) => {
     const { id } = req.params;
   const programData = req.body;
@@ -148,7 +148,7 @@ export const updateProgram = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedProgram, "Program updated successfully"));
 });
 
-// Delete program
+//! Delete program
 export const deleteProgram = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

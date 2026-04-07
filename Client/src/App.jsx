@@ -12,14 +12,14 @@ import Login from './pages/Login';
 import Admin from './pages/dashboard/Admin';
 import { verifySession } from './store/auth/authSlice';
 
-// Loading spinner component
+//* Loading spinner component
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
   </div>
 );
 
-// Protected Route component - redirects to login if not authenticated
+//! Protected Route component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
   const location = useLocation();
@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace state={{ from: location }} />;
 };
 
-// Public Route component for login page only - redirects to dashboard if already authenticated
+//! Public Route component for login page only - redirects to dashboard if already authenticated
 const PublicRoute = ({ children, requireAuth = false }) => {
   const { isAuthenticated, userData, loading } = useSelector((state) => state.auth);
 
@@ -39,7 +39,7 @@ const PublicRoute = ({ children, requireAuth = false }) => {
     return <LoadingSpinner />;
   }
 
-  // Only redirect to dashboard if this is the login page and user is authenticated
+  //* Only redirect to dashboard if this is the login page and user is authenticated
   if (requireAuth && isAuthenticated && userData?.role) {
     const role = userData.role.toLowerCase();
     const dashboardPath = role === 'admin' ? '/admin' : role === 'faculty' ? '/faculty' : '/student';

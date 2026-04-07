@@ -3,46 +3,46 @@ import toast from "react-hot-toast";
 
 const API_BASE_URL = "/api/v1";
 
-// Request cache storage
+//* Request cache storage
 const requestCache = new Map();
 const pendingRequests = new Map();
 
-// Token refresh state
+//* Token refresh state
 let isRefreshing = false;
 let refreshSubscribers = [];
 
-// Subscribe to token refresh
+//* Subscribe to token refresh
 const subscribeTokenRefresh = (callback) => {
   refreshSubscribers.push(callback);
 };
 
-// Notify all subscribers with new token
+//* Notify all subscribers with new token
 const onTokenRefreshed = () => {
   refreshSubscribers.forEach((callback) => callback());
   refreshSubscribers = [];
 };
 
-// Cache configuration
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+//* Cache configuration
+const CACHE_DURATION = 5 * 60 * 1000; //? 5 minutes
 const CACHEABLE_METHODS = ["GET"];
 
-// Create axios instance with optimized configuration
+//! Create axios instance with optimized configuration
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  timeout: 30000, // 30 second timeout
+  timeout: 30000, //? 30 second timeout
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-// Generate cache key from request config
+//* Generate cache key from request config
 const getCacheKey = (config) => {
   return `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
 };
 
-// Check if request is cacheable
+//* Check if request is cacheable
 const isCacheable = (config) => {
   return (
     CACHEABLE_METHODS.includes(config.method?.toUpperCase()) &&
@@ -50,16 +50,16 @@ const isCacheable = (config) => {
   );
 };
 
-// Request interceptor
+//! Request interceptor
 apiClient.interceptors.request.use(
   async (config) => {
-    // Check cache for GET requests
+    //* Check cache for GET requests
     if (isCacheable(config)) {
       const cacheKey = getCacheKey(config);
       const cached = requestCache.get(cacheKey);
 
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        // Return cached data as a cancelled request with cached data attached
+        //* Return cached data as a cancelled request with cached data attached
         config.adapter = () => {
           return Promise.resolve({
             data: cached.data,
@@ -73,19 +73,19 @@ apiClient.interceptors.request.use(
         return config;
       }
 
-      // Check for pending duplicate requests
+      //* Check for pending duplicate requests
       if (pendingRequests.has(cacheKey)) {
         config.adapter = () => pendingRequests.get(cacheKey);
         return config;
       }
     }
 
-    // Add request timestamp for performance tracking
+    //* Add request timestamp for performance tracking
     config.metadata = { startTime: Date.now() };
 
-    // Note: Authentication is handled via HTTP-only cookies automatically by the browser
-    // The backend sets accessToken and refreshToken cookies on login
-    // No need to manually set Authorization header - cookies are sent automatically
+    //? Note: Authentication is handled via HTTP-only cookies automatically by the browser
+    //? The backend sets accessToken and refreshToken cookies on login
+    //? No need to manually set Authorization header - cookies are sent automatically
 
     return config;
   },
@@ -94,10 +94,10 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor
+//! Response interceptor
 apiClient.interceptors.response.use(
   (response) => {
-    // Cache successful GET responses
+    //* Cache successful GET responses
     if (isCacheable(response.config) && !response.cached) {
       const cacheKey = getCacheKey(response.config);
       requestCache.set(cacheKey, {
@@ -105,10 +105,10 @@ apiClient.interceptors.response.use(
         timestamp: Date.now(),
       });
 
-      // Clean up pending request
+      //* Clean up pending request
       pendingRequests.delete(cacheKey);
 
-      // Log request duration in development
+      //? Log request duration in development
       if (import.meta.env.DEV && response.config.metadata) {
         const duration = Date.now() - response.config.metadata.startTime;
         console.log(`[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`);
@@ -120,18 +120,18 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 Unauthorized - Token expired
+    //! Handle 401 Unauthorized - Token expired
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Skip token refresh for session verification endpoint
-      // This prevents redirect loops on initial app load when user is not logged in
+      //? Skip token refresh for session verification endpoint
+      //? This prevents redirect loops on initial app load when user is not logged in
       if (originalRequest.url?.includes('/users/me')) {
         console.log("[API] Session verification failed - no active session");
         return Promise.reject(error);
       }
 
-      // If already refreshing, queue this request
+      //* If already refreshing, queue this request
       if (isRefreshing) {
         return new Promise((resolve) => {
           subscribeTokenRefresh(() => {
@@ -143,7 +143,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh token endpoint
+        //* Call refresh token endpoint
         const response = await axios.post(
           `${API_BASE_URL}/users/refresh-token`,
           {},
@@ -161,19 +161,19 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         refreshSubscribers = [];
         
-        // Clear cache and redirect to login
+        //! Clear cache and redirect to login
         requestCache.clear();
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
 
-    // Handle network errors with retry logic
+    //! Handle network errors with retry logic
     if (!error.response && originalRequest && !originalRequest._retry) {
       originalRequest._retry = (originalRequest._retry || 0) + 1;
 
       if (originalRequest._retry <= 3) {
-        // Exponential backoff: 1s, 2s, 4s
+        //? Exponential backoff: 1s, 2s, 4s
         const delay = Math.pow(2, originalRequest._retry - 1) * 1000;
         console.log(`[API] Retrying request (${originalRequest._retry}/3) after ${delay}ms`);
 
@@ -182,11 +182,11 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Handle specific error statuses
+    //! Handle specific error statuses
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          // Token refresh failed or invalid token
+          //* Token refresh failed or invalid token
           console.error("[API] Unauthorized request - redirecting to login");
           break;
         case 403:
@@ -213,7 +213,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Cache management utilities
+//* Cache management utilities
 export const apiCache = {
   clear: () => {
     requestCache.clear();
@@ -230,7 +230,7 @@ export const apiCache = {
     console.log(`[API] Cleared ${keysToDelete.length} cache entries matching "${pattern}"`);
   },
   invalidate: (entityKey) => {
-    // Invalidate cache for specific entity
+    //* Invalidate cache for specific entity
     apiCache.clearByPattern(`:${entityKey}`);
   },
   getStats: () => {
@@ -241,11 +241,11 @@ export const apiCache = {
   },
 };
 
-// Optimized request methods with additional options
+//* Optimized request methods with additional options
 export const api = {
   get: (url, config = {}) => apiClient.get(url, config),
   post: (url, data, config = {}) => {
-    // Invalidate related cache on mutation
+    //* Invalidate related cache on mutation
     if (config.invalidateCache) {
       apiCache.invalidate(config.invalidateCache);
     }

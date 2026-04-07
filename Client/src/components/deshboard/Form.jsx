@@ -13,7 +13,7 @@ function Form({ currentEntityConfig, activeEntity }) {
         if (editingEntityId && activeEntity && masterData[activeEntity]) {
             const entityToEdit = masterData[activeEntity].find(e => e._id === editingEntityId || e.id === editingEntityId);
             if (entityToEdit) {
-                // Format date fields for input type="date"
+                //* Format date fields for input type="date"
                 const formattedData = { ...entityToEdit };
                 currentEntityConfig.fields.forEach(field => {
                     if (field.type === 'date' && formattedData[field.name]) {
@@ -33,7 +33,7 @@ function Form({ currentEntityConfig, activeEntity }) {
     const handleEntityInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         
-        // Handle nested object fields (e.g., ltpHours.l)
+        //! Handle nested object fields (e.g., ltpHours.l)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setEntityForm(prev => ({

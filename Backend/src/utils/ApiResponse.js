@@ -1,6 +1,6 @@
 /**
- * Custom API Response Class
- * Provides structured success responses with consistent formatting
+ *! Custom API Response Class
+ *! Provides structured success responses with consistent formatting
  */
 class ApiResponse {
   constructor(statusCode, data, message = "Success", meta = null) {
@@ -12,7 +12,7 @@ class ApiResponse {
     this.meta = meta;
   }
 
-  // 2xx Success Responses
+  //* 2xx Success Responses
   static ok(data, message = "Success", meta = null) {
     return new ApiResponse(200, data, message, meta);
   }
@@ -29,7 +29,7 @@ class ApiResponse {
     return new ApiResponse(204, null, message);
   }
 
-  // Paginated response helper
+  //* Paginated response helper
   static paginated(data, pagination, message = "Success") {
     const meta = {
       pagination: {
@@ -44,9 +44,9 @@ class ApiResponse {
     return new ApiResponse(200, data, message, meta);
   }
 
-  /**
-   * Convert response to JSON format
-   */
+  //*
+  //* Convert response to JSON format
+  //*
   toJSON() {
     const response = {
       success: this.success,
@@ -63,9 +63,9 @@ class ApiResponse {
     return response;
   }
 
-  /**
-   * Send response via Express res object
-   */
+  //*
+  //* Send response via Express res object
+  //*
   send(res) {
     return res.status(this.statusCode).json(this.toJSON());
   }

@@ -10,23 +10,23 @@ import {
 
 const app = express();
 
-// Security middleware
+//! Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  contentSecurityPolicy: false, // Disable for API server
+  contentSecurityPolicy: false, //? Disable for API server
 }));
 
-// Compression middleware - compress responses
+//* Compression middleware - compress responses
 app.use(compression({
-  level: 6, // Balance between compression ratio and speed
-  threshold: 1024, // Only compress responses > 1KB
+  level: 6, //? Balance between compression ratio and speed
+  threshold: 1024, //? Only compress responses > 1KB
   filter: (req, res) => {
     if (req.headers['x-no-compression']) return false;
     return compression.filter(req, res);
   }
 }));
 
-// CORS configuration
+//* CORS configuration
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "http://localhost:5173",
@@ -37,13 +37,13 @@ app.use(
   }),
 );
 
-// Body parsing middleware with increased limits for bulk operations
+//* Body parsing middleware with increased limits for bulk operations
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-// Import routes
+//* Import routes
 import userRouter from "./routes/user.routers.js";
 import studentRouter from "./routes/student.routers.js";
 import facultyRouter from "./routes/faculty.routers.js";
@@ -59,7 +59,7 @@ import timetableRouter from "./routes/timetable.routers.js";
 import timeSlotRouter from "./routes/timeSlot.routers.js";
 import timeTableEntryRouter from "./routes/timeTableEntry.routers.js";
 
-// Route declarations
+//* Route declarations
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/students", studentRouter);
 app.use("/api/v1/faculties", facultyRouter);
@@ -75,7 +75,7 @@ app.use("/api/v1/timetables", timetableRouter);
 app.use("/api/v1/time-slots", timeSlotRouter);
 app.use("/api/v1/timetable-entries", timeTableEntryRouter);
 
-// Health check endpoint
+//* Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -86,7 +86,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// API Root
+//* API Root
 app.get("/api/v1", (req, res) => {
   res.status(200).json({
     success: true,
@@ -96,10 +96,10 @@ app.get("/api/v1", (req, res) => {
   });
 });
 
-// 404 Handler - Must be after all routes
+//! 404 Handler - Must be after all routes
 app.use(notFoundHandler);
 
-// Global Error Handler - Must be last
+//! Global Error Handler - Must be last
 app.use(errorHandler);
 
 export { app };

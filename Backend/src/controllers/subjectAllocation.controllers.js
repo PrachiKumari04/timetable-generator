@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-// Add subject allocations
+//* Add subject allocations
 export const addSubjectAllocations = asyncHandler(async (req, res) => {
   const allocations = req.body;
 
@@ -12,7 +12,7 @@ export const addSubjectAllocations = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Subject allocation data is required and must be an array");
   }
 
-  // Validate each allocation
+  //* Validate each allocation
   allocations.forEach((alloc) => {
     if (!alloc.subjectAllocation_id) throw new ApiError(400, "Subject Allocation ID is required");
     if (!alloc.semester_id) throw new ApiError(400, "Semester ID is required");
@@ -25,7 +25,7 @@ export const addSubjectAllocations = asyncHandler(async (req, res) => {
     if (!alloc.academicYear) throw new ApiError(400, "Academic Year is required");
   });
 
-  // Filter out existing allocations
+  //* Filter out existing allocations
   const allocIds = allocations.map((a) => a.subjectAllocation_id);
   const existingAllocs = await SubjectAllocation.find({
     subjectAllocation_id: { $in: allocIds }
@@ -47,15 +47,15 @@ export const addSubjectAllocations = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, allocRecords, "Subject allocations added successfully"));
 });
 
-// Get all subject allocations with pagination
+//! Get all subject allocations with pagination
 export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { subjectAllocation_id: { $regex: search, $options: "i" } },
@@ -72,7 +72,7 @@ export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -81,7 +81,7 @@ export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -94,7 +94,7 @@ export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Subject allocations retrieved successfully"));
 });
 
-// Get subject allocation by ID
+//! Get subject allocation by ID
 export const getSubjectAllocationById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -111,7 +111,7 @@ export const getSubjectAllocationById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, allocation, "Subject allocation fetched successfully"));
 });
 
-// Update subject allocation
+//* Update subject allocation
 export const updateSubjectAllocation = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
@@ -137,7 +137,7 @@ export const updateSubjectAllocation = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedAlloc, "Subject allocation updated successfully"));
 });
 
-// Delete subject allocation
+//! Delete subject allocation
 export const deleteSubjectAllocation = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

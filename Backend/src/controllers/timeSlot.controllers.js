@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-// Add time slots
+//* Add time slots
 export const addTimeSlots = asyncHandler(async (req, res) => {
   const timeSlots = req.body;
 
@@ -12,7 +12,7 @@ export const addTimeSlots = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Time slot data is required and must be an array");
   }
 
-  // Validate each time slot
+  //* Validate each time slot
   timeSlots.forEach((slot) => {
     if (!slot.slot_id) throw new ApiError(400, "Slot ID is required");
     if (!slot.day_of_week) throw new ApiError(400, "Day of Week is required");
@@ -21,7 +21,7 @@ export const addTimeSlots = asyncHandler(async (req, res) => {
     if (!slot.slot_type) throw new ApiError(400, "Slot Type is required");
   });
 
-  // Filter out existing time slots
+  //* Filter out existing time slots
   const slotIds = timeSlots.map((s) => s.slot_id);
   const existingSlots = await TimeSlot.find({
     slot_id: { $in: slotIds }
@@ -43,15 +43,15 @@ export const addTimeSlots = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, slotRecords, "Time slots added successfully"));
 });
 
-// Get all time slots with pagination
+//! Get all time slots with pagination
 export const getAllTimeSlots = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { slot_id: { $regex: search, $options: "i" } },
@@ -66,7 +66,7 @@ export const getAllTimeSlots = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -75,7 +75,7 @@ export const getAllTimeSlots = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -88,7 +88,7 @@ export const getAllTimeSlots = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Time slots retrieved successfully"));
 });
 
-// Get time slot by ID
+//! Get time slot by ID
 export const getTimeSlotById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -105,7 +105,7 @@ export const getTimeSlotById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, timeSlot, "Time slot fetched successfully"));
 });
 
-// Update time slot
+//* Update time slot
 export const updateTimeSlot = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
@@ -131,7 +131,7 @@ export const updateTimeSlot = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTimeSlot, "Time slot updated successfully"));
 });
 
-// Delete time slot
+//! Delete time slot
 export const deleteTimeSlot = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

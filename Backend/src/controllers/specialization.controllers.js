@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-//Add specialization
+//* Add specialization
 export const addSpecialization = asyncHandler(async (req, res) => {
   const specialization = req.body;
 
@@ -48,15 +48,15 @@ export const addSpecialization = asyncHandler(async (req, res) => {
   });
 });
 
-// Get all specializations with pagination
+//! Get all specializations with pagination
 export const getAllSpecialization = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { specialization_id: { $regex: search, $options: "i" } },
@@ -70,7 +70,7 @@ export const getAllSpecialization = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -79,7 +79,7 @@ export const getAllSpecialization = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -92,7 +92,7 @@ export const getAllSpecialization = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Specializations retrieved successfully"));
 });
 
-//Get specialization by id
+//! Get specialization by id
 export const getSpecializationById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -106,7 +106,7 @@ export const getSpecializationById = asyncHandler(async (req, res) => {
   });
 });
 
-//Update specialization
+//* Update specialization
 export const updateSpecialization = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { specialization_id, specialization_name, isActive } = req.body;
@@ -138,7 +138,7 @@ export const updateSpecialization = asyncHandler(async (req, res) => {
   });
 });
 
-//Delete specialization
+//! Delete specialization
 export const deleteSpecialization = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

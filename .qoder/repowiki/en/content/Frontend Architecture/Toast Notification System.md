@@ -12,6 +12,13 @@
 - [package.json](file://Client/package.json)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated toast positioning from 'top-right' to 'top-center' for improved user experience
+- Enhanced theme integration with better dark/light mode support and improved styling
+- Refined notification timing configurations with optimized durations
+- Updated architecture diagrams to reflect current implementation
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [System Architecture](#system-architecture)
@@ -29,7 +36,7 @@
 
 The Toast Notification System is a comprehensive notification framework built for the Timetable Management Application using React Hot Toast library. This system provides consistent, user-friendly feedback mechanisms across all application interactions, from API operations to user actions. The implementation follows modern React patterns with centralized configuration and flexible integration points.
 
-The system is designed to enhance user experience by providing timely, non-intrusive notifications that automatically disappear after appropriate durations while maintaining accessibility and visual consistency across light and dark themes.
+The system is designed to enhance user experience by providing timely, non-intrusive notifications that automatically disappear after appropriate durations while maintaining accessibility and visual consistency across light and dark themes. Recent improvements have optimized toast positioning and theme integration for better user experience.
 
 ## System Architecture
 
@@ -97,7 +104,7 @@ class ToastLibrary {
 +promise(promise, messages, durations) Promise
 }
 class ThemeConfig {
-+position : "top-right"
++position : "top-center"
 +duration : 4000
 +success : DurationConfig
 +error : DurationConfig
@@ -115,9 +122,9 @@ ToastUtilities --> ThemeConfig : "uses"
 - [toast.js:1-135](file://Client/src/utils/toast.js#L1-L135)
 - [App.jsx:29-60](file://Client/src/App.jsx#L29-L60)
 
-### Theme Integration
+### Enhanced Theme Integration
 
-The system integrates seamlessly with the application's theming system, automatically adapting toast appearance to match the current theme.
+The system integrates seamlessly with the application's theming system, automatically adapting toast appearance to match the current theme with improved styling and positioning.
 
 ```mermaid
 sequenceDiagram
@@ -126,10 +133,10 @@ participant App as App Component
 participant Toaster as Toaster Component
 participant Toast as Toast Instance
 User->>App : Trigger action
-App->>Toaster : Render Toaster
+App->>Toaster : Render Toaster with top-center position
 Toaster->>Toast : Create toast with theme config
-Toast->>User : Display themed notification
-Note over App,Toast : Automatic theme adaptation<br/>based on dark/light mode
+Toast->>User : Display themed notification at center-top
+Note over App,Toast : Automatic theme adaptation<br/>with improved positioning<br/>and styling
 ```
 
 **Diagram sources**
@@ -144,7 +151,7 @@ Note over App,Toast : Automatic theme adaptation<br/>based on dark/light mode
 
 ### Standard Notifications
 
-The system supports three primary notification types with distinct visual treatments and durations:
+The system supports three primary notification types with distinct visual treatments and optimized durations:
 
 | Type | Duration | Icon Color | Use Case |
 |------|----------|------------|----------|
@@ -156,15 +163,15 @@ The system supports three primary notification types with distinct visual treatm
 
 ```mermaid
 flowchart TD
-Start([API Call Initiated]) --> ShowLoading["Show Loading Toast"]
+Start([API Call Initiated]) --> ShowLoading["Show Loading Toast<br/>Position: top-center"]
 ShowLoading --> ExecuteAPI["Execute API Operation"]
 ExecuteAPI --> Success{"Operation Success?"}
 Success --> |Yes| DismissLoading["Dismiss Loading Toast"]
-Success --> |Yes| ShowSuccess["Show Success Toast"]
+Success --> |Yes| ShowSuccess["Show Success Toast<br/>3s duration"]
 Success --> |Yes| Cleanup["Cleanup State"]
 Success --> |Yes| End([Complete])
 Success --> |No| DismissLoadingError["Dismiss Loading Toast"]
-DismissLoadingError --> ShowError["Show Error Toast"]
+DismissLoadingError --> ShowError["Show Error Toast<br/>5s duration"]
 ShowError --> HandleError["Handle Error State"]
 HandleError --> End
 Cleanup --> End
@@ -190,13 +197,13 @@ participant APIClient as API Client
 participant ToastUtil as Toast Utils
 participant Server as API Server
 Component->>APIHook : initiate data operation
-APIHook->>ToastUtil : showLoading("Processing...")
+APIHook->>ToastUtil : showLoading("Processing...", { position : "top-center" })
 APIHook->>APIClient : execute request
 APIClient->>Server : send request
 Server-->>APIClient : response
 APIClient-->>APIHook : response data
 APIHook->>ToastUtil : dismissLoading()
-APIHook->>ToastUtil : showSuccess("Operation completed")
+APIHook->>ToastUtil : showSuccess("Operation completed", { duration : 3000 })
 APIHook-->>Component : return data
 ```
 
@@ -241,15 +248,15 @@ Components can directly import and use toast utilities for immediate feedback:
 ```javascript
 // Example usage pattern
 const handleSubmit = async () => {
-  const toastId = toast.loading("Saving data...");
+  const toastId = toast.loading("Saving data...", { position: "top-center" });
   
   try {
     const result = await saveData();
     toast.dismiss(toastId);
-    toast.success("Data saved successfully!");
+    toast.success("Data saved successfully!", { duration: 3000 });
   } catch (error) {
     toast.dismiss(toastId);
-    toast.error("Failed to save data");
+    toast.error("Failed to save data", { duration: 5000 });
   }
 };
 ```
@@ -276,10 +283,10 @@ The system implements comprehensive error handling across multiple layers:
 flowchart TD
 APIError[API Error Response] --> CheckStatus{Check Status Code}
 CheckStatus --> |401| SessionExpired["Show session expired<br/>Clear auth tokens<br/>Redirect to login"]
-CheckStatus --> |Network Error| NetworkError["Show network error<br/>Suggest checking connection"]
-CheckStatus --> |Other Error| GenericError["Show generic error<br/>Display error message"]
+CheckStatus --> |Network Error| NetworkError["Show network error<br/>Suggest checking connection<br/>with improved positioning"]
+CheckStatus --> |Other Error| GenericError["Show generic error<br/>Display error message<br/>at center-top position"]
 SessionExpired --> AuthCleanup["Remove authentication<br/>from local storage"]
-NetworkError --> UserFeedback["Notify user about<br/>network connectivity"]
+NetworkError --> UserFeedback["Notify user about<br/>network connectivity<br/>with better theme support"]
 GenericError --> UserFeedback
 AuthCleanup --> Redirect["Redirect to login page"]
 UserFeedback --> End([Complete])
@@ -302,10 +309,11 @@ The system implements efficient toast lifecycle management to prevent memory lea
 - **Manual Control**: Functions to programmatically dismiss specific toasts
 - **Memory Management**: Proper cleanup of toast instances and references
 
-### Theme Performance
+### Enhanced Theme Performance
 
-The theme integration is optimized to minimize re-renders:
+The theme integration is optimized to minimize re-renders with improved positioning:
 
+- **Optimized Positioning**: Center-top positioning reduces visual clutter
 - **Conditional Rendering**: Theme changes trigger minimal component updates
 - **CSS Classes**: Dynamic class switching for theme transitions
 - **Local Storage**: Efficient theme persistence without blocking operations
@@ -319,16 +327,16 @@ The theme integration is optimized to minimize re-renders:
 
 | Issue | Symptoms | Solution |
 |-------|----------|----------|
-| Toasts not appearing | No notifications visible | Check Toaster component rendering in App.jsx |
-| Incorrect timing | Toasts dismiss too quickly/slowly | Verify duration configurations in toast.js |
-| Theme mismatch | Wrong colors/appearance | Confirm theme state synchronization |
-| Memory leaks | Increasing toast count | Ensure proper toast dismissal |
+| Toasts not appearing | No notifications visible | Check Toaster component rendering in App.jsx with top-center position |
+| Incorrect timing | Toasts dismiss too quickly/slowly | Verify duration configurations in toast.js and App.jsx |
+| Theme mismatch | Wrong colors/appearance | Confirm theme state synchronization and improved styling |
+| Position issues | Notifications appear in wrong location | Ensure position is set to "top-center" in Toaster component |
 
 ### Debugging Steps
 
 1. **Verify Dependencies**: Ensure react-hot-toast is properly installed
 2. **Check Import Paths**: Confirm correct import statements
-3. **Validate Configuration**: Review toast options and theme settings
+3. **Validate Configuration**: Review toast options and theme settings with new positioning
 4. **Monitor Console**: Look for JavaScript errors in browser console
 
 **Section sources**
@@ -339,22 +347,26 @@ The theme integration is optimized to minimize re-renders:
 ### Implementation Guidelines
 
 1. **Consistent Messaging**: Use clear, concise messages that inform rather than confuse
-2. **Appropriate Timing**: Choose durations that match user expectations
-3. **Accessibility**: Ensure sufficient contrast and readable text
+2. **Optimized Timing**: Choose durations that match user expectations (3s for success, 5s for error)
+3. **Accessibility**: Ensure sufficient contrast and readable text with improved theme support
 4. **Error Recovery**: Provide actionable error messages with recovery options
 5. **Performance**: Avoid excessive toast creation in loops or frequent updates
+6. **Positioning**: Use center-top positioning for optimal user experience
 
 ### Design Principles
 
-- **User-Centered**: Focus on user needs and mental models
+- **User-Centered**: Focus on user needs and mental models with improved positioning
 - **Consistency**: Maintain uniform behavior across similar operations
 - **Feedback Loops**: Provide immediate acknowledgment for user actions
 - **Graceful Degradation**: Handle failures gracefully without breaking UX
+- **Theme Harmony**: Ensure notifications blend seamlessly with application theme
 
 ## Conclusion
 
 The Toast Notification System provides a robust, scalable solution for user feedback in the Timetable Management Application. Its architecture ensures consistency, performance, and maintainability while offering flexibility for various use cases.
 
-The system's integration with React Hot Toast, combined with custom utility functions and comprehensive error handling, creates a reliable notification framework that enhances user experience without compromising application performance. The modular design allows for easy extension and customization as the application evolves.
+The system's integration with React Hot Toast, combined with custom utility functions and comprehensive error handling, creates a reliable notification framework that enhances user experience without compromising application performance. The recent improvements to toast positioning, theme integration, and timing configurations demonstrate ongoing commitment to user experience optimization.
 
-Key strengths include automatic theme adaptation, comprehensive error handling, efficient lifecycle management, and seamless integration with existing application patterns. This foundation supports both simple notifications and complex operation workflows with consistent user experience.
+Key strengths include automatic theme adaptation with improved styling, comprehensive error handling, efficient lifecycle management, seamless integration with existing application patterns, and optimized positioning for better user experience. This foundation supports both simple notifications and complex operation workflows with consistent user experience.
+
+The enhanced theme integration with better dark/light mode support and improved notification timing configurations ensures that users receive appropriate feedback regardless of their theme preference or the complexity of the operation being performed.

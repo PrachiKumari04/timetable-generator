@@ -7,7 +7,7 @@ import { login } from "../store/auth/authSlice";
 import { toggleTheme } from "../store/theme/themeSlice";
 import apiClient from "../services/apiClient";
 
-// Validation rules
+//* Validation rules
 const validateForm = (values) => {
   const errors = {};
   
@@ -26,7 +26,7 @@ const validateForm = (values) => {
   return errors;
 };
 
-// Theme toggle icon component
+//! Theme toggle icon component
 const ThemeToggleIcon = memo(({ theme }) => (
   theme === "dark" ? (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -39,7 +39,7 @@ const ThemeToggleIcon = memo(({ theme }) => (
   )
 ));
 
-// Password visibility toggle icon
+//* Password visibility toggle icon
 const EyeIcon = memo(({ visible }) => (
   visible ? (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -59,7 +59,7 @@ function Login() {
   const theme = useSelector((state) => state.theme.theme);
   const navigate = useNavigate();
 
-  // Form state
+  //* Form state
   const [values, setValues] = useState({
     username: "",
     password: "",
@@ -69,7 +69,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect to dashboard if already authenticated
+  //* Redirect to dashboard if already authenticated
   useEffect(() => {
     if (isAuthenticated && userData?.role) {
       const userRole = userData.role.toLowerCase();
@@ -82,7 +82,7 @@ function Login() {
     }
   }, [isAuthenticated, userData, navigate]);
 
-  // Show loading while verifying session (only on initial app load, not during login)
+  //* Show loading while verifying session (only on initial app load, not during login)
   if (authLoading && !isSubmitting) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -97,20 +97,20 @@ function Login() {
     );
   }
 
-  // Handle input changes
+  //! Handle input changes
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setValues((prev) => ({
       ...prev,
       [name]: value,
     }));
-    // Clear error when user starts typing
+    //! Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   }, [errors]);
 
-  // Handle input blur for validation
+  //! Handle input blur for validation
   const handleBlur = useCallback((e) => {
     const { name } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
@@ -120,11 +120,11 @@ function Login() {
     }
   }, [values]);
 
-  // Handle form submission
+  //! Handle form submission
   const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
     
-    // Validate all fields
+    //* Validate all fields
     const formErrors = validateForm(values);
     setErrors(formErrors);
     setTouched({ username: true, password: true });
@@ -146,7 +146,7 @@ function Login() {
       // Direct API call without toast wrapper for better control
       const response = await apiClient.post("/users/login", loginData);
       
-      // Extract data from response
+      //* Extract data from response
       const apiResponse = response.data;
       
       if (!apiResponse.success) {
@@ -155,7 +155,7 @@ function Login() {
         return;
       }
 
-      // Backend returns user data directly in data, not wrapped in 'user' property
+      //* Backend returns user data directly in data, not wrapped in 'user' property
       const responseData = apiResponse.data || {};
       const { accessToken, refreshToken, ...user } = responseData;
       
@@ -165,21 +165,21 @@ function Login() {
         return;
       }
 
-      // Prepare user data for Redux store
+      //! Prepare user data for Redux store
       const userDataForStore = {
         ...user,
         token: accessToken,
         refreshToken: refreshToken,
       };
       
-      // Dispatch login action
+      //* Dispatch login action
       dispatch(login(userDataForStore));
       
-      // Dismiss loading and show success message
+      //* Dismiss loading and show success message
       toast.dismiss(loadingToastId);
       toast.success(`Welcome back, ${user.user_name || user.user_id || "User"}!`);
       
-      // Navigation is handled by useEffect that watches isAuthenticated
+      //* Navigation is handled by useEffect that watches isAuthenticated
       
     } catch (error) {
       toast.dismiss(loadingToastId);

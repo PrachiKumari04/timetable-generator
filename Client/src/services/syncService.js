@@ -11,26 +11,26 @@ class SyncService {
     this.listeners = new Set();
     this.offlineMode = !navigator.onLine;
 
-    // Listen for online/offline events
+    //* Listen for online/offline events
     window.addEventListener("online", () => this.handleOnline());
     window.addEventListener("offline", () => this.handleOffline());
 
-    // Load pending operations from localStorage
+    //* Load pending operations from localStorage
     this.loadPendingOperations();
   }
 
-  // Subscribe to sync status changes
+  //! Subscribe to sync status changes
   subscribe(callback) {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
 
-  // Notify all listeners
+  //! Notify all listeners
   notify(status) {
     this.listeners.forEach((callback) => callback(status));
   }
 
-  // Handle going online
+  //! Handle going online
   async handleOnline() {
     this.offlineMode = false;
     console.log("[Sync] Connection restored - processing pending operations");
@@ -38,14 +38,14 @@ class SyncService {
     await this.processSyncQueue();
   }
 
-  // Handle going offline
+  //! Handle going offline
   handleOffline() {
     this.offlineMode = true;
     console.log("[Sync] Connection lost - operations will be queued");
     this.notify({ type: "OFFLINE", pendingCount: this.syncQueue.length });
   }
 
-  // Load pending operations from localStorage
+  //* Load pending operations from localStorage
   loadPendingOperations() {
     try {
       const stored = localStorage.getItem("syncQueue");
@@ -58,7 +58,7 @@ class SyncService {
     }
   }
 
-  // Save pending operations to localStorage
+  //* Save pending operations to localStorage
   savePendingOperations() {
     try {
       localStorage.setItem("syncQueue", JSON.stringify(this.syncQueue));
@@ -67,7 +67,7 @@ class SyncService {
     }
   }
 
-  // Add operation to sync queue
+  //* Add operation to sync queue
   queueOperation(operation) {
     const op = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -80,7 +80,7 @@ class SyncService {
     this.savePendingOperations();
     this.notify({ type: "QUEUED", operation: op, pendingCount: this.syncQueue.length });
 
-    // Try to process immediately if online
+    //* Try to process immediately if online
     if (!this.offlineMode && !this.isSyncing) {
       this.processSyncQueue();
     }
@@ -88,7 +88,7 @@ class SyncService {
     return op.id;
   }
 
-  // Process all queued operations
+  //* Process all queued operations
   async processSyncQueue() {
     if (this.isSyncing || this.syncQueue.length === 0 || this.offlineMode) {
       return;
@@ -114,7 +114,7 @@ class SyncService {
       }
     }
 
-    // Remove processed operations
+    //* Remove processed operations
     this.syncQueue = this.syncQueue.filter(
       (op) => !processed.includes(op.id) && !op.failed
     );
@@ -133,7 +133,7 @@ class SyncService {
     }
   }
 
-  // Execute a single operation
+  //! Execute a single operation
   async executeOperation(operation) {
     const { type, endpoint, data, invalidateCache } = operation;
 
@@ -155,14 +155,14 @@ class SyncService {
     }
   }
 
-  // Batch operations for efficient syncing
+  //* Batch operations for efficient syncing
   async batchOperation(entityKey, operations) {
     const endpoint = `/batch/${entityKey}`;
 
     try {
       const response = await apiClient.post(endpoint, { operations });
 
-      // Invalidate cache for the entity
+      //! Invalidate cache for the entity
       apiCache.invalidate(entityKey);
 
       return {
@@ -170,7 +170,7 @@ class SyncService {
         data: response.data,
       };
     } catch (error) {
-      // Queue individual operations if batch fails
+      //* Queue individual operations if batch fails
       operations.forEach((op) => {
         this.queueOperation({
           type: op.type,
@@ -188,7 +188,7 @@ class SyncService {
     }
   }
 
-  // Optimistic update with rollback capability
+  //* Optimistic update with rollback capability
   async optimisticUpdate({
     entityKey,
     endpoint,
@@ -197,7 +197,7 @@ class SyncService {
     onSuccess,
     onError,
   }) {
-    // Apply optimistic update immediately
+    //! Apply optimistic update immediately
     if (onSuccess) {
       onSuccess(optimisticData);
     }
@@ -209,12 +209,12 @@ class SyncService {
         data: response.data.data || response.data,
       };
     } catch (error) {
-      // Rollback on error
+      //* Rollback on error
       if (onError) {
         onError(error);
       }
 
-      // Queue for retry
+      //* Queue for retry
       this.queueOperation({
         type: "PUT",
         endpoint,
@@ -230,7 +230,7 @@ class SyncService {
     }
   }
 
-  // Get current sync status
+  //! Get current sync status
   getStatus() {
     return {
       isOnline: !this.offlineMode,
@@ -240,14 +240,14 @@ class SyncService {
     };
   }
 
-  // Clear all pending operations
+  //! Clear all pending operations
   clearQueue() {
     this.syncQueue = [];
     this.savePendingOperations();
     this.notify({ type: "CLEARED", pendingCount: 0 });
   }
 
-  // Retry failed operations
+  //* Retry failed operations
   async retryFailed() {
     const failedOps = this.syncQueue.filter((op) => op.failed);
     failedOps.forEach((op) => {
@@ -261,10 +261,10 @@ class SyncService {
   }
 }
 
-// Export singleton instance
+//! Export singleton instance
 export const syncService = new SyncService();
 
-// React hook for sync status (for use in React components)
+//* React hook for sync status (for use in React components)
 export const useSyncStatus = () => {
   const [status, setStatus] = useState(syncService.getStatus());
 

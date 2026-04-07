@@ -86,7 +86,7 @@ export const promiseToast = (promise, messages = {}) => {
 };
 
 /**
- * API response handler with toast notifications
+ *! API response handler with toast notifications
  * @param {Promise} apiCall - The API call promise
  * @param {Object} options - Configuration options
  */

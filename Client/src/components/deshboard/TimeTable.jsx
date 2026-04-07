@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
 import apiClient from "../../services/apiClient";
 
-// Subject color mapping for different subjects
+//* Subject color mapping for different subjects
 const SUBJECT_COLORS = {
   "Data Analytics & Visualization": { bg: "bg-green-700", text: "text-white" },
   "Ethical Hacking & security operations": { bg: "bg-green-700", text: "text-white" },
@@ -21,7 +21,7 @@ const SUBJECT_COLORS = {
   default: { bg: "bg-gray-500", text: "text-white" },
 };
 
-// Time slots configuration
+//* Time slots configuration
 const TIME_SLOTS = [
   { time: "8:40 am to 9:40 am", label: "1" },
   { time: "9:40 a.m. to 10:40 am", label: "2" },
@@ -37,7 +37,7 @@ const TIME_SLOTS = [
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-// Sample timetable data based on the image
+//* Sample timetable data based on the image
 const SAMPLE_TIMETABLE_DATA = {
   monday: [
     { subject: "Data Analytics & Visualization/Ethical Hacking & security operations", faculty: "", room: "" },
@@ -113,7 +113,7 @@ const SAMPLE_TIMETABLE_DATA = {
   ],
 };
 
-// Get color for a subject
+//! Get color for a subject
 const getSubjectColor = (subject) => {
   if (!subject) return { bg: "bg-transparent", text: "text-transparent" };
   
@@ -218,14 +218,14 @@ const ActionButtons = ({ onPrint, onExport, onRefresh, viewMode, setViewMode, is
   </div>
 );
 
-// Check if a subject is a lab session
+//! Check if a subject is a lab session
 const isLabSession = (subject) => {
   if (!subject) return false;
   const labKeywords = ['lab', 'practical', 'workshop', 'session'];
   return labKeywords.some(keyword => subject.toLowerCase().includes(keyword));
 };
 
-// Process timetable data to handle lab sessions spanning 2 consecutive periods
+//* Process timetable data to handle lab sessions spanning 2 consecutive periods
 const processTimetableData = (timetableData, timeSlots) => {
   const processed = {};
   
@@ -242,15 +242,15 @@ const processTimetableData = (timetableData, timeSlots) => {
         return;
       }
       
-      // Check if current slot is a break
+      //! Check if current slot is a break
       if (timeSlots[index]?.isBreak) {
         processed[dayKey].push(cell);
         return;
       }
       
-      // Check if this is a lab session
+      //! Check if this is a lab session
       if (cell && isLabSession(cell.subject)) {
-        // Mark this as a lab that spans 2 periods
+        //* Mark this as a lab that spans 2 periods
         processed[dayKey].push({ ...cell, isLab: true, spansTwoPeriods: true });
         skipNext = true;
       } else {
@@ -303,7 +303,7 @@ const WeekView = ({ timetableData, timeSlots }) => {
                   const dayKey = day.toLowerCase();
                   const cellData = processedData[dayKey]?.[slotIndex];
                   
-                  // Skip rendering if this is a continued lab cell (merged above)
+                  //* Skip rendering if this is a continued lab cell (merged above)
                   if (cellData?.isContinued) {
                     return null;
                   }
@@ -387,7 +387,7 @@ const DayView = ({ timetableData, timeSlots, selectedDay, setSelectedDay }) => {
           
           const cellData = processedData[selectedDay]?.[slotIndex];
           
-          // Skip rendering if this is a continued lab cell
+          //* Skip rendering if this is a continued lab cell
           if (cellData?.isContinued) {
             return null;
           }
@@ -477,7 +477,7 @@ const TimeTable = ({ onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
   const timetableRef = useRef(null);
   
-  // College information (can be fetched from API)
+  //* College information (can be fetched from API)
   const collegeInfo = {
     name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
     batch: "BATCH 2025 ( A. Y. - 2025-26)",
@@ -488,7 +488,7 @@ const TimeTable = ({ onClose }) => {
     roomNo: "N 715",
   };
 
-  // Handle Print functionality
+  //! Handle Print functionality
   const handlePrint = useCallback(() => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -569,36 +569,36 @@ const TimeTable = ({ onClose }) => {
     printWindow.document.close();
     printWindow.focus();
     
-    // Wait for content to load then print
+    //* Wait for content to load then print
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
     }, 250);
   }, [collegeInfo]);
 
-  // Handle Export to PDF functionality
+  //! Handle Export to PDF functionality
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     try {
-      // Create a canvas from the timetable
+      //! Create a canvas from the timetable
       const element = timetableRef.current;
       if (!element) {
         throw new Error('Timetable element not found');
       }
 
-      // Use html2canvas approach by creating a data URL
+      //* Use html2canvas approach by creating a data URL
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      // Set canvas dimensions
+      //* Set canvas dimensions
       canvas.width = 1200;
       canvas.height = 800;
       
-      // Fill white background
+      //* Fill white background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Draw header
+      //* Draw header
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, 100);
       
@@ -611,7 +611,7 @@ const TimeTable = ({ onClose }) => {
       ctx.fillText(`${collegeInfo.batch}    ${collegeInfo.semester}    Effective From ${collegeInfo.effectiveDate}`, canvas.width / 2, 60);
       ctx.fillText(`${collegeInfo.classInfo}    Class Teacher - ${collegeInfo.classTeacher}    Room - ${collegeInfo.roomNo}`, canvas.width / 2, 85);
       
-      // Draw simplified timetable representation
+      //* Draw simplified timetable representation
       ctx.fillStyle = '#000000';
       ctx.font = '12px Arial';
       ctx.textAlign = 'left';
@@ -626,7 +626,7 @@ const TimeTable = ({ onClose }) => {
         ctx.font = 'bold 14px Arial';
         ctx.fillText(day, 30, y + index * 100 + 18);
         
-        // Draw time slots
+        //* Draw time slots
         ctx.font = '11px Arial';
         const dayData = timetableData[day.toLowerCase()];
         if (dayData) {
@@ -645,7 +645,7 @@ const TimeTable = ({ onClose }) => {
         }
       });
       
-      // Convert to image and download
+      //* Convert to image and download
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `Timetable_${collegeInfo.classInfo.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.png`;
@@ -662,16 +662,16 @@ const TimeTable = ({ onClose }) => {
     }
   }, [collegeInfo, timetableData]);
 
-  // Handle Refresh functionality
+  //! Handle Refresh functionality
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      // Try to fetch fresh data from API
+      //* Try to fetch fresh data from API
       const response = await apiClient.get('/timetable/current');
       if (response.data?.data) {
         setTimetableData(response.data.data);
       } else {
-        // If API returns no data, keep sample data but show message
+        //* If API returns no data, keep sample data but show message
         console.log('No timetable data from API, using sample data');
       }
     } catch (error) {

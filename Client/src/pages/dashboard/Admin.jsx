@@ -26,10 +26,10 @@ function Admin() {
     (state) => state.admin,
   );
 
-  // Verify session first, then fetch data
+  //! Verify session first, then fetch data
   useEffect(() => {
     if (isAuthenticated && userData?.role === "admin") {
-      // Fetch initial data for all entities with default pagination
+      //* Fetch initial data for all entities with default pagination
       const entities = ["program", "course", "room", "division", "specialization", 
                        "faculty", "student", "qualification_type", "subject_allocation", 
                        "time_slot", "timetable", "timetable_entry", "user"];
@@ -40,13 +40,13 @@ function Admin() {
   }, [dispatch, isAuthenticated, userData]);
 
   useEffect(() => {
-    // Only redirect if auth check is complete and user is not authenticated
+    //* Only redirect if auth check is complete and user is not authenticated
     if (!authLoading && (!isAuthenticated || !userData || userData.role !== "admin")) {
       navigate("/");
     }
   }, [authLoading, isAuthenticated, userData, navigate]);
 
-  // Show loading while verifying session
+  //* Show loading while verifying session
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import apiClient, { api, apiCache } from "../services/apiClient";
 
 /**
- * Custom hook for optimized API data fetching with caching
+ *! Custom hook for optimized API data fetching with caching
  * @param {string} url - API endpoint
  * @param {Object} options - Configuration options
  * @returns {Object} { data, loading, error, refetch, clearCache }
@@ -13,7 +13,7 @@ export const useApi = (url, options = {}) => {
     params = {},
     body = null,
     immediate = true,
-    cacheDuration = 5 * 60 * 1000, // 5 minutes
+    cacheDuration = 5 * 60 * 1000, //5 minutes
     onSuccess,
     onError,
     dependencies = [],
@@ -24,7 +24,7 @@ export const useApi = (url, options = {}) => {
   const [error, setError] = useState(null);
   const abortControllerRef = useRef(null);
 
-  // Cancel previous request on unmount or dependency change
+  //* Cancel previous request on unmount or dependency change
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -38,7 +38,7 @@ export const useApi = (url, options = {}) => {
     async (fetchOptions = {}) => {
       const { forceRefresh = false, silent = false } = fetchOptions;
 
-      // Cancel previous request
+      //* Cancel previous request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -115,20 +115,20 @@ export const useApi = (url, options = {}) => {
     ],
   );
 
-  // Initial fetch
+  //* Initial fetch
   useEffect(() => {
     if (immediate) {
       fetchData();
     }
   }, [fetchData, immediate]);
 
-  // Refetch function
+  //! Refetch function
   const refetch = useCallback(
     (options = {}) => fetchData({ ...options, forceRefresh: true }),
     [fetchData],
   );
 
-  // Clear cache for this endpoint
+  //! Clear cache for this endpoint
   const clearCache = useCallback(() => {
     apiCache.clearByPattern(url);
   }, [url]);
@@ -167,7 +167,7 @@ export const usePaginatedApi = (url, options = {}) => {
     params,
   });
 
-  // Update pagination when data changes
+  //* Update pagination when data changes
   useEffect(() => {
     if (data?.pagination) {
       setPagination(data.pagination);

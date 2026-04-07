@@ -5,6 +5,7 @@ import { app } from "./server.js";
 dotenv.config({ path: "./.env" });
 const port = 4000;
 
+//* Connect to database and start server
 connectDB()
   .then(() => {
     app.on("error", (error) => {

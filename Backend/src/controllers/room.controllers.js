@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-//Add rooms
+//* Add rooms
 export const addRoom = asyncHandler(async (req, res) => {
   //recieve data form clint in array of object
   const room = req.body;
@@ -25,7 +25,7 @@ export const addRoom = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Duplicate room numbers found in the input");
   }
 
-  // Check if any room already exists in the database
+  //! Check if any room already exists in the database
   const existingRooms = await Room.find({
     room_no: { $in: uniqueRoomNos },
   });
@@ -38,7 +38,7 @@ export const addRoom = asyncHandler(async (req, res) => {
     );
   }
 
-  // Insert rooms into the database
+  //* Insert rooms into the database
   const createdRooms = await Room.insertMany(room);
 
   res
@@ -46,15 +46,15 @@ export const addRoom = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, createdRooms, "Rooms added successfully"));
 });
 
-// Get all rooms with pagination and filtering
+//! Get all rooms with pagination and filtering
 export const getAllRooms = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { room_no: { $regex: search, $options: "i" } },
@@ -69,7 +69,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -78,7 +78,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;

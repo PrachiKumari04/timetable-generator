@@ -1,6 +1,6 @@
 /**
- * Custom API Error Class
- * Provides structured error responses with status codes and error details
+ *! Custom API Error Class
+ *! Provides structured error responses with status codes and error details
  */
 class ApiError extends Error {
   constructor(
@@ -25,7 +25,7 @@ class ApiError extends Error {
     }
   }
 
-  // Static factory methods for common HTTP errors
+  //* Static factory methods for common HTTP errors
   static badRequest(message = "Bad Request", errors = []) {
     return new ApiError(400, message, errors);
   }
@@ -62,9 +62,9 @@ class ApiError extends Error {
     return new ApiError(503, message, errors);
   }
 
-  /**
-   * Convert error to JSON format for API responses
-   */
+  //*
+  //* Convert error to JSON format for API responses
+  //*
   toJSON() {
     return {
       success: this.success,

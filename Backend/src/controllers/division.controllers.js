@@ -38,15 +38,15 @@ export const registerDivision = asyncHandler(async (req, res) => {
     );
 });
 
-// Get all divisions with pagination and filtering
+//! Get all divisions with pagination and filtering
 export const getAllDivisions = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { division_id: { $regex: search, $options: "i" } },
@@ -60,7 +60,7 @@ export const getAllDivisions = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -69,7 +69,7 @@ export const getAllDivisions = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -82,7 +82,7 @@ export const getAllDivisions = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Divisions retrieved successfully"));
 });
 
-// Get division by ID
+//! Get division by ID
 export const getDivisionById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -116,7 +116,7 @@ export const getDivisionByDivisionId = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, divisionData, "Division fetched successfully"));
 });
 
-// Update division
+//* Update division
 export const updateDivision = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const divisionData = req.body;
@@ -138,7 +138,7 @@ export const updateDivision = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedDivision, "Division updated successfully"));
 });
 
-// Delete division
+//! Delete division
 export const deleteDivision = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

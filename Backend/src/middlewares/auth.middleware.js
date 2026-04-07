@@ -3,11 +3,11 @@ import { ApiError } from "../utils/ApiError.js";
 import { verifyAccessToken } from "../utils/Token.js";
 import { User } from "../models/user.models.js";
 
-// Verify JWT token and attach user to request
+//! Verify JWT token and attach user to request
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
     
-    // Get token from cookies or Authorization header
+    //* Get token from cookies or Authorization header
     const token =
       req.cookies?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
@@ -16,14 +16,14 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       throw new ApiError(401, "Unauthorized request - No token provided");
     }
 
-    // Verify token
+    //* Verify token
     const decodedToken = verifyAccessToken(token);
 
     if (!decodedToken) {
       throw new ApiError(401, "Invalid or expired access token");
     }
 
-    // Find user and attach to request
+    //* Find user and attach to request
     const user = await User.findById(decodedToken._id).select(
       "-password -refreshToken"
     );
@@ -43,7 +43,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Check if user has required role(s)
+//! Check if user has required role(s)
 export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -61,7 +61,7 @@ export const authorizeRoles = (...allowedRoles) => {
   };
 };
 
-// Check if user is admin
+//! Check if user is admin
 export const isAdmin = asyncHandler(async (req, res, next) => {
   if (!req.user) {
     throw new ApiError(401, "Please login to access this resource");
@@ -74,7 +74,7 @@ export const isAdmin = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// Check if user is faculty or admin
+//! Check if user is faculty or admin
 export const isFacultyOrAdmin = asyncHandler(async (req, res, next) => {
   if (!req.user) {
     throw new ApiError(401, "Please login to access this resource");
@@ -91,7 +91,7 @@ export const isFacultyOrAdmin = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// Optional auth - attaches user if token exists, but doesn't require it
+//! Optional auth - attaches user if token exists, but doesn't require it
 export const optionalAuth = asyncHandler(async (req, res, next) => {
   try {
     const token =
@@ -114,7 +114,7 @@ export const optionalAuth = asyncHandler(async (req, res, next) => {
 
     next();
   } catch (error) {
-    // Continue without user if token is invalid
+    //? Continue without user if token is invalid
     next();
   }
 });

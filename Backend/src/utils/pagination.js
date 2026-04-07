@@ -1,9 +1,9 @@
 /**
- * Pagination utility for API responses
+ *! Pagination utility for API responses
  */
 
 /**
- * Create paginated response
+ *! Create paginated response
  * @param {Array} data - Full dataset
  * @param {number} page - Current page number (1-based)
  * @param {number} limit - Items per page
@@ -15,12 +15,12 @@ export const paginate = (data, page = 1, limit = 20, options = {}) => {
 
   let processedData = [...data];
 
-  // Apply filtering if provided
+  //* Apply filtering if provided
   if (filter && typeof filter === "function") {
     processedData = processedData.filter(filter);
   }
 
-  // Apply sorting if provided
+  //* Apply sorting if provided
   if (sortBy) {
     processedData.sort((a, b) => {
       const aVal = a[sortBy];
@@ -56,7 +56,7 @@ export const paginate = (data, page = 1, limit = 20, options = {}) => {
 };
 
 /**
- * Parse pagination parameters from request query
+ *! Parse pagination parameters from request query
  * @param {Object} query - Express request query object
  * @param {Object} defaults - Default values
  * @returns {Object} Parsed pagination parameters
@@ -68,7 +68,7 @@ export const parsePaginationParams = (
   let page = parseInt(query.page, 10) || defaults.page;
   let limit = parseInt(query.limit, 10) || defaults.limit;
 
-  // Ensure positive values
+  //* Ensure positive values
   page = Math.max(1, page);
   limit = Math.max(1, Math.min(limit, defaults.maxLimit));
 
@@ -76,7 +76,7 @@ export const parsePaginationParams = (
 };
 
 /**
- * Create pagination headers for response
+ *! Create pagination headers for response
  * @param {Object} pagination - Pagination metadata
  * @returns {Object} Headers object
  */
@@ -90,7 +90,7 @@ export const createPaginationHeaders = (pagination) => {
 };
 
 /**
- * MongoDB pagination helper for mongoose queries
+ *! MongoDB pagination helper for mongoose queries
  * @param {Model} model - Mongoose model
  * @param {Object} filter - MongoDB filter query
  * @param {number} page - Current page

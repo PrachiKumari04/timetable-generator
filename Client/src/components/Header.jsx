@@ -17,14 +17,14 @@ export default function Header() {
     e.preventDefault();
     
     try {
-      // Call backend logout to clear cookies
+      //! Call backend logout to clear cookies
       if (userData?._id) {
         await apiClient.post("/users/logout", { userId: userData._id });
       }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Always clear local state regardless of API success
+      //* Always clear local state regardless of API success
       dispatch(logout());
       navigate("/");
     }

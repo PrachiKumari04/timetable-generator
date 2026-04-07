@@ -2,7 +2,7 @@ import { Subject } from "../models/subject.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-//Add Subject
+//* Add Subject
 export const addSubject = asyncHandler(async (req, res) => {
   const subject = req.body;
   console.log(subject);
@@ -11,7 +11,7 @@ export const addSubject = asyncHandler(async (req, res) => {
   if (!Array.isArray(subject) || subject.length === 0)
     throw new ApiError(400, "Subject data is required and must be an array");
 
-  //Validate
+  //* Validate
   if (!subject.every((sub) => sub.subject_id && sub.subject_name && sub.credit))
     throw new ApiError(
       400,
@@ -40,7 +40,7 @@ export const addSubject = asyncHandler(async (req, res) => {
   });
 });
 
-//Get all subjects
+//! Get all subjects
 export const getSubjects = asyncHandler((req, res) => {
   const subjects = Subject.find();
 
@@ -54,7 +54,7 @@ export const getSubjects = asyncHandler((req, res) => {
   });
 });
 
-//Get subject by id
+//! Get subject by id
 export const getSubjectById = asyncHandler((req, res) => {
   const { id } = req.params;
 
@@ -71,7 +71,7 @@ export const getSubjectById = asyncHandler((req, res) => {
   });
 });
 
-//Get subject by subject_id
+//! Get subject by subject_id
 export const getSubjectBySubjectId = asyncHandler((req, res) => {
   const { subject_id } = req.params;
   if (!subject_id) throw new ApiError(400, "Subject id is required");
@@ -87,7 +87,7 @@ export const getSubjectBySubjectId = asyncHandler((req, res) => {
   });
 });
 
-//Delete subject 
+//! Delete subject 
 export const deleteSubject = asyncHandler((req, res) => {
   const { id } = req.params;
 
@@ -104,7 +104,7 @@ export const deleteSubject = asyncHandler((req, res) => {
   });
 });
 
-//Update subject
+//* Update subject
 export const updateSubject = asyncHandler((req, res) => {
   const { id } = req.params;
   const updateData = req.body;

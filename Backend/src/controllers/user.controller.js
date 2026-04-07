@@ -11,26 +11,26 @@ import {
 } from "../utils/Token.js";
 import mongoose from "mongoose";
 
-// Register new user (single or multiple)
+//* Register new user (single or multiple)
 export const registerUser = asyncHandler(async (req, res) => {
   const users = req.body;
 
   console.log("Body -->", req.body);
   console.log("Users -->", req.user);
 
-  // Handle single user registration
+  //! Handle single user registration
   if (!Array.isArray(users)) {
     // console.log("Single User -->", users);
     const { password, role, student_id, faculty_id, created_by } = users;
 
-    // Validate required fields
+    //* Validate required fields
     if (!password || !role || (!student_id && !faculty_id)) {
       throw ApiError.badRequest(
         "Password, role, and student_id or faculty_id are required",
       );
     }
 
-    // Check for existing user
+    //! Check for existing user
     const existingUser = await User.findOne({
       $or: [
         { student_id: student_id || null },
@@ -44,7 +44,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       );
     }
 
-    // Create user
+    //! Create user
     const newUser = await User.create({
       password,
       role: role.toLowerCase(),
@@ -63,12 +63,12 @@ export const registerUser = asyncHandler(async (req, res) => {
     ).send(res);
   }
 
-  // Handle multiple user registration (bulk)
+  //! Handle multiple user registration (bulk)
   if (users.length === 0) {
     throw ApiError.badRequest("User data is required and must be an array");
   }
 
-  // Validate each user
+  //* Validate each user
   users.forEach((user) => {
     if (!user.password) {
       throw ApiError.badRequest("Password is required");
@@ -81,7 +81,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
   });
 
-  // Find unique records
+  //* Find unique records
   const studentIds = users.filter((u) => u.student_id).map((u) => u.student_id);
   const facultyIds = users.filter((u) => u.faculty_id).map((u) => u.faculty_id);
 
@@ -119,7 +119,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   console.log("Unique User Records -->", uniqueUserRecords);
 
-  // Save in database
+  //* Save in database
   const userRecords = await User.insertMany(uniqueUserRecords);
   console.log("User -->", userRecords);
 
@@ -132,13 +132,13 @@ export const registerUser = asyncHandler(async (req, res) => {
   );
 });
 
-// Get all users with pagination
+//! Get all users with pagination
 export const getAllUsers = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
   const skip = (page - 1) * limit;
 
-  // Build match filter for search
+  //! Build match filter for search
   let matchFilter = {};
   if (search) {
     matchFilter.$or = [
@@ -154,7 +154,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         matchFilter[fieldName] = value === 'true';
       } else {
@@ -163,7 +163,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -171,10 +171,10 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     sort = { createdAt: -1 };
   }
 
-  // Get total count
+  //! Get total count
   const totalCount = await User.countDocuments(matchFilter);
 
-  // Get paginated users with their name and email
+  //! Get paginated users with their name and email
   const usersWithDetails = await User.aggregate([
     { $match: matchFilter },
     {
@@ -262,7 +262,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   return ApiResponse.ok(result, "Users retrieved successfully").send(res);
 });
 
-// Get user by ID
+//! Get user by ID
 export const getUserById = asyncHandler(async (req, res) => {
   const { id } = req.params;
   console.log("User Id -->", id);
@@ -271,7 +271,7 @@ export const getUserById = asyncHandler(async (req, res) => {
     throw ApiError.badRequest("User ID is required");
   }
 
-  // Fetching data from database
+  //* Fetching data from database
   const getUserData = await User.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(id) } },
     {
@@ -338,7 +338,7 @@ export const getUserById = asyncHandler(async (req, res) => {
   return ApiResponse.ok(getUserData[0], "User fetched successfully").send(res);
 });
 
-// Update user
+//* Update user
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -357,13 +357,13 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   const { password, role, updated_by, isActive } = req.body;
 
-  // Build update object
+  //! Build update object
   const updateData = {};
   if (role) updateData.role = role;
   if (isActive !== undefined) updateData.isActive = isActive;
   if (updated_by) updateData.updated_by = updated_by;
 
-  // Handle password update separately to trigger hashing
+  //! Handle password update separately to trigger hashing
   if (password) {
     if (password.length < 6) {
       throw ApiError.badRequest("Password must be at least 6 characters long");
@@ -394,7 +394,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   return ApiResponse.ok(updatedUser, "User updated successfully").send(res);
 });
 
-// Delete user
+//! Delete user
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -501,7 +501,7 @@ export const userLogin = async (req, res) => {
 
   console.log("User logged in -->", userWithDetails[0]);
 
-  // Set cookies and send response
+  //* Set cookies and send response
   return res
     .status(200)
     .cookie("accessToken", accessToken, accessTokenCookieOptions)
@@ -546,7 +546,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
     .json(ApiResponse.ok({}, "User logged out successfully").toJSON());
 });
 
-// Refresh access token
+//* Refresh access token
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies?.refreshToken || req.body?.refreshToken;
@@ -555,29 +555,29 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     throw ApiError.unauthorized("Unauthorized request - No refresh token");
   }
 
-  // Verify refresh token
+  //! Verify refresh token
   const decodedToken = verifyRefreshToken(incomingRefreshToken);
 
   if (!decodedToken) {
     throw ApiError.unauthorized("Invalid or expired refresh token");
   }
 
-  // Find user
+  //* Find user
   const user = await User.findById(decodedToken._id);
 
   if (!user) {
     throw ApiError.unauthorized("User not found");
   }
 
-  // Check if refresh token matches
+  //! Check if refresh token matches
   if (user.refreshToken !== incomingRefreshToken) {
     throw ApiError.unauthorized("Refresh token is expired or used");
   }
 
-  // Generate new tokens
+  //! Generate new tokens
   const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
 
-  // Update refresh token in database
+  //* Update refresh token in database
   user.refreshToken = newRefreshToken;
   await user.save({ validateBeforeSave: false });
 
@@ -593,16 +593,16 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-// Get current user from token
+//! Get current user from token
 export const getCurrentUser = asyncHandler(async (req, res) => {
-  // User is already attached to req by verifyJWT middleware
+  //* User is already attached to req by verifyJWT middleware
   const user = req.user;
 
   if (!user) {
     throw ApiError.unauthorized("User not found");
   }
 
-  // Get user details with student/faculty info
+  //! Get user details with student/faculty info
   const userWithDetails = await User.aggregate([
     { $match: { _id: user._id } },
     {
@@ -664,7 +664,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
   ).send(res);
 });
 
-// Change password
+//* Change password
 export const changePassword = asyncHandler(async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body;
 
@@ -686,14 +686,14 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw ApiError.notFound("User not found");
   }
 
-  // Verify current password
+  //! Verify current password
   const isPasswordValid = await user.comparePassword(currentPassword);
 
   if (!isPasswordValid) {
     throw ApiError.unauthorized("Current password is incorrect");
   }
 
-  // Update password (will be hashed by pre-save middleware)
+  //* Update password (will be hashed by pre-save middleware)
   user.password = newPassword;
   await user.save();
 

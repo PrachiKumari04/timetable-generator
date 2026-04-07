@@ -85,18 +85,18 @@ userSchema.pre("save", async function () {
       }
     }
 
-    // Hash password if modified
+    //* Hash password if modified
     if (this.isModified("password")) {
       const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
       this.password = await bcrypt.hash(this.password, saltRounds);
     }
   } catch (error) {
-    // Handle error
+    //! Handle error
     console.error("Error in userSchema pre-save hook:", error);
   }
 });
 
-// Compare password method
+//* Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };

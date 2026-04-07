@@ -16,7 +16,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         hasPrevPage: false,
     };
 
-    // Local state for pagination, search, sort, and filters
+    //* Local state for pagination, search, sort, and filters
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [searchQuery, setSearchQuery] = useState('');
@@ -25,7 +25,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
     const [showFilters, setShowFilters] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
 
-    // Fetch data when pagination/search/sort/filters changes
+    //* Fetch data when pagination/search/sort/filters changes
     useEffect(() => {
         if (activeEntity) {
             const params = {
@@ -33,7 +33,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
                 limit,
                 ...(searchQuery && { search: searchQuery }),
                 ...(sortField && { sortBy: sortField, sortOrder }),
-                // Add field filters with filter_ prefix
+                //* Add field filters with filter_ prefix
                 ...Object.entries(activeFilters).reduce((acc, [key, value]) => {
                     if (value !== undefined && value !== '') {
                         acc[`filter_${key}`] = String(value);
@@ -45,7 +45,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         }
     }, [dispatch, activeEntity, page, limit, searchQuery, sortField, sortOrder, activeFilters]);
 
-    // Reset to page 1 when entity changes
+    //* Reset to page 1 when entity changes
     useEffect(() => {
         setPage(1);
         setSearchQuery('');
@@ -55,12 +55,12 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         setShowFilters(false);
     }, [activeEntity]);
 
-    // Get filterable fields (boolean and select fields)
+    //! Get filterable fields (boolean and select fields)
     const filterableFields = currentEntityConfig?.fields?.filter(field => 
         field.type === 'boolean' || field.type === 'select' || field.name === 'isActive'
     ) || [];
 
-    // Get unique values for filter dropdowns
+    //! Get unique values for filter dropdowns
     const getUniqueValues = (fieldName) => {
         const values = new Set();
         entities.forEach(entity => {
@@ -72,7 +72,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         return Array.from(values).sort();
     };
 
-    // Handle filter change
+    //! Handle filter change
     const handleFilterChange = (fieldName, value) => {
         setActiveFilters(prev => ({
             ...prev,
@@ -81,7 +81,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         setPage(1);
     };
 
-    // Clear all filters
+    //! Clear all filters
     const clearAllFilters = () => {
         setSearchQuery('');
         setActiveFilters({});
@@ -90,7 +90,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         setPage(1);
     };
 
-    // Check if any filters are active
+    //! Check if any filters are active
     const hasActiveFilters = searchQuery || Object.values(activeFilters).some(v => v !== undefined && v !== '');
 
     const handleEditEntity = (entity) => {
@@ -103,7 +103,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         }
     };
 
-    // Helper function to get nested field value
+    //! Helper function to get nested field value
     const getFieldValue = (entity, fieldName) => {
         if (fieldName.includes('.')) {
             const [parent, child] = fieldName.split('.');
@@ -112,7 +112,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         return entity[fieldName];
     };
 
-    // Helper function to format cell value based on field type
+    //! Helper function to format cell value based on field type
     const formatCellValue = (value, field) => {
         if (value === undefined || value === null) return '-';
         
@@ -146,14 +146,14 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         return value;
     };
 
-    // Handle page change
+    //! Handle page change
     const handlePageChange = useCallback((newPage) => {
         if (newPage >= 1 && newPage <= currentPagination.totalPages) {
             setPage(newPage);
         }
     }, [currentPagination.totalPages]);
 
-    // Handle sort
+    //! Handle sort
     const handleSort = useCallback((fieldName) => {
         if (sortField === fieldName) {
             setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -164,7 +164,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         setPage(1);
     }, [sortField]);
 
-    // Generate page numbers for display
+    //! Generate page numbers for display
     const getPageNumbers = () => {
         const { currentPage, totalPages } = currentPagination;
         const maxVisible = 5;

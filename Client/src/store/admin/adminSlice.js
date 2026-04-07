@@ -98,7 +98,7 @@ const adminSlice = createSlice({
         state.error = null;
     },
     clearEntityCache: (state, action) => {
-      // Clear cache for specific entity or all entities
+      //! Clear cache for specific entity or all entities
       if (action.payload) {
         apiCache.invalidate(action.payload);
         delete state.masterData[action.payload];
@@ -108,7 +108,7 @@ const adminSlice = createSlice({
       }
     },
     refreshEntity: (state, action) => {
-      // Mark entity for refresh (will be refetched on next access)
+      //* Mark entity for refresh (will be refetched on next access)
       if (action.payload) {
         apiCache.invalidate(action.payload);
         delete state.masterData[action.payload];
@@ -125,12 +125,12 @@ const adminSlice = createSlice({
       .addCase(fetchMasterData.fulfilled, (state, action) => {
         state.loading = false;
         const { entityKey, data } = action.payload;
-        // Handle paginated response
+        //! Handle paginated response
         if (data.data && data.pagination) {
           state.masterData[entityKey] = data.data;
           state.pagination[entityKey] = data.pagination;
         } else {
-          // Handle non-paginated response (fallback)
+          //! Handle non-paginated response (fallback)
           state.masterData[entityKey] = data;
         }
       })
@@ -138,7 +138,7 @@ const adminSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Add Master Data
+      //* Add Master Data
       .addCase(addMasterData.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -156,7 +156,7 @@ const adminSlice = createSlice({
         state.error = action.payload;
         toast.error(`Failed to add: ${action.payload}`);
       })
-      // Update Master Data
+      //* Update Master Data
       .addCase(updateMasterData.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -176,7 +176,7 @@ const adminSlice = createSlice({
         state.error = action.payload;
         toast.error(`Failed to update: ${action.payload}`);
       })
-      // Delete Master Data
+      //! Delete Master Data
       .addCase(deleteMasterData.pending, (state) => {
         state.loading = true;
         state.error = null;

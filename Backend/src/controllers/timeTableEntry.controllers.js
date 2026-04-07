@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-// Add timetable entries
+//* Add timetable entries
 export const addTimeTableEntries = asyncHandler(async (req, res) => {
   const entries = req.body;
 
@@ -12,7 +12,7 @@ export const addTimeTableEntries = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Timetable entry data is required and must be an array");
   }
 
-  // Validate each entry
+  //* Validate each entry
   entries.forEach((entry) => {
     if (!entry.entry_id) throw new ApiError(400, "Entry ID is required");
     if (!entry.faculty_id) throw new ApiError(400, "Faculty ID is required");
@@ -23,7 +23,7 @@ export const addTimeTableEntries = asyncHandler(async (req, res) => {
     if (!entry.room_no) throw new ApiError(400, "Room Number is required");
   });
 
-  // Filter out existing entries
+  //* Filter out existing entries
   const entryIds = entries.map((e) => e.entry_id);
   const existingEntries = await TimeTableEntry.find({
     entry_id: { $in: entryIds }
@@ -45,15 +45,15 @@ export const addTimeTableEntries = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, entryRecords, "Timetable entries added successfully"));
 });
 
-// Get all timetable entries with pagination
+//! Get all timetable entries with pagination
 export const getAllTimeTableEntries = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { entry_id: { $regex: search, $options: "i" } },
@@ -70,7 +70,7 @@ export const getAllTimeTableEntries = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -79,7 +79,7 @@ export const getAllTimeTableEntries = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -92,7 +92,7 @@ export const getAllTimeTableEntries = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Timetable entries retrieved successfully"));
 });
 
-// Get timetable entry by ID
+//! Get timetable entry by ID
 export const getTimeTableEntryById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -109,7 +109,7 @@ export const getTimeTableEntryById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, entry, "Timetable entry fetched successfully"));
 });
 
-// Update timetable entry
+//* Update timetable entry
 export const updateTimeTableEntry = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
@@ -135,7 +135,7 @@ export const updateTimeTableEntry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedEntry, "Timetable entry updated successfully"));
 });
 
-// Delete timetable entry
+//! Delete timetable entry
 export const deleteTimeTableEntry = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

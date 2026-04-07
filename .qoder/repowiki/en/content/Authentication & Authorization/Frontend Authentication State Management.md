@@ -13,12 +13,14 @@
 - [apiClient.js](file://Client/src/services/apiClient.js)
 - [themeSlice.js](file://Client/src/store/theme/themeSlice.js)
 - [App.jsx](file://Client/src/App.jsx)
+- [syncService.js](file://Client/src/services/syncService.js)
 </cite>
 
 ## Update Summary
 **Changes Made**
 - Enhanced API client session verification logic to prevent infinite redirect loops during initial application load
-- Added conditional logic to skip token refresh attempts when session verification fails for /users/me endpoint
+- Added sophisticated response interceptors that detect failed session verification attempts and intelligently skip token refresh for invalid sessions
+- Implemented conditional logic to prevent token refresh attempts when session verification fails for /users/me endpoint
 - Improved error handling in response interceptor to prevent problematic redirect cycles when no active session exists
 - Updated authentication flow to handle initial session verification failures gracefully
 
@@ -134,11 +136,12 @@ AuthSlice->>ApiClient : GET /users/me
 ApiClient->>Backend : Verify session
 Backend-->>ApiClient : Session verification result
 ApiClient-->>AuthSlice : Response or Error
+Note over ApiClient : Response interceptor checks for /users/me failures
+Note over ApiClient : Skips token refresh for session verification failures
 AuthSlice->>AuthSlice : Handle success/failure
 AuthSlice-->>Store : Update state
 Store-->>Login : Re-render with token state
 Store-->>Routes : Re-render with token state
-Note over ApiClient,Cookies : Enhanced error handling prevents redirect loops
 ```
 
 **Diagram sources**
@@ -627,11 +630,11 @@ Key enhancements of the updated implementation include:
 - Enhanced role-based access control with token validation
 - Automatic role-based redirection with useEffect hooks
 - Improved token refresh mechanism with comprehensive error handling
-- **Critical Enhancement**: Prevention of infinite redirect loops during initial application load through conditional logic
+- **Critical Enhancement**: Prevention of infinite redirect loops during initial application load through sophisticated response interceptors that detect failed session verification attempts and intelligently skip token refresh for invalid sessions
 - Efficient state updates with minimal performance overhead
 
 The system provides an excellent foundation for production-ready authentication with comprehensive security measures, proper error handling, and scalable architecture. The integration with HTTP-only cookies ensures secure token storage while maintaining seamless user experience through comprehensive loading states and error handling mechanisms.
 
 The enhanced authentication flow now properly differentiates between initial session verification and login submission states, providing a more intuitive and reliable user experience. The automatic role-based redirection system ensures users are directed to appropriate dashboards based on their authentication status and role assignments.
 
-**Updated**: The most significant enhancement addresses a critical issue where the application could get stuck in infinite redirect loops during initial load when no active session exists. The solution implements conditional logic in the API client's response interceptor to skip token refresh attempts specifically for /users/me endpoint failures, preventing problematic redirect cycles and ensuring graceful fallback to the login page.
+**Updated**: The most significant enhancement addresses a critical issue where the application could get stuck in infinite redirect loops during initial load when no active session exists. The solution implements sophisticated response interceptors in the API client that detect failed session verification attempts and intelligently skip token refresh for invalid sessions. This prevents problematic redirect cycles and ensures graceful fallback to the login page when no active session is available. The implementation includes conditional logic specifically targeting the /users/me endpoint to avoid triggering token refresh operations when session verification fails, thereby eliminating the infinite redirect loop scenario.

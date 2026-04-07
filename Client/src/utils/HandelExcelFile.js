@@ -11,7 +11,7 @@ export const downloadExcelTemplate = (filename, columns) => {
 };
 
 /**
- * Parses an Excel file and returns an array of objects.
+ *! Parses an Excel file and returns an array of objects.
  */
 export const parseExcelFile = (file) => {
   return new Promise((resolve, reject) => {

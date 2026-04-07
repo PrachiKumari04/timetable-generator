@@ -9,13 +9,13 @@ function Student() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect if auth check is complete and user is not authenticated
+    //* Only redirect if auth check is complete and user is not authenticated
     if (!authLoading && (!isAuthenticated || !userData || userData.role !== "student")) {
       navigate("/login");
     }
   }, [authLoading, isAuthenticated, userData, navigate]);
 
-  // Show loading while verifying session
+  //* Show loading while verifying session
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">

@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Student } from "../models/student.models.js";
 import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
 
-//Register a new student
+//* Register a new student
 export const registerStudent = asyncHandler(async (req, res) => {
   //gating data from clint side(Array of Objects [{}])
 
@@ -54,7 +54,7 @@ export const registerStudent = asyncHandler(async (req, res) => {
   const existingStudentIds = new Set(existingStudents.map((s) => s.student_id));
   const existingEmails = new Set(existingStudents.map((s) => s.email));
 
-  //Filter out unique recored
+  //* Filter out unique recored
   const uniqueStudentRecords = students.filter(
     (student) =>
       !existingStudentIds.has(student.student_id) &&
@@ -90,15 +90,15 @@ export const registerStudent = asyncHandler(async (req, res) => {
     );
 });
 
-// Get all students with pagination
+//! Get all students with pagination
 export const getAllStudents = asyncHandler(async (req, res) => {
   const { page, limit } = parsePaginationParams(req.query);
   const { search, sortBy, sortOrder, ...fieldFilters } = req.query;
 
-  // Build filter
+  //! Build filter
   let filter = {};
   
-  // Search filter
+  //* Search filter
   if (search) {
     filter.$or = [
       { student_id: { $regex: search, $options: "i" } },
@@ -114,7 +114,7 @@ export const getAllStudents = asyncHandler(async (req, res) => {
       const fieldName = key.replace('filter_', '');
       const value = fieldFilters[key];
       
-      // Handle boolean filters
+      //! Handle boolean filters
       if (value === 'true' || value === 'false') {
         filter[fieldName] = value === 'true';
       } else {
@@ -123,7 +123,7 @@ export const getAllStudents = asyncHandler(async (req, res) => {
     }
   });
 
-  // Build sort
+  //! Build sort
   let sort = {};
   if (sortBy) {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
@@ -136,7 +136,7 @@ export const getAllStudents = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, result, "Students retrieved successfully"));
 });
 
-//  Get student by id
+//! Get student by id
 export const getStudentById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -159,7 +159,7 @@ export const getStudentById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Student fetched successfully", student));
 });
 
-//  Update student
+//* Update student
 export const updateStudent = asyncHandler(async (req, res) => {
   const { id } = req.params;
   console.log("Student Id --> ", id);
@@ -214,7 +214,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedStudent, "Student updated successfully"));
 });
 
-//  Delete student
+//! Delete student
 export const deleteStudent = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

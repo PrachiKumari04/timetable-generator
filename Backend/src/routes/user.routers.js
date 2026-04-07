@@ -15,11 +15,11 @@ import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Public routes
+//! Public routes
 router.route("/login").post(userLogin);
 router.route("/refresh-token").post(refreshAccessToken);
 
-// Protected routes
+//! Protected routes
 router
   .route("/")
   .post(verifyJWT, authorizeRoles("admin"), registerUser)

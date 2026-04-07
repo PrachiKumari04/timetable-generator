@@ -8,7 +8,7 @@ const initialState = {
   error: null,
 };
 
-// Async thunk to verify session on app load
+//* Async thunk to verify session on app load
 export const verifySession = createAsyncThunk(
   "auth/verifySession",
   async (_, { rejectWithValue }) => {
