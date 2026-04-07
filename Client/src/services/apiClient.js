@@ -124,13 +124,6 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      //? Skip token refresh for session verification endpoint
-      //? This prevents redirect loops on initial app load when user is not logged in
-      if (originalRequest.url?.includes('/users/me')) {
-        console.log("[API] Session verification failed - no active session");
-        return Promise.reject(error);
-      }
-
       //* If already refreshing, queue this request
       if (isRefreshing) {
         return new Promise((resolve) => {

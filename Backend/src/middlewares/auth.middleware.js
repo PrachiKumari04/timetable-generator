@@ -29,7 +29,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     );
 
     if (!user) {
-      throw new ApiError(401, "User not found");
+      throw new ApiError(404, "User not found");
     }
 
     if (!user.isActive) {

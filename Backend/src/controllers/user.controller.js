@@ -644,13 +644,9 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
         _id: 1,
         role: 1,
         isActive: 1,
-        user_id: {
-          $cond: {
-            if: { $ne: ["$student_id", null] },
-            then: "$student_id",
-            else: "$faculty_id",
-          },
-        },
+        user_id: 1,
+        student_id: 1,
+        faculty_id: 1,
         user_name: {
           $cond: {
             if: { $ne: ["$student_id", null] },
