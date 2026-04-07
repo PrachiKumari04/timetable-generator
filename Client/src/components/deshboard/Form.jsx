@@ -9,6 +9,7 @@ function Form({ currentEntityConfig, activeEntity }) {
 
     const [entityForm, setEntityForm] = useState({});
 
+    //! useEffect to populate entityForm state when editing an entity
     useEffect(() => {
         if (editingEntityId && activeEntity && masterData[activeEntity]) {
             const entityToEdit = masterData[activeEntity].find(e => e._id === editingEntityId || e.id === editingEntityId);
@@ -30,6 +31,7 @@ function Form({ currentEntityConfig, activeEntity }) {
         }
     }, [editingEntityId, activeEntity, masterData, currentEntityConfig]);
 
+    //! Handle entity input change
     const handleEntityInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         
@@ -51,12 +53,14 @@ function Form({ currentEntityConfig, activeEntity }) {
         }
     };
 
+    //! Reset entity form
     const resetEntityForm = () => {
         setEntityForm({});
         dispatch(setEditingEntityId(null));
         dispatch(clearError());
     };
 
+    //! Handle entity submit    
     const handleEntitySubmit = (e) => {
         e.preventDefault();
         if (editingEntityId) {
@@ -72,6 +76,8 @@ function Form({ currentEntityConfig, activeEntity }) {
         }
     };
 
+    //! Render entity form
+    //! If currentEntityConfig is not available, return null
     if (!currentEntityConfig) return null;
 
     return (

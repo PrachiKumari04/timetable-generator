@@ -10,6 +10,9 @@ import {
   verifyRefreshToken,
 } from "../utils/Token.js";
 import mongoose from "mongoose";
+import { Student } from "../models/student.models.js";
+import { Faculty } from "../models/faculty.models.js";
+// import Faculty from "../../../Client/src/pages/dashboard/Faculty.jsx";
 
 //* Register new user (single or multiple)
 export const registerUser = asyncHandler(async (req, res) => {
@@ -20,7 +23,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   //! Handle single user registration
   if (!Array.isArray(users)) {
-    // console.log("Single User -->", users);
     const { password, role, student_id, faculty_id, created_by } = users;
 
     //* Validate required fields
@@ -44,9 +46,20 @@ export const registerUser = asyncHandler(async (req, res) => {
       );
     }
 
+    //! Check for existing student or faculty
+    const existingStudent = await Student.findOne({ student_id: student_id || null });
+    const existingFaculty = await Faculty.findOne({ faculty_id: faculty_id || null });
+
+    //! Check if student or faculty exists
+    if (!existingStudent && !existingFaculty) {
+      throw ApiError.badRequest("Student or Faculty with this student_id or faculty_id does not exist");
+    }
+
+    const hashedPassword = await User.hashPassword(password);
+
     //! Create user
     const newUser = await User.create({
-      password,
+      password: hashedPassword,
       role: role.toLowerCase(),
       student_id: student_id || null,
       faculty_id: faculty_id || null,
@@ -147,16 +160,20 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       { faculty_id: { $regex: search, $options: "i" } },
     ];
   }
-  
-  // Field-specific filters
-  Object.keys(fieldFilters).forEach(key => {
-    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
-      const fieldName = key.replace('filter_', '');
+
+  //! Field-specific filters
+  Object.keys(fieldFilters).forEach((key) => {
+    if (
+      key.startsWith("filter_") &&
+      fieldFilters[key] !== undefined &&
+      fieldFilters[key] !== ""
+    ) {
+      const fieldName = key.replace("filter_", "");
       const value = fieldFilters[key];
-      
+
       //! Handle boolean filters
-      if (value === 'true' || value === 'false') {
-        matchFilter[fieldName] = value === 'true';
+      if (value === "true" || value === "false") {
+        matchFilter[fieldName] = value === "true";
       } else {
         matchFilter[fieldName] = value;
       }
@@ -179,7 +196,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     { $match: matchFilter },
     {
       $lookup: {
-        from: "students",
+        from: "students", //! Lookup students collection
         localField: "student_id",
         foreignField: "student_id",
         as: "student_data",
@@ -215,13 +232,9 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     {
       $project: {
         role: 1,
-        user_id: {
-          $cond: {
-            if: { $eq: ["$faculty_id", null] },
-            then: "$student_id",
-            else: "$faculty_id",
-          },
-        },
+        user_id: 1,
+        student_id: 1,
+        faculty_id: 1,
         user_name: {
           $cond: {
             if: { $eq: ["$faculty_id", null] },
@@ -304,13 +317,9 @@ export const getUserById = asyncHandler(async (req, res) => {
     {
       $project: {
         role: 1,
-        user_id: {
-          $cond: {
-            if: { $eq: ["$faculty_id", null] },
-            then: "$student_id",
-            else: "$faculty_id",
-          },
-        },
+        user_id: 1,
+        student_id: 1,
+        faculty_id: 1,
         user_name: {
           $cond: {
             if: { $eq: ["$faculty_id", null] },
@@ -328,8 +337,6 @@ export const getUserById = asyncHandler(async (req, res) => {
       },
     },
   ]);
-
-  console.log("User -->", getUserData);
 
   if (getUserData.length === 0) {
     throw ApiError.notFound("User not found");
@@ -660,7 +667,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     {
       user: userWithDetails[0],
     },
-    "Current user fetched successfully"
+    "Current user fetched successfully",
   ).send(res);
 });
 

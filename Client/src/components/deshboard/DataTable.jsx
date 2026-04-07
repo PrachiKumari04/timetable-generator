@@ -93,10 +93,12 @@ function DataTable({ currentEntityConfig, activeEntity }) {
     //! Check if any filters are active
     const hasActiveFilters = searchQuery || Object.values(activeFilters).some(v => v !== undefined && v !== '');
 
+    //! Handle edit entity
     const handleEditEntity = (entity) => {
         dispatch(setEditingEntityId(entity._id || entity.id));
     };
 
+    //! Handle delete entity
     const handleDeleteEntity = (id) => {
         if(window.confirm("Are you sure you want to delete this record?")) {
             dispatch(deleteMasterData({ entityKey: activeEntity, id }));

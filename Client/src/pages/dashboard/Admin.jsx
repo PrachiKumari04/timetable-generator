@@ -65,7 +65,7 @@ function Admin() {
     return null;
   }
 
-  // ---- Entity configurations aligned with backend models ----
+  //! Entity configurations aligned with backend models
   const ENTITY_CONFIG = {
     program: {
       label: "Program",
@@ -705,7 +705,7 @@ function Admin() {
           name: "password",
           label: "Password",
           placeholder: "Min 6 characters",
-          type: "password",
+          type: "text",
           required: true,
         },
         {
