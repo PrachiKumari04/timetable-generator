@@ -13,14 +13,19 @@
 - [ApiResponse.js](file://Backend/src/utils/ApiResponse.js)
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [user.models.js](file://Backend/src/models/user.models.js)
+- [Home.jsx](file://Client/src/pages/Home.jsx)
+- [Header.jsx](file://Client/src/components/Header.jsx)
+- [App.jsx](file://Client/src/App.jsx)
 </cite>
 
 ## Update Summary
 **Changes Made**
+- Added comprehensive home button to login page interface with SVG icon integration, proper keyboard focus styling, ARIA labels for screen reader compatibility, and absolute positioning at top-left corner
 - Updated validation rules to reflect the change from username to user_id field
 - Modified form submission to use user_id instead of username for authentication
 - Enhanced backend integration to support user_id-based authentication
 - Updated error handling to work with user_id validation
+- Enhanced accessibility features with comprehensive ARIA attributes and keyboard navigation support
 - Maintained backward compatibility with existing UI components
 
 ## Table of Contents
@@ -38,9 +43,9 @@
 
 ## Introduction
 
-The login page implementation in the Timetable Project demonstrates a modern, streamlined React-based authentication system with comprehensive form validation, enhanced error handling, and improved user feedback mechanisms. This documentation covers the updated login page component that now features a simplified authentication flow with direct API calls, enhanced error handling with toast notifications, and improved user experience through password visibility controls and form validation improvements.
+The login page implementation in the Timetable Project demonstrates a modern, streamlined React-based authentication system with comprehensive form validation, enhanced error handling, and improved user experience through navigation accessibility features. This documentation covers the updated login page component that now features a simplified authentication flow with direct API calls, enhanced error handling with toast notifications, and improved user experience through password visibility controls, form validation improvements, and comprehensive navigation accessibility.
 
-**Updated** The authentication system has been updated to use user_id instead of username for login purposes, reflecting the new authentication system where users log in with their manually assigned user_id instead of username. The form validation and API integration have been updated to use the user_id field throughout the authentication flow.
+**Updated** The authentication system has been updated to use user_id instead of username for login purposes, reflecting the new authentication system where users log in with their manually assigned user_id instead of username. The form validation and API integration have been updated to use the user_id field throughout the authentication flow. Additionally, the login page now includes a comprehensive home button with SVG icon integration, proper keyboard focus styling, ARIA labels for screen reader compatibility, and absolute positioning at the top-left corner.
 
 The implementation showcases React best practices with Redux Toolkit for state management, featuring proper separation of concerns between UI presentation, business logic, and data persistence. The system supports role-based navigation with automatic redirection based on user roles (admin, student, faculty) and includes sophisticated error handling with user-friendly feedback mechanisms through toast notifications.
 
@@ -74,7 +79,7 @@ C --> N
 ```
 
 **Diagram sources**
-- [Login.jsx:1-322](file://Client/src/pages/Login.jsx#L1-L322)
+- [Login.jsx:1-339](file://Client/src/pages/Login.jsx#L1-L339)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 - [apiClient.js:1-213](file://Client/src/services/apiClient.js#L1-L213)
 - [toast.js:1-136](file://Client/src/utils/toast.js#L1-L136)
@@ -83,14 +88,14 @@ C --> N
 - [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
 
 **Section sources**
-- [Login.jsx:1-322](file://Client/src/pages/Login.jsx#L1-L322)
+- [Login.jsx:1-339](file://Client/src/pages/Login.jsx#L1-L339)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 
 ## Core Components
 
 ### Streamlined Login Component Architecture
 
-The Login component now implements a focused authentication flow with enhanced validation, error handling, and user feedback using user_id field:
+The Login component now implements a focused authentication flow with enhanced validation, error handling, and user feedback using user_id field, along with comprehensive navigation accessibility:
 
 ```mermaid
 classDiagram
@@ -104,6 +109,13 @@ class Login {
 +useCallback handleSubmit
 +validateForm() Object
 +render() JSX.Element
+}
+class HomeButton {
++absolute positioning
++SVG icon integration
++keyboard focus styling
++ARIA labels
++click handler
 }
 class AuthSlice {
 +initialState Object
@@ -127,6 +139,7 @@ class ToastNotifications {
 +showError() void
 +dismiss() void
 }
+Login --> HomeButton : "includes"
 Login --> AuthSlice : "dispatches"
 Login --> ThemeSlice : "dispatches"
 Login --> ApiClient : "uses"
@@ -135,16 +148,16 @@ Login --> ReduxStore : "uses"
 ```
 
 **Diagram sources**
-- [Login.jsx:56-322](file://Client/src/pages/Login.jsx#L56-L322)
+- [Login.jsx:56-339](file://Client/src/pages/Login.jsx#L56-L339)
 - [authSlice.js:3-61](file://Client/src/store/auth/authSlice.js#L3-L61)
 - [themeSlice.js:3-29](file://Client/src/store/theme/themeSlice.js#L3-L29)
 - [apiClient.js:14-213](file://Client/src/services/apiClient.js#L14-L213)
 - [toast.js:8-136](file://Client/src/utils/toast.js#L8-L136)
 
-The component leverages React hooks for state management, implements comprehensive form validation, and integrates with Redux for authentication state management. It features streamlined authentication flow with direct API calls and enhanced user feedback through toast notifications.
+The component leverages React hooks for state management, implements comprehensive form validation, and integrates with Redux for authentication state management. It features streamlined authentication flow with direct API calls and enhanced user feedback through toast notifications. The addition of the home button enhances navigation accessibility with proper positioning and keyboard support.
 
 **Section sources**
-- [Login.jsx:56-322](file://Client/src/pages/Login.jsx#L56-L322)
+- [Login.jsx:56-339](file://Client/src/pages/Login.jsx#L56-L339)
 - [authSlice.js:3-61](file://Client/src/store/auth/authSlice.js#L3-L61)
 
 ## Architecture Overview
@@ -154,11 +167,15 @@ The streamlined authentication flow incorporates enhanced validation, comprehens
 ```mermaid
 sequenceDiagram
 participant U as User
+participant HB as Home Button
 participant L as Streamlined Login Component
 participant V as Form Validation
 participant A as ApiClient
 participant B as Backend API
 participant R as Redux Store
+U->>HB : Click home button
+HB->>L : Navigate to "/"
+L->>L : Render home page
 U->>L : Fill streamlined login form with user_id
 L->>V : Validate form fields (user_id)
 V-->>L : Validation results
@@ -188,7 +205,7 @@ end
 - [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
 - [authSlice.js:28-37](file://Client/src/store/auth/authSlice.js#L28-L37)
 
-The architecture ensures comprehensive validation with real-time feedback, robust error handling with user-friendly messaging, and streamlined authentication flow with direct API integration using user_id field.
+The architecture ensures comprehensive validation with real-time feedback, robust error handling with user-friendly messaging, and streamlined authentication flow with direct API integration using user_id field. The home button provides seamless navigation with proper accessibility support.
 
 **Section sources**
 - [Login.jsx:111-188](file://Client/src/pages/Login.jsx#L111-L188)
@@ -262,80 +279,53 @@ ThemeState --> LocalStorage : "persists"
 ```
 
 **Diagram sources**
-- [Login.jsx:195-202](file://Client/src/pages/Login.jsx#L195-L202)
+- [Login.jsx:210-218](file://Client/src/pages/Login.jsx#L210-L218)
 - [themeSlice.js:3-29](file://Client/src/store/theme/themeSlice.js#L3-L29)
 
-**Section sources**
-- [Login.jsx:111-322](file://Client/src/pages/Login.jsx#L111-L322)
-- [themeSlice.js:3-29](file://Client/src/store/theme/themeSlice.js#L3-L29)
+### Comprehensive Home Button Implementation
 
-### Enhanced Authentication Redux Slice
+**Updated** The login page now includes a comprehensive home button with SVG icon integration, proper keyboard focus styling, ARIA labels, and absolute positioning:
 
-The authentication state management maintains its core functionality while supporting the streamlined login experience:
-
-#### State Structure
-
-The authentication slice continues to maintain essential authentication state:
-- `isAuthenticated`: Boolean flag indicating login status
-- `userData`: Object containing user information, role details, and authentication tokens
-- `loading`: Boolean flag indicating session verification status
-
-#### Enhanced Reducer Operations
+#### Home Button Features
 
 ```mermaid
 stateDiagram-v2
-[*] --> Unauthenticated
-Unauthenticated --> Authenticating : login action dispatched
-Authenticating --> Authenticated : login success
-Authenticated --> Unauthenticated : logout action
-note right of Unauthenticated
-isAuthenticated : false
-userData : null
-loading : false
+[*] --> Hidden
+Hidden --> Visible : Component Renders
+Visible --> Hovered : Mouse Over
+Hovered --> Focused : Keyboard Focus
+Focused --> Clicked : Click Event
+Clicked --> Navigated : Route Change
+Navigated --> Hidden : Component Unmounts
+note right of Visible
+- Absolute Positioning
+- Top-Left Corner
+- SVG Icon Integration
+- Hover Effects
+- Focus Styling
 end note
-note right of Authenticated
-isAuthenticated : true
-userData : {role, user_id, user_name, email, token}
-loading : false
+note right of Focused
+- Keyboard Navigation
+- Focus Ring
+- ARIA Labels
+- Screen Reader Support
 end note
 ```
 
 **Diagram sources**
-- [authSlice.js:4-9](file://Client/src/store/auth/authSlice.js#L4-L9)
+- [Login.jsx:196-208](file://Client/src/pages/Login.jsx#L196-L208)
 
-The slice maintains localStorage persistence for seamless authentication state across browser sessions, now supporting the streamlined token-based authentication with access and refresh tokens.
-
-**Section sources**
-- [authSlice.js:4-9](file://Client/src/store/auth/authSlice.js#L4-L9)
-
-### Enhanced Backend Integration
-
-The authentication process integrates with a comprehensive backend API featuring streamlined error handling and token management:
-
-#### Enhanced API Endpoint Structure
-
-The backend provides a dedicated login endpoint (`/api/v1/users/login`) with streamlined security and comprehensive error handling:
-
-1. **Input Validation**: Validates required fields with detailed error messages
-2. **User Verification**: Searches for user records with flexible user_id matching
-3. **Password Security**: Implements secure password comparison
-4. **Token Generation**: Creates both access and refresh tokens
-5. **User Data Retrieval**: Aggregates comprehensive user information
-6. **Cookie Management**: Sets secure HTTP-only cookies for token storage
-
-#### Enhanced Response Handling
-
-The backend uses a standardized response format through the `ApiResponse` utility class with enhanced structure:
-- **Status Code Management**: Proper HTTP status code assignment
-- **Data Encapsulation**: Structured data response with user information
-- **Success Flag**: Automatic success determination based on status codes
-- **Timestamp Tracking**: Request processing timestamps
-- **Meta Information**: Pagination and additional metadata support
+The home button includes:
+- **Absolute Positioning**: Positioned at top-left corner using CSS positioning
+- **SVG Icon Integration**: Custom home icon with proper sizing and styling
+- **Keyboard Focus Styling**: Proper focus ring and outline for keyboard navigation
+- **ARIA Labels**: Descriptive labels for screen reader compatibility
+- **Hover Effects**: Smooth transitions and visual feedback
+- **Navigation**: Direct route to home page ("/")
 
 **Section sources**
-- [Login.jsx:134-151](file://Client/src/pages/Login.jsx#L134-L151)
-- [user.controller.js:401-506](file://Backend/src/controllers/user.controller.js#L401-L506)
-- [ApiResponse.js:5-74](file://Backend/src/utils/ApiResponse.js#L5-L74)
+- [Login.jsx:111-339](file://Client/src/pages/Login.jsx#L111-L339)
+- [themeSlice.js:3-29](file://Client/src/store/theme/themeSlice.js#L3-L29)
 
 ## Advanced Features
 
@@ -404,7 +394,7 @@ end note
 ```
 
 **Diagram sources**
-- [Login.jsx:280-287](file://Client/src/pages/Login.jsx#L280-L287)
+- [Login.jsx:297-304](file://Client/src/pages/Login.jsx#L297-L304)
 - [Login.jsx:43-54](file://Client/src/pages/Login.jsx#L43-L54)
 
 The toggle feature includes:
@@ -436,7 +426,7 @@ L --> M[Update Form Errors]
 ```
 
 **Diagram sources**
-- [Login.jsx:180-188](file://Client/src/pages/Login.jsx#L180-L188)
+- [Login.jsx:180-192](file://Client/src/pages/Login.jsx#L180-L192)
 
 The error handling system includes:
 - **Toast Notifications**: Non-blocking user feedback for all actions
@@ -447,7 +437,7 @@ The error handling system includes:
 **Section sources**
 - [Login.jsx:11-27](file://Client/src/pages/Login.jsx#L11-L27)
 - [Login.jsx:43-54](file://Client/src/pages/Login.jsx#L43-L54)
-- [Login.jsx:180-188](file://Client/src/pages/Login.jsx#L180-L188)
+- [Login.jsx:180-192](file://Client/src/pages/Login.jsx#L180-L192)
 
 ## Dependency Analysis
 
@@ -546,7 +536,7 @@ end note
 ```
 
 **Diagram sources**
-- [Login.jsx:125-188](file://Client/src/pages/Login.jsx#L125-L188)
+- [Login.jsx:125-192](file://Client/src/pages/Login.jsx#L125-L192)
 
 #### Performance Optimization Features
 
@@ -575,7 +565,7 @@ The enhanced API client provides sophisticated network optimization:
 - **Cache Invalidation**: Smart cache invalidation on data mutations
 
 **Section sources**
-- [Login.jsx:125-188](file://Client/src/pages/Login.jsx#L125-L188)
+- [Login.jsx:125-192](file://Client/src/pages/Login.jsx#L125-L192)
 - [apiClient.js:39-152](file://Client/src/services/apiClient.js#L39-L152)
 
 ## Accessibility Features
@@ -593,22 +583,28 @@ A[ARIA Labels] --> B[User ID Field]
 A --> C[Password Field]
 A --> D[Submit Button]
 A --> E[Theme Toggle]
-B --> F[aria-labelledby]
-C --> G[aria-invalid]
-C --> H[aria-describedby]
-D --> I[aria-disabled]
-E --> J[aria-label]
-K[Keyboard Navigation] --> L[Tab Order]
-K --> M[Enter Key Support]
-K --> N[Escape Key Support]
-O[Screen Reader Support] --> P[Live Regions]
-O --> Q[Descriptive Labels]
-O --> R[Error Announcements]
+A --> F[Home Button]
+B --> G[aria-labelledby]
+C --> H[aria-invalid]
+C --> I[aria-describedby]
+D --> J[aria-disabled]
+E --> K[aria-label]
+F --> L[aria-label]
+M[Keyboard Navigation] --> N[Tab Order]
+M --> O[Enter Key Support]
+M --> P[Escape Key Support]
+Q[Screen Reader Support] --> R[Live Regions]
+Q --> S[Descriptive Labels]
+Q --> T[Error Announcements]
+U[Focus Management] --> V[Home Button Focus]
+U --> W[Form Field Focus]
+U --> X[Error Field Focus]
 end
 ```
 
 **Diagram sources**
-- [Login.jsx:230-294](file://Client/src/pages/Login.jsx#L230-L294)
+- [Login.jsx:200-208](file://Client/src/pages/Login.jsx#L200-L208)
+- [Login.jsx:230-339](file://Client/src/pages/Login.jsx#L230-L339)
 - [Login.jsx:195-202](file://Client/src/pages/Login.jsx#L195-L202)
 
 #### Keyboard Navigation Support
@@ -619,6 +615,7 @@ The login form provides comprehensive keyboard navigation:
 - **Escape Key Handling**: Modal-like behavior for theme toggle
 - **Focus Management**: Automatic focus on first error field
 - **Accessible Buttons**: Proper button semantics and keyboard support
+- **Home Button Navigation**: Direct keyboard access to home page
 
 #### Screen Reader Compatibility
 
@@ -628,6 +625,7 @@ The component ensures compatibility with assistive technologies:
 - **Status Messages**: Polite announcements for loading and success states
 - **Contrast Compliance**: Sufficient color contrast for visual accessibility
 - **Focus Indicators**: Visible focus rings for keyboard navigation
+- **Home Button Accessibility**: Proper ARIA labels and keyboard navigation
 
 ### Enhanced Form Validation Accessibility
 
@@ -639,7 +637,8 @@ The validation system provides accessible error feedback:
 - **Validation Timing**: Immediate feedback without disrupting workflow
 
 **Section sources**
-- [Login.jsx:230-294](file://Client/src/pages/Login.jsx#L230-L294)
+- [Login.jsx:200-208](file://Client/src/pages/Login.jsx#L200-L208)
+- [Login.jsx:230-339](file://Client/src/pages/Login.jsx#L230-L339)
 - [Login.jsx:195-202](file://Client/src/pages/Login.jsx#L195-L202)
 
 ## Troubleshooting Guide
@@ -717,7 +716,7 @@ Common performance issues with solutions:
 
 The streamlined login page implementation demonstrates a sophisticated and comprehensive authentication system that successfully combines modern React patterns with enhanced validation, accessibility compliance, and improved user feedback mechanisms. The implementation now includes major enhancements that significantly improve user experience, streamline authentication flow, and maintain code quality.
 
-**Updated** The authentication system has been successfully updated to use user_id instead of username for login purposes, reflecting the new authentication system where users log in with their manually assigned user_id instead of username. The form validation and API integration have been updated to use the user_id field throughout the authentication flow.
+**Updated** The authentication system has been successfully updated to use user_id instead of username for login purposes, reflecting the new authentication system where users log in with their manually assigned user_id instead of username. The form validation and API integration have been updated to use the user_id field throughout the authentication flow. Additionally, the login page now includes a comprehensive home button with SVG icon integration, proper keyboard focus styling, ARIA labels for screen reader compatibility, and absolute positioning at the top-left corner.
 
 Key strengths of the streamlined implementation include:
 - **Streamlined Form Validation**: Comprehensive client-side validation with real-time feedback using user_id field
@@ -728,6 +727,7 @@ Key strengths of the streamlined implementation include:
 - **Persistent Theme Support**: Seamless theme switching with localStorage persistence
 - **Robust Backend Integration**: Secure token-based authentication with comprehensive error handling
 - **Accessibility Compliance**: Extensive ARIA attributes and keyboard navigation support
+- **Navigation Accessibility**: Comprehensive home button with proper positioning and keyboard support
 
 The streamlined system provides a solid foundation for the Timetable Project's authentication needs while maintaining code quality, accessibility standards, and user experience excellence. The modular architecture supports future expansion for additional authentication features and continues to demonstrate best practices in modern React development.
 

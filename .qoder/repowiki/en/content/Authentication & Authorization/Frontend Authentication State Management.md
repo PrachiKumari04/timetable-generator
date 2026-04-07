@@ -12,14 +12,15 @@
 - [Student.jsx](file://Client/src/pages/dashboard/Student.jsx)
 - [apiClient.js](file://Client/src/services/apiClient.js)
 - [themeSlice.js](file://Client/src/store/theme/themeSlice.js)
+- [App.jsx](file://Client/src/App.jsx)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Enhanced authentication state management with new useEffect hook for automatic role-based redirection
-- Improved token refresh mechanism with comprehensive error handling and retry logic
-- Better login handler logic that properly differentiates between initial session verification and login submission states
-- Enhanced authentication flow with improved state synchronization and component re-rendering
+- Enhanced API client session verification logic to prevent infinite redirect loops during initial application load
+- Added conditional logic to skip token refresh attempts when session verification fails for /users/me endpoint
+- Improved error handling in response interceptor to prevent problematic redirect cycles when no active session exists
+- Updated authentication flow to handle initial session verification failures gracefully
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -39,7 +40,7 @@
 ## Introduction
 This document provides comprehensive documentation for the enhanced frontend authentication state management implementation using Redux Toolkit with JWT token support. The system now implements modern authentication practices with access/refresh token management, async session verification via async thunks, comprehensive loading states, and improved error handling. The authentication flow seamlessly integrates with HTTP-only cookies for secure session management and provides robust role-based access control through protected route components.
 
-The enhanced system now features automatic role-based redirection, improved token refresh mechanisms, and better differentiation between initial session verification and login submission states, providing a more robust and user-friendly authentication experience.
+The enhanced system now features automatic role-based redirection, improved token refresh mechanisms, and better differentiation between initial session verification and login submission states, providing a more robust and user-friendly authentication experience. A critical improvement addresses infinite redirect loops during initial application load by implementing conditional logic to skip token refresh attempts when session verification fails for the /users/me endpoint.
 
 ## Project Structure
 The authentication system is organized within the Redux store structure under the Client/src/store directory, featuring enhanced JWT token management and async thunk implementations.
@@ -58,6 +59,7 @@ Header[Header.jsx]
 Admin[Admin.jsx]
 Faculty[Faculty.jsx]
 Student[Student.jsx]
+App[App.jsx]
 end
 subgraph "API Layer"
 ApiClient[apiClient.js]
@@ -75,16 +77,18 @@ Header --> AuthSlice
 Admin --> AuthSlice
 Faculty --> AuthSlice
 Student --> AuthSlice
+App --> AuthSlice
 AuthSlice --> AccessToken
 AuthSlice --> RefreshToken
 Login --> ApiClient
+App --> ApiClient
 ApiClient --> AuthService
 ```
 
 **Diagram sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 - [authSlice.js:1-63](file://Client/src/store/auth/authSlice.js#L1-L63)
-- [apiClient.js:1-268](file://Client/src/services/apiClient.js#L1-L268)
+- [apiClient.js:1-275](file://Client/src/services/apiClient.js#L1-L275)
 
 **Section sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
@@ -100,7 +104,7 @@ The authSlice now implements comprehensive JWT token management with async sessi
 The system uses createAsyncThunk for session verification on application load, providing robust async state management with pending, fulfilled, and rejected states. The verifySession thunk handles backend session validation and proper error state management.
 
 ### API Client Integration
-The authentication system integrates with a sophisticated API client that handles HTTP-only cookie management, request caching, automatic retry logic, and comprehensive token refresh mechanisms.
+The authentication system integrates with a sophisticated API client that handles HTTP-only cookie management, request caching, automatic retry logic, and comprehensive token refresh mechanisms. The client now includes enhanced error handling to prevent infinite redirect loops during initial application load.
 
 ### Component Integration
 Multiple React components integrate with the enhanced authentication state to provide role-based access control and secure UI rendering with automatic redirection capabilities.
@@ -115,35 +119,32 @@ The enhanced authentication architecture follows a modern JWT-based approach wit
 ```mermaid
 sequenceDiagram
 participant User as User
-participant Login as Login Component
+participant App as App Component
 participant Store as Redux Store
 participant AuthSlice as Auth Slice
 participant ApiClient as API Client
 participant Backend as Backend Service
 participant Cookies as HTTP-Only Cookies
-participant Header as Header Component
+participant Login as Login Component
 participant Routes as Route Components
-User->>Login : Submit login form
-Login->>ApiClient : POST /users/login
-ApiClient->>Backend : Authenticate user
-Backend->>Cookies : Set access_token & refresh_token cookies
-Backend-->>ApiClient : Success response with user data
-ApiClient-->>Login : Response with tokens
-Login->>Store : dispatch(login(userDataWithTokens))
-Store->>AuthSlice : Update state with tokens
-AuthSlice->>AuthSlice : Store tokens in state
-AuthSlice-->>Store : New state with tokens
-Store-->>Header : Re-render with token state
+User->>App : Load Application
+App->>Store : dispatch(verifySession())
+Store->>AuthSlice : Set loading=true
+AuthSlice->>ApiClient : GET /users/me
+ApiClient->>Backend : Verify session
+Backend-->>ApiClient : Session verification result
+ApiClient-->>AuthSlice : Response or Error
+AuthSlice->>AuthSlice : Handle success/failure
+AuthSlice-->>Store : Update state
+Store-->>Login : Re-render with token state
 Store-->>Routes : Re-render with token state
-Header->>Header : Update UI based on token state
-Routes->>Routes : Navigate based on role with token validation
-Note over ApiClient,Cookies : Tokens automatically included in requests
+Note over ApiClient,Cookies : Enhanced error handling prevents redirect loops
 ```
 
 **Diagram sources**
-- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
-- [authSlice.js:27-40](file://Client/src/store/auth/authSlice.js#L27-L40)
-- [apiClient.js:140-162](file://Client/src/services/apiClient.js#L140-L162)
+- [App.jsx:52-59](file://Client/src/App.jsx#L52-L59)
+- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
+- [apiClient.js:127-132](file://Client/src/services/apiClient.js#L127-L132)
 
 ## Detailed Component Analysis
 
@@ -329,6 +330,13 @@ The Login component implements intelligent redirection logic:
 - Prevents double redirection during login process
 - Handles role-based navigation based on user data
 
+### Enhanced Error Handling for Session Verification
+The system now includes critical improvements to prevent infinite redirect loops:
+- Response interceptor checks for /users/me endpoint failures
+- Skips token refresh attempts for session verification failures
+- Prevents redirect cycles when no active session exists
+- Allows graceful fallback to login page
+
 ```mermaid
 flowchart TD
 A[App Load] --> B{verifySession Running?}
@@ -380,11 +388,12 @@ The system implements proper token lifecycle management:
 - Proper cleanup on logout
 
 ### Enhanced Token Refresh Mechanism
-The apiClient.js implements a sophisticated token refresh system:
+The apiClient.js implements a sophisticated token refresh system with enhanced error handling:
 - Automatic detection of 401 Unauthorized responses
 - Queue-based request handling during refresh operations
 - Subscriber pattern for notifying pending requests after refresh
 - Comprehensive error handling with cache clearing and redirect
+- **Critical Enhancement**: Conditional logic to skip token refresh for /users/me endpoint failures
 
 ### Enhanced Token State Synchronization
 The Redux store maintains token state alongside user data:
@@ -394,7 +403,7 @@ The Redux store maintains token state alongside user data:
 - Consistent token state across application components
 
 **Section sources**
-- [apiClient.js:140-162](file://Client/src/services/apiClient.js#L140-L162)
+- [apiClient.js:127-132](file://Client/src/services/apiClient.js#L127-L132)
 - [Login.jsx:168-173](file://Client/src/pages/Login.jsx#L168-L173)
 
 ## Component Integration Patterns
@@ -488,11 +497,12 @@ The system implements secure error handling:
 - Secure error logging without exposing sensitive data
 
 ### Enhanced API Security Integration
-The API client implements comprehensive security:
+The API client implements comprehensive security with enhanced error handling:
 - Automatic cookie management for authentication
 - Request caching with security considerations
 - Network error handling with user feedback
 - Retry logic with exponential backoff
+- **Critical Enhancement**: Prevents infinite redirect loops during initial load
 
 ### Enhanced Production Security Recommendations
 - Implement Content Security Policy (CSP) headers
@@ -501,7 +511,7 @@ The API client implements comprehensive security:
 - Monitor authentication patterns for suspicious activity
 
 **Section sources**
-- [apiClient.js:86-88](file://Client/src/services/apiClient.js#L86-L88)
+- [apiClient.js:127-132](file://Client/src/services/apiClient.js#L127-L132)
 - [Header.jsx:16-31](file://Client/src/components/Header.jsx#L16-L31)
 
 ## Performance Optimizations
@@ -561,6 +571,19 @@ The enhanced authentication system implements several performance optimizations 
 - Use replace: true for single-page navigation
 - Handle edge cases in role-based routing logic
 
+#### Infinite Redirect Loops During Initial Load
+**Symptoms**: Application stuck in redirect cycle when no active session exists
+**Causes**:
+- Missing conditional logic in response interceptor
+- Improper handling of /users/me endpoint failures
+- Token refresh attempts triggered unnecessarily
+
+**Solutions**:
+- Verify response interceptor includes /users/me endpoint check
+- Ensure conditional logic prevents token refresh for session verification failures
+- Test initial load behavior with no active session
+- Implement proper fallback to login page
+
 #### Token Refresh Failures
 **Symptoms**: Frequent token refresh attempts or infinite loops
 **Causes**:
@@ -604,8 +627,11 @@ Key enhancements of the updated implementation include:
 - Enhanced role-based access control with token validation
 - Automatic role-based redirection with useEffect hooks
 - Improved token refresh mechanism with comprehensive error handling
+- **Critical Enhancement**: Prevention of infinite redirect loops during initial application load through conditional logic
 - Efficient state updates with minimal performance overhead
 
 The system provides an excellent foundation for production-ready authentication with comprehensive security measures, proper error handling, and scalable architecture. The integration with HTTP-only cookies ensures secure token storage while maintaining seamless user experience through comprehensive loading states and error handling mechanisms.
 
 The enhanced authentication flow now properly differentiates between initial session verification and login submission states, providing a more intuitive and reliable user experience. The automatic role-based redirection system ensures users are directed to appropriate dashboards based on their authentication status and role assignments.
+
+**Updated**: The most significant enhancement addresses a critical issue where the application could get stuck in infinite redirect loops during initial load when no active session exists. The solution implements conditional logic in the API client's response interceptor to skip token refresh attempts specifically for /users/me endpoint failures, preventing problematic redirect cycles and ensuring graceful fallback to the login page.
