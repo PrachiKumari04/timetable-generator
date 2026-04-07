@@ -16,11 +16,10 @@
 
 ## Update Summary
 **Changes Made**
-- Updated authentication architecture to use JWT tokens with access/refresh token support
-- Added comprehensive async thunk implementation for session verification
-- Enhanced state management with loading states and improved error handling
-- Updated authentication flow to use HTTP-only cookies for secure session management
-- Added comprehensive token management and API client integration
+- Enhanced authentication state management with new useEffect hook for automatic role-based redirection
+- Improved token refresh mechanism with comprehensive error handling and retry logic
+- Better login handler logic that properly differentiates between initial session verification and login submission states
+- Enhanced authentication flow with improved state synchronization and component re-rendering
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -28,16 +27,19 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [JWT Token Management](#jwt-token-management)
-7. [Async Thunk Implementation](#async-thunk-implementation)
-8. [Dependency Analysis](#dependency-analysis)
-9. [Performance Considerations](#performance-considerations)
+6. [Enhanced Authentication Flow](#enhanced-authentication-flow)
+7. [Token Management and Refresh](#token-management-and-refresh)
+8. [Component Integration Patterns](#component-integration-patterns)
+9. [State Management Enhancements](#state-management-enhancements)
 10. [Security Considerations](#security-considerations)
-11. [Troubleshooting Guide](#troubleshooting-guide)
-12. [Conclusion](#conclusion)
+11. [Performance Optimizations](#performance-optimizations)
+12. [Troubleshooting Guide](#troubleshooting-guide)
+13. [Conclusion](#conclusion)
 
 ## Introduction
 This document provides comprehensive documentation for the enhanced frontend authentication state management implementation using Redux Toolkit with JWT token support. The system now implements modern authentication practices with access/refresh token management, async session verification via async thunks, comprehensive loading states, and improved error handling. The authentication flow seamlessly integrates with HTTP-only cookies for secure session management and provides robust role-based access control through protected route components.
+
+The enhanced system now features automatic role-based redirection, improved token refresh mechanisms, and better differentiation between initial session verification and login submission states, providing a more robust and user-friendly authentication experience.
 
 ## Project Structure
 The authentication system is organized within the Redux store structure under the Client/src/store directory, featuring enhanced JWT token management and async thunk implementations.
@@ -81,8 +83,8 @@ ApiClient --> AuthService
 
 **Diagram sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [authSlice.js:1-61](file://Client/src/store/auth/authSlice.js#L1-L61)
-- [apiClient.js:1-213](file://Client/src/services/apiClient.js#L1-L213)
+- [authSlice.js:1-63](file://Client/src/store/auth/authSlice.js#L1-L63)
+- [apiClient.js:1-268](file://Client/src/services/apiClient.js#L1-L268)
 
 **Section sources**
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
@@ -92,19 +94,19 @@ ApiClient --> AuthService
 The enhanced authentication system consists of several key components working together to manage JWT tokens and provide secure authentication state management.
 
 ### Enhanced Authentication Slice Implementation
-The authSlice now implements comprehensive JWT token management with async session verification, loading states, and improved error handling.
+The authSlice now implements comprehensive JWT token management with async session verification, loading states, and improved error handling. The slice maintains a loading state that starts as true to indicate initial session verification.
 
 ### Async Thunk Integration
-The system uses createAsyncThunk for session verification on application load, providing robust async state management with pending, fulfilled, and rejected states.
+The system uses createAsyncThunk for session verification on application load, providing robust async state management with pending, fulfilled, and rejected states. The verifySession thunk handles backend session validation and proper error state management.
 
 ### API Client Integration
-The authentication system integrates with a sophisticated API client that handles HTTP-only cookie management, request caching, and automatic retry logic.
+The authentication system integrates with a sophisticated API client that handles HTTP-only cookie management, request caching, automatic retry logic, and comprehensive token refresh mechanisms.
 
 ### Component Integration
-Multiple React components integrate with the enhanced authentication state to provide role-based access control and secure UI rendering.
+Multiple React components integrate with the enhanced authentication state to provide role-based access control and secure UI rendering with automatic redirection capabilities.
 
 **Section sources**
-- [authSlice.js:1-61](file://Client/src/store/auth/authSlice.js#L1-L61)
+- [authSlice.js:1-63](file://Client/src/store/auth/authSlice.js#L1-L63)
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 
 ## Architecture Overview
@@ -139,9 +141,9 @@ Note over ApiClient,Cookies : Tokens automatically included in requests
 ```
 
 **Diagram sources**
-- [Login.jsx:132-188](file://Client/src/pages/Login.jsx#L132-L188)
-- [authSlice.js:27-38](file://Client/src/store/auth/authSlice.js#L27-L38)
-- [apiClient.js:71-76](file://Client/src/services/apiClient.js#L71-L76)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
+- [authSlice.js:27-40](file://Client/src/store/auth/authSlice.js#L27-L40)
+- [apiClient.js:140-162](file://Client/src/services/apiClient.js#L140-L162)
 
 ## Detailed Component Analysis
 
@@ -152,7 +154,7 @@ The authSlice implements a sophisticated JWT-based authentication system with co
 The slice now includes comprehensive state management for JWT tokens:
 - isAuthenticated: Boolean flag indicating user authentication status
 - userData: User object containing token information
-- loading: Boolean flag for async operation states
+- loading: Boolean flag for async operation states (starts as true)
 - error: Error object for authentication failures
 
 #### Async Thunk Implementation
@@ -169,7 +171,7 @@ The slice provides improved reducers with better state management:
 - Sets isAuthenticated to true
 - Updates userData with token information
 - Clears error state on successful authentication
-- Stores both user data and token information
+- Sets loading to false after successful login
 
 **Logout Reducer**
 - Resets authentication state to null/false
@@ -205,10 +207,10 @@ AuthSlice --> TokenState : "stores"
 **Diagram sources**
 - [authSlice.js:4-9](file://Client/src/store/auth/authSlice.js#L4-L9)
 - [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
-- [authSlice.js:39-55](file://Client/src/store/auth/authSlice.js#L39-L55)
+- [authSlice.js:27-40](file://Client/src/store/auth/authSlice.js#L27-L40)
 
 **Section sources**
-- [authSlice.js:1-61](file://Client/src/store/auth/authSlice.js#L1-L61)
+- [authSlice.js:1-63](file://Client/src/store/auth/authSlice.js#L1-L63)
 
 ### Enhanced Store Configuration (store.js)
 The main store configuration remains focused but now manages the enhanced authentication slice with other application slices.
@@ -224,17 +226,26 @@ The store includes:
 - [store.js:1-15](file://Client/src/store/store.js#L1-L15)
 
 ### Enhanced Login Component Integration
-The Login component demonstrates comprehensive JWT authentication flow with token management.
+The Login component demonstrates comprehensive JWT authentication flow with token management and automatic role-based redirection.
 
 #### Enhanced Authentication Flow
 1. User submits login form with credentials
-2. Component calls authentication API with token support
-3. On successful authentication, extracts access_token and refresh_token
-4. Dispatches login action with complete token information
-5. Redirects user based on role with token validation
-6. Updates Redux state with token information
+2. Component validates form inputs and prevents submission if invalid
+3. Component calls authentication API with token support
+4. On successful authentication, extracts access_token and refresh_token
+5. Dispatches login action with complete token information
+6. Uses useEffect hook for automatic role-based redirection
+7. Updates Redux state with token information
 
-#### Token Management
+#### Automatic Role-Based Redirection
+The component implements a new useEffect hook that automatically redirects users based on their role:
+- Checks isAuthenticated and userData.role on state changes
+- Redirects admin users to /admin
+- Redirects student users to /student
+- Redirects faculty users to /faculty
+- Uses replace: true to prevent back navigation
+
+#### Enhanced Token Management
 The component implements comprehensive token handling:
 - Extracts both access_token and refresh_token from API response
 - Stores tokens in userData for Redux state
@@ -249,7 +260,8 @@ The component implements robust role-based routing:
 - Other roles navigate to home with proper error handling
 
 **Section sources**
-- [Login.jsx:132-188](file://Client/src/pages/Login.jsx#L132-L188)
+- [Login.jsx:72-83](file://Client/src/pages/Login.jsx#L72-L83)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
 
 ### Enhanced Header Component Integration
 The Header component provides authentication-aware UI controls with token state awareness.
@@ -289,28 +301,92 @@ Similar robust protection mechanisms apply to faculty and student dashboards:
 - Proper error handling for authentication failures
 
 **Section sources**
-- [Admin.jsx:17-52](file://Client/src/pages/dashboard/Admin.jsx#L17-L52)
+- [Admin.jsx:17-47](file://Client/src/pages/dashboard/Admin.jsx#L17-L47)
 - [Faculty.jsx:5-35](file://Client/src/pages/dashboard/Faculty.jsx#L5-L35)
 - [Student.jsx:5-35](file://Client/src/pages/dashboard/Student.jsx#L5-L35)
 
-## JWT Token Management
-The enhanced authentication system implements comprehensive JWT token management with access/refresh token support.
+## Enhanced Authentication Flow
+The enhanced authentication system implements a sophisticated flow that properly differentiates between initial session verification and login submission states.
 
-### Token Storage Strategy
+### Initial Session Verification
+When the application loads, the verifySession async thunk runs automatically:
+- Sets loading state to true initially
+- Calls /users/me endpoint to validate existing session
+- Handles success by setting isAuthenticated to true
+- Handles failure by resetting authentication state
+- Sets loading to false after completion
+
+### Login Submission State
+During login submission, the system properly distinguishes between:
+- Initial session verification (loading state from verifySession)
+- Login submission (isSubmitting state from form)
+- Both states are tracked separately to prevent conflicts
+
+### Automatic Redirection Logic
+The Login component implements intelligent redirection logic:
+- Uses useEffect to watch for authentication state changes
+- Differentiates between initial verification and login submission
+- Prevents double redirection during login process
+- Handles role-based navigation based on user data
+
+```mermaid
+flowchart TD
+A[App Load] --> B{verifySession Running?}
+B --> |Yes| C[Loading State: true]
+B --> |No| D{isAuthenticated?}
+D --> |Yes| E{Has userData.role?}
+E --> |Yes| F[Redirect Based on Role]
+E --> |No| G[Continue Loading]
+D --> |No| H[Show Login Form]
+F --> I[Navigation Complete]
+G --> J[Wait for Session Verification]
+H --> K[User Submits Login]
+K --> L[isSubmitting: true]
+L --> M[API Call to /users/login]
+M --> N{Login Success?}
+N --> |Yes| O[Dispatch login action]
+O --> P[isSubmitting: false]
+P --> Q[Automatic Redirection]
+N --> |No| R[Show Error Message]
+R --> S[isSubmitting: false]
+Q --> T[Final State]
+```
+
+**Diagram sources**
+- [Login.jsx:72-83](file://Client/src/pages/Login.jsx#L72-L83)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
+- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
+
+**Section sources**
+- [Login.jsx:72-83](file://Client/src/pages/Login.jsx#L72-L83)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
+- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
+
+## Token Management and Refresh
+The enhanced authentication system implements comprehensive JWT token management with improved refresh mechanisms.
+
+### Enhanced Token Storage Strategy
 The system uses HTTP-only cookies for secure token storage:
 - Access tokens stored in HTTP-only cookies for XSS protection
 - Refresh tokens stored in separate HTTP-only cookies
 - Automatic token inclusion in all API requests
 - Secure cookie attributes for enhanced security
 
-### Token Lifecycle Management
+### Enhanced Token Lifecycle Management
 The system implements proper token lifecycle management:
-- Automatic token refresh on expiration
-- Graceful handling of expired tokens
+- Automatic token refresh on expiration with comprehensive error handling
+- Graceful handling of expired tokens with retry logic
 - Token validation before API requests
 - Proper cleanup on logout
 
-### Token State Synchronization
+### Enhanced Token Refresh Mechanism
+The apiClient.js implements a sophisticated token refresh system:
+- Automatic detection of 401 Unauthorized responses
+- Queue-based request handling during refresh operations
+- Subscriber pattern for notifying pending requests after refresh
+- Comprehensive error handling with cache clearing and redirect
+
+### Enhanced Token State Synchronization
 The Redux store maintains token state alongside user data:
 - Token information stored in userData object
 - Automatic state updates on token changes
@@ -318,95 +394,59 @@ The Redux store maintains token state alongside user data:
 - Consistent token state across application components
 
 **Section sources**
-- [apiClient.js:71-76](file://Client/src/services/apiClient.js#L71-L76)
-- [Login.jsx:145-158](file://Client/src/pages/Login.jsx#L145-L158)
+- [apiClient.js:140-162](file://Client/src/services/apiClient.js#L140-L162)
+- [Login.jsx:168-173](file://Client/src/pages/Login.jsx#L168-L173)
 
-## Async Thunk Implementation
-The system implements comprehensive async thunk management for session verification and state updates.
+## Component Integration Patterns
+The enhanced authentication system demonstrates several improved integration patterns between components and the Redux store.
 
-### Session Verification Process
-The verifySession async thunk provides robust session validation:
-- Automatic execution on application load
-- Backend session validation via /users/me endpoint
-- Comprehensive error handling with rejectWithValue
-- Loading state management during verification
+### Enhanced State Subscription Patterns
+Components now properly differentiate between:
+- Authentication state (isAuthenticated, userData, loading)
+- Form submission state (isSubmitting)
+- Loading states for different operations
 
-### Async State Management
-The system provides comprehensive async state management:
-- Pending state during session verification
-- Fulfilled state on successful verification
-- Rejected state on verification failure
-- Loading indicators during async operations
+### Improved Component Re-rendering
+The system implements efficient re-rendering patterns:
+- Selective re-rendering based on specific state slices
+- Efficient useSelector hooks prevent unnecessary component updates
+- Token-aware component optimization
+- Role-based conditional rendering with loading states
 
-### Error Handling Strategy
-The async thunk implements comprehensive error handling:
-- Specific error messages for different failure scenarios
-- Graceful degradation on verification failures
-- User-friendly error messaging
-- Proper state cleanup on errors
+### Enhanced Error Handling Patterns
+Components implement comprehensive error handling:
+- Form validation with real-time feedback
+- API error handling with user-friendly messages
+- Loading state management during async operations
+- Graceful degradation on authentication failures
 
-**Section sources**
-- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
-- [authSlice.js:39-55](file://Client/src/store/auth/authSlice.js#L39-L55)
-
-## Dependency Analysis
-The enhanced authentication system has clear dependencies and relationships between components with comprehensive token management.
-
-```mermaid
-graph TD
-AuthSlice[authSlice.js] --> AsyncThunk[verifySession Async Thunk]
-AuthSlice --> LocalStorage[Enhanced State Management]
-Store[store.js] --> AuthSlice
-Login[Login.jsx] --> AuthSlice
-Login --> ApiClient[apiClient.js]
-Header[Header.jsx] --> AuthSlice
-Admin[Admin.jsx] --> AuthSlice
-Faculty[Faculty.jsx] --> AuthSlice
-Student[Student.jsx] --> AuthSlice
-Main[main.jsx] --> Store
-AuthSlice --> ThemeSlice[themeSlice.js]
-Login --> Header
-Header --> Routes[Route Components]
-ApiClient --> Backend[Backend Service]
-ApiClient --> Cookies[HTTP-Only Cookies]
-style AuthSlice fill:#e1f5fe
-style Store fill:#f3e5f5
-style Login fill:#e8f5e8
-style Header fill:#fff3e0
-```
-
-**Diagram sources**
-- [authSlice.js:1-61](file://Client/src/store/auth/authSlice.js#L1-L61)
-- [store.js:1-15](file://Client/src/store/store.js#L1-L15)
-- [main.jsx:1-18](file://Client/src/main.jsx#L1-L18)
-
-### Enhanced Component Coupling Analysis
-- Low coupling between components and the auth slice
-- High cohesion within the auth slice for authentication concerns
-- Clear separation of authentication logic from UI concerns
-- Comprehensive token management integration
-
-### Enhanced State Flow Dependencies
-The authentication state flows through multiple components with automatic re-rendering and comprehensive token state management.
+### Enhanced Navigation Patterns
+The system implements intelligent navigation:
+- Automatic redirection based on authentication state
+- Role-based routing with proper state validation
+- Prevention of double redirection during login process
+- Smooth transitions between authenticated and unauthenticated states
 
 **Section sources**
-- [authSlice.js:1-61](file://Client/src/store/auth/authSlice.js#L1-L61)
-- [store.js:1-15](file://Client/src/store/store.js#L1-L15)
+- [Login.jsx:72-83](file://Client/src/pages/Login.jsx#L72-L83)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
+- [Header.jsx:16-31](file://Client/src/components/Header.jsx#L16-L31)
 
-## Performance Considerations
-The enhanced authentication system implements several performance optimizations with comprehensive token management.
+## State Management Enhancements
+The enhanced authentication system implements several improvements to state management with comprehensive token handling.
 
-### Efficient State Updates
+### Enhanced State Update Strategies
 - Minimal state updates only when authentication changes
 - Direct token state management reduces unnecessary operations
 - Async thunk optimization prevents redundant verification calls
 - Loading state management prevents UI blocking
 
-### Enhanced Component Re-rendering
-- Selective re-rendering based on specific state slices
-- Efficient useSelector hooks prevent unnecessary component updates
-- Token-aware component optimization
-- Role-based conditional rendering with loading states
+### Enhanced Component State Flow
+The authentication state flows through multiple components with automatic re-rendering and comprehensive token state management:
+- Initial loading state during session verification
+- Form submission state during login process
+- Final authenticated state with token information
+- Error states with proper recovery mechanisms
 
 ### Enhanced Storage Optimization
 - Lightweight token storage with HTTP-only cookies
@@ -414,11 +454,15 @@ The enhanced authentication system implements several performance optimizations 
 - Cleanup operations remove unused keys efficiently
 - Cache management for API responses
 
-### Async Operation Optimization
+### Enhanced Async Operation Management
 - Debounced async operations prevent redundant calls
 - Loading state management improves perceived performance
 - Error caching prevents repeated failed requests
 - Token refresh optimization reduces authentication overhead
+
+**Section sources**
+- [authSlice.js:4-9](file://Client/src/store/auth/authSlice.js#L4-L9)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
 
 ## Security Considerations
 The enhanced authentication system implements comprehensive security measures with JWT token management and HTTP-only cookies.
@@ -429,82 +473,106 @@ The enhanced authentication system implements comprehensive security measures wi
 - Automatic token inclusion in all API requests
 - Token validation before sensitive operations
 
-### Token Security Implementation
+### Enhanced Token Security Implementation
 The system implements robust token security:
 - Access tokens stored in HTTP-only cookies
 - Refresh tokens stored separately for enhanced security
 - Automatic token refresh on expiration
 - Proper token cleanup on logout
 
-### Error Handling Security
+### Enhanced Error Handling Security
 The system implements secure error handling:
 - Generic error messages prevent information leakage
 - Specific error handling for different failure scenarios
 - Graceful degradation on authentication failures
 - Secure error logging without exposing sensitive data
 
-### API Security Integration
+### Enhanced API Security Integration
 The API client implements comprehensive security:
 - Automatic cookie management for authentication
 - Request caching with security considerations
 - Network error handling with user feedback
 - Retry logic with exponential backoff
 
-### Production Security Recommendations
+### Enhanced Production Security Recommendations
 - Implement Content Security Policy (CSP) headers
 - Add CSRF protection for API requests
 - Regular security audits and vulnerability assessments
 - Monitor authentication patterns for suspicious activity
 
 **Section sources**
-- [apiClient.js:71-76](file://Client/src/services/apiClient.js#L71-L76)
+- [apiClient.js:86-88](file://Client/src/services/apiClient.js#L86-L88)
 - [Header.jsx:16-31](file://Client/src/components/Header.jsx#L16-L31)
+
+## Performance Optimizations
+The enhanced authentication system implements several performance optimizations with comprehensive token management.
+
+### Enhanced State Update Performance
+- Minimal state updates only when authentication changes
+- Direct token state management reduces unnecessary operations
+- Async thunk optimization prevents redundant verification calls
+- Loading state management prevents UI blocking
+
+### Enhanced Component Re-rendering Performance
+- Selective re-rendering based on specific state slices
+- Efficient useSelector hooks prevent unnecessary component updates
+- Token-aware component optimization
+- Role-based conditional rendering with loading states
+
+### Enhanced Storage Performance
+- Lightweight token storage with HTTP-only cookies
+- JSON serialization occurs only during state transitions
+- Cleanup operations remove unused keys efficiently
+- Cache management for API responses
+
+### Enhanced Async Operation Performance
+- Debounced async operations prevent redundant calls
+- Loading state management improves perceived performance
+- Error caching prevents repeated failed requests
+- Token refresh optimization reduces authentication overhead
 
 ## Troubleshooting Guide
 
 ### Common Issues and Solutions
 
-#### Authentication State Not Persisting
-**Symptoms**: Users appear logged out after page refresh
+#### Authentication State Conflicts
+**Symptoms**: Confusion between initial session verification and login submission states
 **Causes**: 
-- HTTP-only cookie restrictions
-- Cross-origin cookie policy violations
-- Browser privacy mode limitations
-- Cookie security settings blocking cookies
+- Both loading and isSubmitting states active simultaneously
+- Inproper state management in components
+- Missing useEffect dependency arrays
 
 **Solutions**:
-- Verify cookie settings in browser developer tools
-- Check for cross-origin policy violations
-- Ensure HTTPS deployment for secure cookies
-- Implement proper cookie domain and path configuration
+- Ensure proper state differentiation between verifySession and login submission
+- Use separate state variables for different operation types
+- Implement proper useEffect dependency arrays
+- Clear isSubmitting state after login completion
 
-#### Token Management Issues
-**Symptoms**: JWT tokens not being properly managed
+#### Automatic Redirection Issues
+**Symptoms**: Double redirection or incorrect role-based navigation
 **Causes**:
-- Missing token extraction from API responses
-- Incorrect token storage in Redux state
-- Cookie not being sent with API requests
-- Token expiration without proper refresh
+- Missing useEffect dependency tracking
+- Improper state checking logic
+- Race conditions between authentication and navigation
 
 **Solutions**:
-- Verify token extraction in login component
-- Check Redux state structure for token storage
-- Inspect network tab for cookie inclusion
-- Implement token refresh logic
+- Verify useEffect dependencies include all state variables
+- Implement proper state validation before redirection
+- Use replace: true for single-page navigation
+- Handle edge cases in role-based routing logic
 
-#### Async Thunk Errors
-**Symptoms**: Session verification fails or hangs
+#### Token Refresh Failures
+**Symptoms**: Frequent token refresh attempts or infinite loops
 **Causes**:
-- API endpoint not responding
-- Network connectivity issues
-- Backend authentication service problems
-- Async thunk error handling failures
+- Improper error handling in token refresh
+- Missing retry logic implementation
+- Cache clearing without proper recovery
 
 **Solutions**:
-- Verify API endpoint accessibility
-- Check network connectivity and CORS settings
-- Review backend authentication service logs
-- Implement proper error handling and retry logic
+- Implement comprehensive error handling for token refresh
+- Add retry logic with exponential backoff
+- Ensure proper cache management after refresh failures
+- Clear authentication state on refresh failure
 
 #### Component Rendering Issues
 **Symptoms**: UI doesn't reflect authentication state changes
@@ -521,19 +589,23 @@ The API client implements comprehensive security:
 - Implement loading states for async operations
 
 **Section sources**
-- [authSlice.js:12-22](file://Client/src/store/auth/authSlice.js#L12-L22)
-- [Login.jsx:132-188](file://Client/src/pages/Login.jsx#L132-L188)
+- [Login.jsx:72-83](file://Client/src/pages/Login.jsx#L72-L83)
+- [Login.jsx:124-192](file://Client/src/pages/Login.jsx#L124-L192)
 - [Header.jsx:16-31](file://Client/src/components/Header.jsx#L16-L31)
 
 ## Conclusion
 The enhanced frontend authentication state management system provides a robust foundation for modern JWT-based authentication with comprehensive token management, async thunk implementation, and secure HTTP-only cookie handling. The system successfully demonstrates advanced authentication patterns with loading states, comprehensive error handling, and seamless integration with React components.
 
-Key strengths of the enhanced implementation include:
+Key enhancements of the updated implementation include:
 - Modern JWT token management with access/refresh token support
 - Comprehensive async thunk implementation for session verification
 - Secure HTTP-only cookie management for enhanced security
 - Robust error handling and loading state management
 - Enhanced role-based access control with token validation
+- Automatic role-based redirection with useEffect hooks
+- Improved token refresh mechanism with comprehensive error handling
 - Efficient state updates with minimal performance overhead
 
 The system provides an excellent foundation for production-ready authentication with comprehensive security measures, proper error handling, and scalable architecture. The integration with HTTP-only cookies ensures secure token storage while maintaining seamless user experience through comprehensive loading states and error handling mechanisms.
+
+The enhanced authentication flow now properly differentiates between initial session verification and login submission states, providing a more intuitive and reliable user experience. The automatic role-based redirection system ensures users are directed to appropriate dashboards based on their authentication status and role assignments.
