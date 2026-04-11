@@ -347,13 +347,13 @@ function Admin() {
           type: "date",
           required: true,
         },
-        // {
-        //   name: "date_of_birth",
-        //   label: "Date of Birth",
-        //   placeholder: "e.g. 1980-05-20",
-        //   type: "date",
-        //   required: false,
-        // },
+        {
+          name: "date_of_birth",
+          label: "Date of Birth",
+          placeholder: "e.g. 1980-05-20",
+          type: "date",
+          required: false,
+        },
         {
           name: "address",
           label: "Address",

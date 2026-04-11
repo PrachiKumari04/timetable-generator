@@ -12,6 +12,7 @@ import {
 import mongoose from "mongoose";
 import { Student } from "../models/student.models.js";
 import { Faculty } from "../models/faculty.models.js";
+import bcrypt from "bcryptjs";
 // import Faculty from "../../../Client/src/pages/dashboard/Faculty.jsx";
 
 //* Register new user (single or multiple)
@@ -21,60 +22,66 @@ export const registerUser = asyncHandler(async (req, res) => {
   console.log("Body -->", req.body);
   console.log("Users -->", req.user);
 
-  //! Handle single user registration
-  if (!Array.isArray(users)) {
-    const { password, role, student_id, faculty_id, created_by } = users;
+  // //! Handle single user registration
+  // if (!Array.isArray(users)) {
+  //   const { password, role, student_id, faculty_id, created_by } = users;
 
-    //* Validate required fields
-    if (!password || !role || (!student_id && !faculty_id)) {
-      throw ApiError.badRequest(
-        "Password, role, and student_id or faculty_id are required",
-      );
-    }
+  //   //* Validate required fields
+  //   if (!password || !role || (!student_id && !faculty_id)) {
+  //     throw ApiError.badRequest(
+  //       "Password, role, and student_id or faculty_id are required",
+  //     );
+  //   }
 
-    //! Check for existing user
-    const existingUser = await User.findOne({
-      $or: [
-        { student_id: student_id || null },
-        { faculty_id: faculty_id || null },
-      ],
-    });
+  //   //! Check for existing user
+  //   const existingUser = await User.findOne({
+  //     $or: [
+  //       { student_id: student_id || null },
+  //       { faculty_id: faculty_id || null },
+  //     ],
+  //   });
 
-    if (existingUser) {
-      throw ApiError.conflict(
-        "User with this student_id or faculty_id already exists",
-      );
-    }
+  //   if (existingUser) {
+  //     throw ApiError.conflict(
+  //       "User with this student_id or faculty_id already exists",
+  //     );
+  //   }
 
-    //! Check for existing student or faculty
-    const existingStudent = await Student.findOne({ student_id: student_id || null });
-    const existingFaculty = await Faculty.findOne({ faculty_id: faculty_id || null });
+  //   //! Check for existing student or faculty
+  //   const existingStudent = await Student.findOne({
+  //     student_id: student_id || null,
+  //   });
+  //   const existingFaculty = await Faculty.findOne({
+  //     faculty_id: faculty_id || null,
+  //   });
 
-    //! Check if student or faculty exists
-    if (!existingStudent && !existingFaculty) {
-      throw ApiError.badRequest("Student or Faculty with this student_id or faculty_id does not exist");
-    }
+  //   //! Check if student or faculty exists
+  //   if (!existingStudent && !existingFaculty) {
+  //     throw ApiError.badRequest(
+  //       "Student or Faculty with this student_id or faculty_id does not exist",
+  //     );
+  //   }
 
-    const hashedPassword = await User.hashPassword(password);
+  //   const hashedPassword = await User.hashPassword(password);
 
-    //! Create user
-    const newUser = await User.create({
-      password: hashedPassword,
-      role: role.toLowerCase(),
-      student_id: student_id || null,
-      faculty_id: faculty_id || null,
-      created_by: created_by || null,
-    });
+  //   //! Create user
+  //   const newUser = await User.create({
+  //     password: hashedPassword,
+  //     role: role.toLowerCase(),
+  //     student_id: student_id || null,
+  //     faculty_id: faculty_id || null,
+  //     created_by: created_by || null,
+  //   });
 
-    const createdUser = await User.findById(newUser._id).select(
-      "-password -refreshToken",
-    );
+  //   const createdUser = await User.findById(newUser._id).select(
+  //     "-password -refreshToken",
+  //   );
 
-    return ApiResponse.created(
-      createdUser,
-      "User registered successfully",
-    ).send(res);
-  }
+  //   return ApiResponse.created(
+  //     createdUser,
+  //     "User registered successfully",
+  //   ).send(res);
+  // }
 
   //! Handle multiple user registration (bulk)
   if (users.length === 0) {
@@ -132,8 +139,42 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   console.log("Unique User Records -->", uniqueUserRecords);
 
+  //* Process each user: generate user_id and hash password
+  const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
+  const processedUsers = await Promise.all(
+    uniqueUserRecords.map(async (user) => {
+      const prefix = user.role ? user.role.substring(0, 3).toUpperCase() : "USR";
+
+      // * Generate user_id based on role
+      switch (user.role) {
+        case "admin":
+        case "coordinator":
+          user.user_id = user.student_id ? `${prefix}${user.student_id}` : null;
+          break;
+        case "faculty":
+          user.user_id = user.faculty_id ? `${prefix}${user.faculty_id}` : null;
+          break;
+        case "student":
+          user.user_id = user.student_id ? `${prefix}${user.student_id}` : null;
+          break;
+        case "hod":
+          user.user_id = user.faculty_id ? `${prefix}${user.faculty_id}` : null;
+          break;
+        default:
+          const timestamp = Date.now().toString(36).toUpperCase();
+          const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+          user.user_id = `${prefix}${timestamp}${random}`;
+      }
+
+      // * Hash password
+      user.password = await bcrypt.hash(user.password, saltRounds);
+
+      return user;
+    }),
+  );
+
   //* Save in database
-  const userRecords = await User.insertMany(uniqueUserRecords);
+  const userRecords = await User.insertMany(processedUsers);
   console.log("User -->", userRecords);
 
   if (userRecords.length === 0) {

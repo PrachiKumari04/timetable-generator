@@ -36,9 +36,9 @@ export const registerFaculty = asyncHandler(async (req, res) => {
     if (!faculty.date_of_joining) {
       throw new ApiError(400, "Date of Joining is required");
     }
-    // if (!faculty.date_of_birth) {
-    //   throw new ApiError(400, "Date of Birth is required");
-    // }
+    if (!faculty.date_of_birth) {
+      throw new ApiError(400, "Date of Birth is required");
+    }
     if (!faculty.address) {
       throw new ApiError(400, "Address is required");
     }
