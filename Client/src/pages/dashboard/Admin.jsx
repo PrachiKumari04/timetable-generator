@@ -30,18 +30,35 @@ function Admin() {
   useEffect(() => {
     if (isAuthenticated && userData?.role === "admin") {
       //* Fetch initial data for all entities with default pagination
-      const entities = ["program", "course", "room", "division", "specialization", 
-                       "faculty", "student", "qualification_type", "subject_allocation", 
-                       "time_slot", "timetable", "timetable_entry", "user"];
-      entities.forEach(entityKey => {
-        dispatch(fetchMasterData({ entityKey, params: { page: 1, limit: 10 } }));
+      const entities = [
+        "program",
+        "course",
+        "room",
+        "division",
+        "specialization",
+        "faculty",
+        "student",
+        "qualification_type",
+        "subject_allocation",
+        "time_slot",
+        "timetable",
+        "timetable_entry",
+        "user",
+      ];
+      entities.forEach((entityKey) => {
+        dispatch(
+          fetchMasterData({ entityKey, params: { page: 1, limit: 10 } }),
+        );
       });
     }
   }, [dispatch, isAuthenticated, userData]);
 
   useEffect(() => {
     //* Only redirect if auth check is complete and user is not authenticated
-    if (!authLoading && (!isAuthenticated || !userData || userData.role !== "admin")) {
+    if (
+      !authLoading &&
+      (!isAuthenticated || !userData || userData.role !== "admin")
+    ) {
       navigate("/");
     }
   }, [authLoading, isAuthenticated, userData, navigate]);
@@ -51,9 +68,25 @@ function Admin() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex items-center space-x-2">
-          <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <svg
+            className="animate-spin h-8 w-8 text-primary"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
           <span className="text-lg font-medium text-primary">Loading...</span>
         </div>
@@ -282,7 +315,8 @@ function Admin() {
           name: "gender",
           label: "Gender",
           placeholder: "e.g. Male/Female/Other",
-          type: "text",
+          type: "select",
+          options: ["male", "female", "other"],
           required: true,
         },
         {
@@ -313,13 +347,13 @@ function Admin() {
           type: "date",
           required: true,
         },
-        {
-          name: "date_of_birth",
-          label: "Date of Birth",
-          placeholder: "e.g. 1980-05-20",
-          type: "date",
-          required: false,
-        },
+        // {
+        //   name: "date_of_birth",
+        //   label: "Date of Birth",
+        //   placeholder: "e.g. 1980-05-20",
+        //   type: "date",
+        //   required: false,
+        // },
         {
           name: "address",
           label: "Address",
@@ -541,7 +575,15 @@ function Admin() {
           label: "Day of Week",
           placeholder: "e.g. monday",
           type: "select",
-          options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+          options: [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+          ],
           required: true,
         },
         {
@@ -668,7 +710,15 @@ function Admin() {
           label: "Day",
           placeholder: "e.g. monday",
           type: "select",
-          options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+          options: [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+          ],
           required: true,
         },
         {
@@ -689,17 +739,18 @@ function Admin() {
     user: {
       label: "User",
       pluralLabel: "Users",
-      description: "Manage system users (admin, faculty, students, coordinators, HODs).",
+      description:
+        "Manage system users (admin, faculty, students, coordinators, HODs).",
       fields: [
         {
-          name:"user_name",
+          name: "user_name",
           label: "User Name",
           type: "text",
         },
         {
-          name:"user_id",
+          name: "user_id",
           label: "User ID",
-          type:"text"
+          type: "text",
         },
         {
           name: "password",
@@ -741,7 +792,12 @@ function Admin() {
 
   useEffect(() => {
     if (activeEntity && !masterData[activeEntity]) {
-      dispatch(fetchMasterData({ entityKey: activeEntity, params: { page: 1, limit: 10 } }));
+      dispatch(
+        fetchMasterData({
+          entityKey: activeEntity,
+          params: { page: 1, limit: 10 },
+        }),
+      );
     }
   }, [activeEntity, dispatch, masterData]);
 
