@@ -4,20 +4,19 @@ const courseSchema = new Schema(
   {
     course_id: {
       type: String,
-      required: true,
+      required: [true, "Course ID is required"],
       unique: true,
       uppercase: true,
       trim: true,
     },
     course_name: {
       type: String,
-      required: true,
+      required: [true, "Course Name is required"],
       trim: true,
       uppercase: true,
     },
     credit: {
-      type: Number,
-      required: true,
+      type: String,
       trim: true,
     },
     isActive: {

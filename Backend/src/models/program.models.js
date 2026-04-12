@@ -16,7 +16,7 @@ const programSchema = new Schema(
       trim: true,
     },
     program_duration: {
-      type: Number,
+      type: String,
       required: true,
       trim: true,
     },

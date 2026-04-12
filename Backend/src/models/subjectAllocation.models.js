@@ -27,21 +27,16 @@ const subjectAllocationSchema = new Schema(
       uppercase: true,
       trim: true,
     },
-    ltpHours: {
-      l: { type: Number, required: [true, "Lecture hours is required"] },
-      t: { type: Number, required: [true, "Tutorial hours is required"] },
-      p: { type: Number, required: [true, "Practical hours is required"] },
-    },
-    isLab: {
-      type: Boolean,
-      default: false,   
-    },
-    classTeacher: {
-      type: String,
-      required: [true, "Class teacher is required"],
-      uppercase: true,
-      trim: true,
-    },
+    l: { type: String, required: [true, "Lecture hours is required"] },
+    t: { type: String, required: [true, "Tutorial hours is required"] },
+    p: { type: String, required: [true, "Practical hours is required"] },
+    isLab: { type: Boolean, default: false },
+    // classTeacher: {
+    //   type: String,
+    //   required: [true, "Class teacher is required"],
+    //   uppercase: true,
+    //   trim: true,
+    // },
     academicYear: {
       type: String,
       required: [true, "Academic year is required"],

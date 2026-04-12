@@ -10,7 +10,16 @@
 - [ApiError.js](file://Backend/src/utils/ApiError.js)
 - [course.models.js](file://Backend/src/models/course.models.js)
 - [subject.models.js](file://Backend/src/models/subject.models.js)
+- [Admin.jsx](file://Client/src/pages/dashboard/Admin.jsx)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated validation rules section to reflect that date_of_birth is now mandatory in controller validation
+- Updated POST /api/v1/faculties request schema to show date_of_birth as mandatory
+- Updated PUT /api/v1/faculties request schema to reflect mandatory date_of_birth field
+- Added note about the current validation inconsistency between model and controller
+- Updated core components section to reflect comprehensive validation for all required faculty fields
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -65,19 +74,19 @@ SVR --> SM
 
 **Diagram sources**
 - [faculty.routers.js:1-20](file://Backend/src/routes/faculty.routers.js#L1-L20)
-- [faculty.conteoller.js:1-229](file://Backend/src/controllers/faculty.conteoller.js#L1-L229)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [faculty.conteoller.js:1-235](file://Backend/src/controllers/faculty.conteoller.js#L1-L235)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 - [course.models.js:1-33](file://Backend/src/models/course.models.js#L1-L33)
 - [subject.models.js:1-33](file://Backend/src/models/subject.models.js#L1-L33)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
-- [server.js:1-54](file://Backend/src/server.js#L1-L54)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [server.js:1-106](file://Backend/src/server.js#L1-L106)
 
 **Section sources**
 - [faculty.routers.js:1-20](file://Backend/src/routes/faculty.routers.js#L1-L20)
-- [faculty.conteoller.js:1-229](file://Backend/src/controllers/faculty.conteoller.js#L1-L229)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
-- [server.js:1-54](file://Backend/src/server.js#L1-L54)
+- [faculty.conteoller.js:1-235](file://Backend/src/controllers/faculty.conteoller.js#L1-L235)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
+- [server.js:1-106](file://Backend/src/server.js#L1-L106)
 
 ## Core Components
 - Faculty Model: Defines the schema for faculty records, including identifiers, personal details, contact information, qualifications, experience, gender, join date, birth date, address, and activity status.
@@ -95,15 +104,18 @@ Key validation rules and constraints:
 - years_of_Experience: Required, numeric.
 - gender: Required, lowercase, trimmed.
 - date_of_joining: Optional date with default current time.
-- date_of_birth: Optional date.
+- date_of_birth: **Updated** Mandatory date - now required for all faculty registrations.
 - address: Required, trimmed.
 - isActive: Boolean flag with default true.
 
+**Updated** The date_of_birth field is now mandatory in the controller validation to ensure complete faculty records. However, there is a validation inconsistency where the model defines it as optional while the controller requires it.
+
 **Section sources**
-- [faculty.models.js:3-74](file://Backend/src/models/faculty.models.js#L3-L74)
-- [faculty.conteoller.js:14-53](file://Backend/src/controllers/faculty.conteoller.js#L14-L53)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.models.js:3-80](file://Backend/src/models/faculty.models.js#L3-L80)
+- [faculty.conteoller.js:14-84](file://Backend/src/controllers/faculty.conteoller.js#L14-L84)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
+- [Admin.jsx:350-356](file://Client/src/pages/dashboard/Admin.jsx#L350-L356)
 
 ## Architecture Overview
 The faculty management API follows a layered architecture:
@@ -130,10 +142,10 @@ Note over C,S : "Other endpoints follow similar flow with different controller m
 ```
 
 **Diagram sources**
-- [server.js:40-50](file://Backend/src/server.js#L40-L50)
+- [server.js:79-87](file://Backend/src/server.js#L79-L87)
 - [faculty.routers.js:12-17](file://Backend/src/routes/faculty.routers.js#L12-L17)
-- [faculty.conteoller.js:6-103](file://Backend/src/controllers/faculty.conteoller.js#L6-L103)
-- [faculty.models.js:1-77](file://Backend/src/models/faculty.models.js#L1-L77)
+- [faculty.conteoller.js:8-84](file://Backend/src/controllers/faculty.conteoller.js#L8-L84)
+- [faculty.models.js:1-81](file://Backend/src/models/faculty.models.js#L1-L81)
 
 ## Detailed Component Analysis
 
@@ -153,7 +165,7 @@ Notes:
 - Individual operations require a valid ObjectId in the path parameter.
 
 **Section sources**
-- [server.js:40-50](file://Backend/src/server.js#L40-L50)
+- [server.js:63-76](file://Backend/src/server.js#L63-L76)
 - [faculty.routers.js:12-17](file://Backend/src/routes/faculty.routers.js#L12-L17)
 
 ### Request and Response Schemas
@@ -173,29 +185,30 @@ Request Body:
   - years_of_Experience (number, required)
   - gender (string, required, lowercase, trimmed)
   - date_of_joining (date, optional)
-  - date_of_birth (date, optional)
+  - **Updated** date_of_birth (date, **mandatory** - required for all registrations)
   - address (string, required, trimmed)
   - isActive (boolean, optional, default true)
 
 Validation Rules:
 - Payload must be a non-empty array.
-- Each record must include all required fields.
+- Each record must include all required fields including date_of_birth.
 - Unique constraints apply to faculty_id, email, and phone across the batch and existing records.
+- **Updated** date_of_birth is now mandatory and will cause validation errors if missing.
 
 Success Response:
 - Status: 201 Created
 - Body: ApiResponse with inserted faculty records.
 
 Error Responses:
-- 400 Bad Request: Invalid or missing payload fields.
+- 400 Bad Request: Invalid or missing payload fields, including missing date_of_birth.
 - 408 Already Reported: All provided records already exist.
 - 500 Internal Server Error: Registration failure.
 
 **Section sources**
-- [faculty.conteoller.js:6-103](file://Backend/src/controllers/faculty.conteoller.js#L6-L103)
-- [faculty.models.js:5-71](file://Backend/src/models/faculty.models.js#L5-L71)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.conteoller.js:8-84](file://Backend/src/controllers/faculty.conteoller.js#L8-L84)
+- [faculty.models.js:5-80](file://Backend/src/models/faculty.models.js#L5-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 #### GET /api/v1/faculties
 Purpose:
@@ -212,9 +225,9 @@ Error Responses:
 - 404 Not Found: No faculty records found.
 
 **Section sources**
-- [faculty.conteoller.js:105-118](file://Backend/src/controllers/faculty.conteoller.js#L105-L118)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.conteoller.js:86-130](file://Backend/src/controllers/faculty.conteoller.js#L86-L130)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 #### GET /api/v1/faculties/:id
 Purpose:
@@ -231,9 +244,9 @@ Error Responses:
 - 404 Not Found: Missing or invalid ID, or faculty not found.
 
 **Section sources**
-- [faculty.conteoller.js:120-141](file://Backend/src/controllers/faculty.conteoller.js#L120-L141)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.conteoller.js:132-153](file://Backend/src/controllers/faculty.conteoller.js#L132-L153)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 #### PUT /api/v1/faculties/:id
 Purpose:
@@ -245,11 +258,12 @@ Path Parameters:
 Request Body:
 - Partial fields to update:
   - faculty_name, email, phone, specialization, higher_qualification,
-  - years_of_Experience, gender, date_of_joining, date_of_birth, address, isActive.
+  - years_of_Experience, gender, date_of_joining, **Updated** date_of_birth (**mandatory**), address, isActive.
 
 Validation Rules:
 - ID must be present and valid.
 - At least one update field must be provided.
+- **Updated** date_of_birth is mandatory and cannot be omitted.
 
 Success Response:
 - Status: 200 OK
@@ -259,10 +273,10 @@ Error Responses:
 - 404 Not Found: Missing or invalid ID, or faculty not found.
 
 **Section sources**
-- [faculty.conteoller.js:143-207](file://Backend/src/controllers/faculty.conteoller.js#L143-L207)
-- [faculty.models.js:5-71](file://Backend/src/models/faculty.models.js#L5-L71)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.conteoller.js:155-213](file://Backend/src/controllers/faculty.conteoller.js#L155-L213)
+- [faculty.models.js:5-80](file://Backend/src/models/faculty.models.js#L5-L80)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 #### DELETE /api/v1/faculties/:id
 Purpose:
@@ -279,9 +293,9 @@ Error Responses:
 - 404 Not Found: Missing or invalid ID, or faculty not found.
 
 **Section sources**
-- [faculty.conteoller.js:209-228](file://Backend/src/controllers/faculty.conteoller.js#L209-L228)
-- [ApiResponse.js:1-10](file://Backend/src/utils/ApiResponse.js#L1-L10)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.conteoller.js:215-235](file://Backend/src/controllers/faculty.conteoller.js#L215-L235)
+- [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 ### Search and Filtering Capabilities
 Current Implementation:
@@ -293,16 +307,18 @@ Recommendations:
 - Add pagination support (e.g., ?page=&limit=).
 - Implement text search on names or specializations.
 
-[No sources needed since this section provides recommendations without analyzing specific files]
+**Section sources**
+- [faculty.conteoller.js:86-130](file://Backend/src/controllers/faculty.conteoller.js#L86-L130)
 
 ### Bulk Upload Functionality
 - Implemented via POST /api/v1/faculties with an array payload.
 - Validates each record against required fields and uniqueness constraints.
 - Inserts only unique records not present in the database.
+- **Updated** date_of_birth is now mandatory during bulk uploads.
 
 **Section sources**
-- [faculty.conteoller.js:6-103](file://Backend/src/controllers/faculty.conteoller.js#L6-L103)
-- [faculty.models.js:5-71](file://Backend/src/models/faculty.models.js#L5-L71)
+- [faculty.conteoller.js:8-84](file://Backend/src/controllers/faculty.conteoller.js#L8-L84)
+- [faculty.models.js:5-80](file://Backend/src/models/faculty.models.js#L5-L80)
 
 ### Relationship Endpoints with Courses and Subjects
 Current Implementation:
@@ -341,31 +357,29 @@ S --> M
 
 **Diagram sources**
 - [faculty.routers.js:1-20](file://Backend/src/routes/faculty.routers.js#L1-L20)
-- [faculty.conteoller.js:1-4](file://Backend/src/controllers/faculty.conteoller.js#L1-L4)
+- [faculty.conteoller.js:1-6](file://Backend/src/controllers/faculty.conteoller.js#L1-L6)
 - [faculty.models.js:1-2](file://Backend/src/models/faculty.models.js#L1-L2)
 - [ApiResponse.js:1-2](file://Backend/src/utils/ApiResponse.js#L1-L2)
 - [ApiError.js:1-2](file://Backend/src/utils/ApiError.js#L1-L2)
-- [server.js:25-50](file://Backend/src/server.js#L25-L50)
+- [server.js:46-76](file://Backend/src/server.js#L46-L76)
 
 **Section sources**
 - [faculty.routers.js:1-20](file://Backend/src/routes/faculty.routers.js#L1-L20)
-- [faculty.conteoller.js:1-4](file://Backend/src/controllers/faculty.conteoller.js#L1-L4)
+- [faculty.conteoller.js:1-6](file://Backend/src/controllers/faculty.conteoller.js#L1-L6)
 - [faculty.models.js:1-2](file://Backend/src/models/faculty.models.js#L1-L2)
 - [ApiResponse.js:1-2](file://Backend/src/utils/ApiResponse.js#L1-L2)
 - [ApiError.js:1-2](file://Backend/src/utils/ApiError.js#L1-L2)
-- [server.js:25-50](file://Backend/src/server.js#L25-L50)
+- [server.js:46-76](file://Backend/src/server.js#L46-L76)
 
 ## Performance Considerations
 - Bulk insertions use unordered mode to improve throughput; consider ordered mode if strict ordering is required.
 - Uniqueness checks involve database queries; ensure indexes exist on faculty_id, email, and phone.
 - Pagination should be introduced for GET /api/v1/faculties to handle large datasets efficiently.
 
-[No sources needed since this section provides general guidance]
-
 ## Troubleshooting Guide
 Common Issues and Resolutions:
 - 400 Bad Request during bulk registration:
-  - Ensure the payload is a non-empty array and each record includes all required fields.
+  - Ensure the payload is a non-empty array and each record includes all required fields including date_of_birth.
 - 408 Already Reported:
   - Some or all provided records already exist; remove duplicates or update existing records.
 - 404 Not Found:
@@ -374,8 +388,10 @@ Common Issues and Resolutions:
   - Check database connectivity and server logs for underlying failures.
 
 **Section sources**
-- [faculty.conteoller.js:14-103](file://Backend/src/controllers/faculty.conteoller.js#L14-L103)
-- [ApiError.js:1-21](file://Backend/src/utils/ApiError.js#L1-L21)
+- [faculty.conteoller.js:14-84](file://Backend/src/controllers/faculty.conteoller.js#L14-L84)
+- [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 
 ## Conclusion
-The faculty management endpoints provide a solid foundation for bulk registration, retrieval, updates, and deletions. The schema enforces strong validation and uniqueness constraints. Future enhancements should include search/filter capabilities, pagination, and explicit relationship endpoints with courses and subjects to support richer timetable workflows.
+The faculty management endpoints provide a solid foundation for bulk registration, retrieval, updates, and deletions. The schema enforces strong validation and uniqueness constraints. **Updated** The recent enhancement makes date_of_birth mandatory in controller validation, improving data completeness. However, there is currently a validation inconsistency where the model defines date_of_birth as optional while the controller requires it. Future enhancements should include search/filter capabilities, pagination, and explicit relationship endpoints with courses and subjects to support richer timetable workflows.
+
+**Note**: There is currently a validation inconsistency where the model defines date_of_birth as optional, but the controller validation requires it. This should be addressed to maintain consistency across the application layers.

@@ -20,6 +20,10 @@ const roomSchema = new Schema(
       uppercase: true,
       trim: true,
     },
+    isLab: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

@@ -2,43 +2,48 @@ import { SubjectAllocation } from "../models/subjectAllocation.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js";
+import {
+  paginateMongoose,
+  parsePaginationParams,
+} from "../utils/pagination.js";
 
 //* Add subject allocations
 export const addSubjectAllocations = asyncHandler(async (req, res) => {
   const allocations = req.body;
 
+  console.log("Allocations:", allocations);
+
   if (!Array.isArray(allocations) || allocations.length === 0) {
-    throw new ApiError(400, "Subject allocation data is required and must be an array");
+    throw new ApiError(
+      400,
+      "Subject allocation data is required and must be an array",
+    );
   }
 
   //* Validate each allocation
   allocations.forEach((alloc) => {
-    if (!alloc.subjectAllocation_id) throw new ApiError(400, "Subject Allocation ID is required");
+    if (!alloc.subjectAllocation_id)
+      throw new ApiError(400, "Subject Allocation ID is required");
     if (!alloc.semester_id) throw new ApiError(400, "Semester ID is required");
     if (!alloc.program_id) throw new ApiError(400, "Program ID is required");
     if (!alloc.division_id) throw new ApiError(400, "Division ID is required");
     if (!alloc.faculty_id) throw new ApiError(400, "Faculty ID is required");
     if (!alloc.course_id) throw new ApiError(400, "Course ID is required");
-    if (!alloc.ltpHours) throw new ApiError(400, "LTP Hours is required");
-    if (!alloc.classTeacher) throw new ApiError(400, "Class Teacher is required");
+    // if (!alloc.l) throw new ApiError(400, "LTP Hours (l) is required");
+    // if (!alloc.t) throw new ApiError(400, "LTP Hours (t) is required");
+    // if (!alloc.p) throw new ApiError(400, "LTP Hours (p) is required");
+    // if (!alloc.classTeacher) throw new ApiError(400, "Class Teacher is required");
     if (!alloc.academicYear) throw new ApiError(400, "Academic Year is required");
   });
 
   //* Filter out existing allocations
   const allocIds = allocations.map((a) => a.subjectAllocation_id);
-  const existingAllocs = await SubjectAllocation.find({
-    subjectAllocation_id: { $in: allocIds }
-  });
+  const existingAllocs = await SubjectAllocation.find({ subjectAllocation_id: { $in: allocIds } });
   const existingAllocIds = new Set(existingAllocs.map((a) => a.subjectAllocation_id));
 
-  const uniqueAllocations = allocations.filter(
-    (a) => !existingAllocIds.has(a.subjectAllocation_id)
-  );
+  const uniqueAllocations = allocations.filter((a) => !existingAllocIds.has(a.subjectAllocation_id));
 
-  if (uniqueAllocations.length === 0) {
-    throw new ApiError(408, "All provided subject allocations already exist");
-  }
+  if (uniqueAllocations.length === 0) throw new ApiError(408, "All provided subject allocations already exist");
 
   const allocRecords = await SubjectAllocation.insertMany(uniqueAllocations);
 
@@ -54,7 +59,7 @@ export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
 
   //! Build filter
   let filter = {};
-  
+
   //* Search filter
   if (search) {
     filter.$or = [
@@ -65,16 +70,20 @@ export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
       { course_id: { $regex: search, $options: "i" } },
     ];
   }
-  
+
   // Field-specific filters
-  Object.keys(fieldFilters).forEach(key => {
-    if (key.startsWith('filter_') && fieldFilters[key] !== undefined && fieldFilters[key] !== '') {
-      const fieldName = key.replace('filter_', '');
+  Object.keys(fieldFilters).forEach((key) => {
+    if (
+      key.startsWith("filter_") &&
+      fieldFilters[key] !== undefined &&
+      fieldFilters[key] !== ""
+    ) {
+      const fieldName = key.replace("filter_", "");
       const value = fieldFilters[key];
-      
+
       //! Handle boolean filters
-      if (value === 'true' || value === 'false') {
-        filter[fieldName] = value === 'true';
+      if (value === "true" || value === "false") {
+        filter[fieldName] = value === "true";
       } else {
         filter[fieldName] = value;
       }
@@ -87,11 +96,23 @@ export const getAllSubjectAllocations = asyncHandler(async (req, res) => {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
   }
 
-  const result = await paginateMongoose(SubjectAllocation, filter, page, limit, { sort });
+  const result = await paginateMongoose(
+    SubjectAllocation,
+    filter,
+    page,
+    limit,
+    { sort },
+  );
 
   return res
     .status(200)
-    .json(new ApiResponse(200, result, "Subject allocations retrieved successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        "Subject allocations retrieved successfully",
+      ),
+    );
 });
 
 //! Get subject allocation by ID
@@ -108,7 +129,13 @@ export const getSubjectAllocationById = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, allocation, "Subject allocation fetched successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        allocation,
+        "Subject allocation fetched successfully",
+      ),
+    );
 });
 
 //* Update subject allocation
@@ -125,7 +152,7 @@ export const updateSubjectAllocation = asyncHandler(async (req, res) => {
   const updatedAlloc = await SubjectAllocation.findByIdAndUpdate(
     id,
     updateData,
-    { new: true }
+    { new: true },
   );
 
   if (!updatedAlloc) {
@@ -134,7 +161,13 @@ export const updateSubjectAllocation = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedAlloc, "Subject allocation updated successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        updatedAlloc,
+        "Subject allocation updated successfully",
+      ),
+    );
 });
 
 //! Delete subject allocation
@@ -149,5 +182,11 @@ export const deleteSubjectAllocation = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, deletedAlloc, "Subject allocation deleted successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        deletedAlloc,
+        "Subject allocation deleted successfully",
+      ),
+    );
 });

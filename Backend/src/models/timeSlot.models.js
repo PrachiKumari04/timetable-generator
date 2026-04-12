@@ -19,16 +19,16 @@ const timeSlotSchema = new Schema(
     startTime: {
       type: String,
       required: [true, "Start time is required"],
-      trim: true,
+      // trim: true,
     },
     endTime: {
       type: String,
       required: [true, "End time is required"],
-      trim: true,
+      // trim: true,
     },
     slot_type: {
       type: String,
-      enum: ["lecture", "lab", "break", "lunch"],
+      enum: ["LECTURE", "LAB", "BREAK", "LUNCH"],
       required: [true, "Slot type is required"],
       uppercase: true,
     },

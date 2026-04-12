@@ -249,6 +249,12 @@ function Admin() {
           type: "text",
           required: true,
         },
+        {
+          name: "isLab",
+          label: "Is Lab",
+          type: "boolean",
+          required: false,
+        },
       ],
     },
     specialization: {
@@ -515,13 +521,13 @@ function Admin() {
           type: "text",
           required: true,
         },
-        {
-          name: "classTeacher",
-          label: "Class Teacher Name",
-          placeholder: "e.g. Dr. Sunil Kumar",
-          type: "text",
-          required: true,
-        },
+        // {
+        //   name: "classTeacher",
+        //   label: "Class Teacher Name",
+        //   placeholder: "e.g. Dr. Sunil Kumar",
+        //   type: "text",
+        //   required: true,
+        // },
         {
           name: "academicYear",
           label: "Academic Year",
@@ -530,21 +536,21 @@ function Admin() {
           required: true,
         },
         {
-          name: "ltpHours.l",
+          name: "l",
           label: "Lecture Hours (L)",
           placeholder: "e.g. 3",
           type: "number",
           required: true,
         },
         {
-          name: "ltpHours.t",
+          name: "t",
           label: "Tutorial Hours (T)",
           placeholder: "e.g. 1",
           type: "number",
           required: true,
         },
         {
-          name: "ltpHours.p",
+          name: "p",
           label: "Practical Hours (P)",
           placeholder: "e.g. 2",
           type: "number",

@@ -10,6 +10,15 @@ const pendingRequests = new Map();
 //* Token refresh state
 let isRefreshing = false;
 let refreshSubscribers = [];
+let refreshPromise = null;
+
+//* Check if refresh token exists in cookies
+const hasRefreshToken = () => {
+  return document.cookie.split(';').some((cookie) => {
+    const [name] = cookie.trim().split('=');
+    return name === 'refreshToken';
+  });
+};
 
 //* Subscribe to token refresh
 const subscribeTokenRefresh = (callback) => {
@@ -17,9 +26,38 @@ const subscribeTokenRefresh = (callback) => {
 };
 
 //* Notify all subscribers with new token
-const onTokenRefreshed = () => {
-  refreshSubscribers.forEach((callback) => callback());
+const onTokenRefreshed = (success = true) => {
+  refreshSubscribers.forEach((callback) => callback(success));
   refreshSubscribers = [];
+};
+
+//* Perform token refresh with locking
+const performTokenRefresh = async () => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = axios.post(
+    `${API_BASE_URL}/users/refresh-token`,
+    {},
+    { withCredentials: true, timeout: 10000 }
+  ).then((response) => {
+    if (response.data?.success) {
+      console.log("[API] Token refreshed successfully");
+      onTokenRefreshed(true);
+      return { success: true };
+    }
+    throw new Error("Refresh failed");
+  }).catch((error) => {
+    console.error("[API] Token refresh failed:", error);
+    onTokenRefreshed(false);
+    throw error;
+  }).finally(() => {
+    isRefreshing = false;
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
 };
 
 //* Cache configuration
@@ -124,11 +162,34 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      //* Skip refresh for auth endpoints to prevent loops
+      const isAuthEndpoint = originalRequest.url?.includes('/users/me') || 
+                             originalRequest.url?.includes('/users/refresh-token') ||
+                             originalRequest.url?.includes('/users/login') ||
+                             originalRequest.url?.includes('/users/logout');
+      
+      if (isAuthEndpoint) {
+        console.log(`[API] Auth endpoint returned 401 - not attempting refresh`);
+        return Promise.reject(error);
+      }
+
+      //* Check if refresh token exists
+      if (!hasRefreshToken()) {
+        console.error("[API] No refresh token - session expired");
+        requestCache.clear();
+        window.dispatchEvent(new CustomEvent('auth:sessionExpired'));
+        return Promise.reject(error);
+      }
+
       //* If already refreshing, queue this request
-      if (isRefreshing) {
-        return new Promise((resolve) => {
-          subscribeTokenRefresh(() => {
-            resolve(apiClient(originalRequest));
+      if (isRefreshing || refreshPromise) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((success) => {
+            if (success) {
+              resolve(apiClient(originalRequest));
+            } else {
+              reject(error);
+            }
           });
         });
       }
@@ -136,27 +197,15 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        //* Call refresh token endpoint
-        const response = await axios.post(
-          `${API_BASE_URL}/users/refresh-token`,
-          {},
-          { withCredentials: true }
-        );
-
-        if (response.data?.success) {
-          console.log("[API] Token refreshed successfully");
-          onTokenRefreshed();
-          isRefreshing = false;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        console.error("[API] Token refresh failed:", refreshError);
-        isRefreshing = false;
-        refreshSubscribers = [];
+        //* Perform token refresh
+        await performTokenRefresh();
         
-        //! Clear cache and redirect to login
+        //* Retry original request
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        console.error("[API] Token refresh failed");
         requestCache.clear();
-        window.location.href = "/login";
+        window.dispatchEvent(new CustomEvent('auth:sessionExpired'));
         return Promise.reject(refreshError);
       }
     }

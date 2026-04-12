@@ -15,11 +15,11 @@
 
 ## Update Summary
 **Changes Made**
-- Updated User Model Schema to document the new pre-save hook system for automatic user_id generation
-- Revised Registration Process to reflect manual user_id management requirement with automatic generation capability
-- Updated Authentication Flow to show user_id vs student_id/faculty_id distinction with pre-save hook integration
-- Added comprehensive documentation for the pre-save hook that generates user_ids based on role prefixes
-- Updated field definitions to clarify the dual nature of user_id management (manual provision with automatic fallback)
+- Updated User Model Schema to document the modernized pre-save hook system with enhanced user_id generation logic
+- Revised Registration Process to reflect streamlined user_id management with automatic generation capabilities
+- Updated Authentication Flow to show user_id vs student_id/faculty_id distinction with modernized pre-save hook integration
+- Added comprehensive documentation for the streamlined pre-save hook that generates user_ids based on role prefixes
+- Updated field definitions to clarify the automatic user_id generation approach
 - Enhanced troubleshooting guidance for pre-save hook functionality and user_id generation
 
 ## Table of Contents
@@ -34,10 +34,10 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document provides comprehensive data model documentation for the User model within the timetable management system. It details the user schema including the pre-save hook system for automatic user_id generation, password field, role enumeration, relationship fields, timestamps, and the self-referencing created_by and updated_by fields. The system now combines manual user_id management with automatic generation capabilities while maintaining robust role-based access control and security considerations.
+This document provides comprehensive data model documentation for the User model within the timetable management system. It details the user schema including the modernized pre-save hook system for automatic user_id generation, password field, role enumeration, relationship fields, timestamps, and the self-referencing created_by and updated_by fields. The system now features a streamlined pre-save hook that automatically generates user_ids based on role prefixes and relationship identifiers while maintaining robust role-based access control and security considerations.
 
 ## Project Structure
-The user model is part of a MongoDB/Mongoose-based backend architecture with Express.js routing and controller logic. The user model integrates with student and faculty collections through foreign keys (student_id and faculty_id), while the pre-save hook system ensures automatic user_id generation based on role prefixes and relationship identifiers.
+The user model is part of a MongoDB/Mongoose-based backend architecture with Express.js routing and controller logic. The user model integrates with student and faculty collections through foreign keys (student_id and faculty_id), while the modernized pre-save hook system ensures automatic user_id generation based on role prefixes and relationship identifiers.
 
 ```mermaid
 graph TB
@@ -71,25 +71,25 @@ UC --> TK
 ```
 
 **Diagram sources**
-- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
-- [user.controller.js:1-702](file://Backend/src/controllers/user.controller.js#L1-L702)
+- [user.models.js:1-149](file://Backend/src/models/user.models.js#L1-L149)
+- [user.controller.js:1-746](file://Backend/src/controllers/user.controller.js#L1-L746)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 - [auth.middleware.js:1-121](file://Backend/src/middlewares/auth.middleware.js#L1-L121)
 
 **Section sources**
-- [user.models.js:1-105](file://Backend/src/models/user.models.js#L1-L105)
-- [user.controller.js:1-702](file://Backend/src/controllers/user.controller.js#L1-L702)
+- [user.models.js:1-149](file://Backend/src/models/user.models.js#L1-L149)
+- [user.controller.js:1-746](file://Backend/src/controllers/user.controller.js#L1-L746)
 - [user.routers.js:1-41](file://Backend/src/routes/user.routers.js#L1-L41)
 
 ## Core Components
-This section documents the primary data structures and their relationships, focusing on the pre-save hook system for automatic user_id generation.
+This section documents the primary data structures and their relationships, focusing on the modernized pre-save hook system for automatic user_id generation.
 
 ### User Model Schema
-The User model defines the core authentication and authorization entity with enhanced user_id management capabilities:
+The User model defines the core authentication and authorization entity with streamlined user_id management capabilities:
 
-**Updated** The user_id field now supports both manual provision and automatic generation through a pre-save hook:
+**Updated** The user_id field now supports automatic generation through a modernized pre-save hook:
 
-- **user_id**: String field with required validation, unique constraint, uppercase, trimmed
+- **user_id**: String field with unique constraint, nullable (auto-generated when not provided)
 - **password**: String field with required validation and minimum length requirement
 - **role**: Enumerated field with predefined values: admin, faculty, student, coordinator, hod
 - **student_id**: String field for linking to student records (nullable, used for user_id generation)
@@ -146,42 +146,43 @@ USER }o--|| USER : "updated_by"
 ```
 
 **Diagram sources**
-- [user.models.js:6-63](file://Backend/src/models/user.models.js#L6-L63)
+- [user.models.js:6-62](file://Backend/src/models/user.models.js#L6-L62)
 - [student.models.js:5-11](file://Backend/src/models/student.models.js#L5-L11)
 - [faculty.models.js:5-10](file://Backend/src/models/faculty.models.js#L5-L10)
 
 **Section sources**
-- [user.models.js:6-63](file://Backend/src/models/user.models.js#L6-L63)
+- [user.models.js:6-62](file://Backend/src/models/user.models.js#L6-L62)
 
-### Pre-Save Hook System for Automatic User ID Generation
-**Updated** The system now includes a sophisticated pre-save hook that automatically generates user_ids based on role prefixes and relationship identifiers:
+### Modernized Pre-Save Hook System for Automatic User ID Generation
+**Updated** The system now includes a streamlined pre-save hook that automatically generates user_ids based on role prefixes and relationship identifiers:
 
 - **Automatic Generation**: When user_id is not provided during creation, the pre-save hook generates it automatically
 - **Role-Based Prefixes**: Uses first 3 characters of role name in uppercase as prefix (e.g., "ADM" for admin, "FAC" for faculty)
+- **Enhanced Switch Logic**: Streamlined switch statement handles different role types with specific user_id generation rules
 - **Relationship Integration**: Combines role prefix with student_id or faculty_id for academic users
-- **Random Generation**: Creates unique identifiers for administrative roles without student/faculty relationships
+- **Smart Fallback**: Generates unique identifiers for administrative roles without student/faculty relationships
 - **Timestamp and Random Components**: Uses timestamp and random string for unique identifier generation
-- **Validation Integration**: Works seamlessly with existing validation rules and unique constraints
+- **Password Hashing Integration**: Seamlessly integrates password hashing during the same pre-save operation
+- **Error Handling**: Robust error handling within the pre-save hook for reliable user_id generation
 
 **Section sources**
-- [user.models.js:65-97](file://Backend/src/models/user.models.js#L65-L97)
+- [user.models.js:103-142](file://Backend/src/models/user.models.js#L103-L142)
 
-### Manual User ID Management with Automatic Fallback
-**Updated** The system now supports both manual and automatic user_id management approaches:
+### Streamlined User ID Management with Automatic Generation
+**Updated** The system now features a streamlined approach to user_id management:
 
-- **Manual Assignment**: user_id field can be provided manually during user creation
-- **Automatic Generation**: If user_id is omitted, pre-save hook generates it automatically
-- **Validation**: user_id is required and must be unique across all users
-- **Format Flexibility**: Supports custom user_id formats when manually provided
-- **Consistency**: Ensures standardized identification format through role prefixes
+- **Automatic Generation**: user_id field is auto-generated by pre-save hook when not provided
+- **Role-Based Logic**: Switch statement determines user_id generation based on role type
+- **Validation**: user_id maintains unique constraint through database-level enforcement
+- **Format Consistency**: Ensures standardized identification format through role prefixes
 - **Fallback Logic**: Automatically generates unique user_ids for administrative roles
+- **Integration**: Works seamlessly with existing validation rules and unique constraints
 
 **Section sources**
-- [user.models.js:6-11](file://Backend/src/models/user.models.js#L6-L11)
-- [user.controller.js:48-54](file://Backend/src/controllers/user.controller.js#L48-L54)
+- [user.models.js:103-129](file://Backend/src/models/user.models.js#L103-L129)
 
 ## Architecture Overview
-The user management system follows a layered architecture with clear separation of concerns and enhanced user_id management through pre-save hooks:
+The user management system follows a layered architecture with clear separation of concerns and enhanced user_id management through modernized pre-save hooks:
 
 ```mermaid
 sequenceDiagram
@@ -195,9 +196,10 @@ participant DB as "MongoDB"
 Client->>Router : POST /api/users (register)
 Router->>Controller : registerUser()
 Controller->>Controller : Validate input data (password, role, student_id/faculty_id)
-Controller->>Model : Create user (user_id may be provided or generated)
+Controller->>Model : Create user (user_id auto-generated)
 Model->>Model : Pre-save hook executes
 Model->>Model : Generate user_id based on role and relationships
+Model->>Model : Hash password during pre-save
 Model->>DB : Save user document with generated user_id
 DB-->>Model : Acknowledge
 Model-->>Controller : Saved user with auto-generated user_id
@@ -215,13 +217,13 @@ Controller-->>Client : ApiResponse with user details
 
 **Diagram sources**
 - [user.routers.js:22-29](file://Backend/src/routes/user.routers.js#L22-L29)
-- [user.controller.js:14-133](file://Backend/src/controllers/user.controller.js#L14-L133)
-- [user.models.js:65-97](file://Backend/src/models/user.models.js#L65-L97)
+- [user.controller.js:18-187](file://Backend/src/controllers/user.controller.js#L18-L187)
+- [user.models.js:103-142](file://Backend/src/models/user.models.js#L103-L142)
 
 ## Detailed Component Analysis
 
 ### User Registration and Validation
-**Updated** The registration process now supports both manual and automatic user_id management:
+**Updated** The registration process now features streamlined user_id management:
 
 ```mermaid
 flowchart TD
@@ -247,7 +249,7 @@ Success --> End
 ```
 
 **Diagram sources**
-- [user.controller.js:14-133](file://Backend/src/controllers/user.controller.js#L14-L133)
+- [user.controller.js:18-187](file://Backend/src/controllers/user.controller.js#L18-L187)
 
 Key validation rules implemented:
 - Password field is mandatory for all users
@@ -255,13 +257,13 @@ Key validation rules implemented:
 - Either student_id or faculty_id must be provided
 - Duplicate user_id, student_id, and faculty_id entries are prevented
 - All provided users must be unique
-- **Updated** user_id is required but can be auto-generated by pre-save hook
+- **Updated** user_id is auto-generated by modernized pre-save hook when not provided
 
 **Section sources**
-- [user.controller.js:14-133](file://Backend/src/controllers/user.controller.js#L14-L133)
+- [user.controller.js:18-187](file://Backend/src/controllers/user.controller.js#L18-L187)
 
 ### Role-Based Access Control System
-The system implements role-based access control through the role enumeration with enhanced user_id management:
+The system implements role-based access control through the role enumeration with streamlined user_id management:
 
 ```mermaid
 classDiagram
@@ -275,7 +277,7 @@ class UserRole {
 +getPermissions(role) string[]
 }
 class User {
-+string user_id (auto-generated or manually provided)
++string user_id (auto-generated by pre-save hook)
 +string password
 +string role
 +string student_id
@@ -297,7 +299,7 @@ User --> UserManagement : "managed by"
 ```
 
 **Diagram sources**
-- [user.models.js:19-28](file://Backend/src/models/user.models.js#L19-L28)
+- [user.models.js:18-27](file://Backend/src/models/user.models.js#L18-L27)
 - [auth.middleware.js:47-62](file://Backend/src/middlewares/auth.middleware.js#L47-L62)
 
 Role validation rules:
@@ -305,14 +307,14 @@ Role validation rules:
 - Automatic lowercase normalization ensures consistent storage
 - Trim operation removes whitespace
 - Message validation provides clear error feedback
-- **Updated** user_id generation ensures consistent identification format
+- **Updated** user_id generation ensures consistent identification format through pre-save hook
 
 **Section sources**
-- [user.models.js:19-28](file://Backend/src/models/user.models.js#L19-L28)
+- [user.models.js:18-27](file://Backend/src/models/user.models.js#L18-L27)
 - [auth.middleware.js:47-62](file://Backend/src/middlewares/auth.middleware.js#L47-L62)
 
 ### Authentication and Authorization Flow
-**Updated** The login process now uses user_id for authentication with pre-save hook integration:
+**Updated** The login process now uses user_id for authentication with modernized pre-save hook integration:
 
 ```mermaid
 sequenceDiagram
@@ -325,7 +327,7 @@ Client->>Controller : POST /api/users/login
 Controller->>Controller : Validate input fields (user_id/password)
 Controller->>Model : Find user by user_id
 Model->>Model : Match by auto-generated user_id
-Model->>Model : Verify password hash
+Model->>Model : Verify password hash via comparePassword method
 Model->>Student : Lookup student data
 Model->>Faculty : Lookup faculty data
 Student-->>Model : Student documents
@@ -339,10 +341,10 @@ Note over Client,Model : Authentication successful with auto-generated user_id
 ```
 
 **Diagram sources**
-- [user.controller.js:415-519](file://Backend/src/controllers/user.controller.js#L415-L519)
+- [user.controller.js:463-567](file://Backend/src/controllers/user.controller.js#L463-L567)
 
 **Section sources**
-- [user.controller.js:415-519](file://Backend/src/controllers/user.controller.js#L415-L519)
+- [user.controller.js:463-567](file://Backend/src/controllers/user.controller.js#L463-L567)
 
 ### Audit Trail Implementation
 The self-referencing created_by and updated_by fields implement comprehensive audit trails:
@@ -367,7 +369,7 @@ USER ||--o{ USER : "updated_by"
 ```
 
 **Diagram sources**
-- [user.models.js:50-60](file://Backend/src/models/user.models.js#L50-L60)
+- [user.models.js:49-59](file://Backend/src/models/user.models.js#L49-L59)
 
 Audit trail characteristics:
 - Both fields reference the User collection
@@ -377,10 +379,10 @@ Audit trail characteristics:
 - **Updated** user_id remains consistent even when audit trail fields change
 
 **Section sources**
-- [user.models.js:50-60](file://Backend/src/models/user.models.js#L50-L60)
+- [user.models.js:49-59](file://Backend/src/models/user.models.js#L49-L59)
 
 ### Data Retrieval and Projection
-**Updated** The user controller implements sophisticated aggregation pipelines for data retrieval with pre-save hook integration:
+**Updated** The user controller implements sophisticated aggregation pipelines for data retrieval with modernized pre-save hook integration:
 
 ```mermaid
 flowchart TD
@@ -398,10 +400,10 @@ UseFaculty --> AddUserData
 ```
 
 **Diagram sources**
-- [user.controller.js:165-250](file://Backend/src/controllers/user.controller.js#L165-L250)
+- [user.controller.js:320-379](file://Backend/src/controllers/user.controller.js#L320-L379)
 
 **Section sources**
-- [user.controller.js:165-250](file://Backend/src/controllers/user.controller.js#L165-L250)
+- [user.controller.js:320-379](file://Backend/src/controllers/user.controller.js#L320-L379)
 
 ## Dependency Analysis
 The user model has several important dependencies and relationships:
@@ -436,7 +438,7 @@ UR --> EXPRESS
 
 **Diagram sources**
 - [user.models.js:1](file://Backend/src/models/user.models.js#L1)
-- [user.controller.js:1-12](file://Backend/src/controllers/user.controller.js#L1-L12)
+- [user.controller.js:1-16](file://Backend/src/controllers/user.controller.js#L1-L16)
 - [user.routers.js:1](file://Backend/src/routes/user.routers.js#L1)
 - [auth.middleware.js:1-5](file://Backend/src/middlewares/auth.middleware.js#L1-L5)
 
@@ -451,7 +453,7 @@ Key dependency relationships:
 
 **Section sources**
 - [user.models.js:1](file://Backend/src/models/user.models.js#L1)
-- [user.controller.js:1-12](file://Backend/src/controllers/user.controller.js#L1-L12)
+- [user.controller.js:1-16](file://Backend/src/controllers/user.controller.js#L1-L16)
 - [user.routers.js:1](file://Backend/src/routes/user.routers.js#L1)
 
 ## Performance Considerations
@@ -462,7 +464,7 @@ Several performance optimizations are implemented in the user model and controll
 - **Selective Field Projection**: Sensitive fields like passwords are excluded from responses
 - **Conditional Lookups**: Student and faculty data are only retrieved when needed
 - **Batch Operations**: Bulk user registration reduces database round trips
-- **Pre-Save Hook Optimization**: Automatic user_id generation occurs only when needed
+- **Modernized Pre-Save Hook**: Automatic user_id generation occurs efficiently during save operations
 - **Hashing Optimization**: Password hashing with configurable salt rounds
 - **Unique Constraints**: Database-level unique constraints prevent duplicate user_ids
 
@@ -474,7 +476,7 @@ Several performance optimizations are implemented in the user model and controll
 - Verify that user_id matches the auto-generated format (role prefix + ID)
 - Ensure password field is included in login request
 - Check that user.isActive is set to true
-- **Updated** Note: user_id is auto-generated by pre-save hook if not provided
+- **Updated** Note: user_id is auto-generated by modernized pre-save hook if not provided
 
 **Registration Errors**
 - Confirm that password field is present in all user records
@@ -486,7 +488,7 @@ Several performance optimizations are implemented in the user model and controll
 - Verify that student_id or faculty_id relationships are properly established
 - Check that aggregation pipeline is correctly configured
 - Ensure that sensitive fields are properly excluded from projections
-- **Updated** user_id is auto-generated through pre-save hook system
+- **Updated** user_id is auto-generated through modernized pre-save hook system
 
 **Audit Trail Problems**
 - Confirm that created_by and updated_by fields are properly populated
@@ -494,31 +496,33 @@ Several performance optimizations are implemented in the user model and controll
 - Check that ObjectId references are valid
 
 **User ID Generation Issues**
-- **Updated** Ensure that user_id is auto-generated by pre-save hook if not provided
+- **Updated** Ensure that user_id is auto-generated by modernized pre-save hook if not provided
 - Verify that role prefix is correctly applied (first 3 characters of role name)
 - Check that student_id or faculty_id is properly formatted for relationship-based generation
 - Confirm that random component is generated for administrative roles
-- Monitor pre-save hook execution for proper user_id generation
+- Monitor modernized pre-save hook execution for proper user_id generation
 
-**Pre-Save Hook Problems**
-- Verify that pre-save hook executes before document save
+**Modernized Pre-Save Hook Problems**
+- Verify that modernized pre-save hook executes before document save
 - Check that role prefix generation works correctly
 - Ensure relationship-based user_id generation uses correct format
 - Validate random user_id generation for administrative roles
 - Confirm that user_id uniqueness is maintained through database constraints
+- **Updated** Review switch statement logic for different role types
 
 **Authentication Flow Issues**
 - **Updated** Verify that login requests use user_id instead of username
 - Check that JWT tokens contain user_id in payload
 - Ensure token verification uses correct secret keys
-- Validate that user_id format matches pre-save hook generation
+- Validate that user_id format matches modernized pre-save hook generation
+- **Updated** Review comparePassword method integration
 
 **Section sources**
-- [user.controller.js:415-519](file://Backend/src/controllers/user.controller.js#L415-L519)
-- [user.models.js:65-97](file://Backend/src/models/user.models.js#L65-L97)
+- [user.controller.js:463-567](file://Backend/src/controllers/user.controller.js#L463-L567)
+- [user.models.js:103-142](file://Backend/src/models/user.models.js#L103-L142)
 - [ApiError.js:1-80](file://Backend/src/utils/ApiError.js#L1-L80)
 - [ApiResponse.js:1-74](file://Backend/src/utils/ApiResponse.js#L1-L74)
 - [Token.js:1-71](file://Backend/src/utils/Token.js#L1-L71)
 
 ## Conclusion
-The User model provides a robust foundation for the timetable management system's authentication and authorization needs. The enhanced pre-save hook system eliminates the need for manual user_id generation while maintaining strong data integrity and security. The implementation includes comprehensive validation, role-based access control, audit trails, efficient data retrieval mechanisms, and intelligent user_id generation through automatic prefixing and relationship integration. The modular architecture supports future enhancements while maintaining clear separation of concerns and consistent user identification across all user types.
+The User model provides a robust foundation for the timetable management system's authentication and authorization needs. The modernized pre-save hook system eliminates the need for manual user_id generation while maintaining strong data integrity and security. The implementation includes comprehensive validation, role-based access control, audit trails, efficient data retrieval mechanisms, and intelligent user_id generation through automatic prefixing and relationship integration. The streamlined architecture supports future enhancements while maintaining clear separation of concerns and consistent user identification across all user types.

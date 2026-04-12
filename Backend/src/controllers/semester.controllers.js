@@ -6,32 +6,45 @@ import { paginateMongoose, parsePaginationParams } from "../utils/pagination.js"
 
 //* Add semester
 export const addSemester = asyncHandler(async (req, res) => {
-  const semester = req.body;
+  let semesters = req.body;
 
-  if (Array.isArray(semester) || semester.length === 0)
+  // Convert single object to array for consistent handling
+  if (!Array.isArray(semesters)) {
+    semesters = [semesters];
+  }
+
+  if (semesters.length === 0)
     throw new ApiError(400, "Semester data is required");
 
-  semester.forEach((sem) => {
+  // Validate all semesters
+  semesters.forEach((sem) => {
     if (!sem.semester_id)
       throw new ApiError(400, "Semester ID is required");
     if (!sem.semester_name)
       throw new ApiError(400, "Semester name is required");
   });
 
-  //filter  unipue data which is not stored in db
-  const uniqueSemester = semester.filter((sem) => {
-    return !Semester.findOne({ semester_name: sem.semester_name });
-  });
+  // Filter unique data which is not stored in db
+  const uniqueSemesters = [];
+  for (const sem of semesters) {
+    const existing = await Semester.findOne({ semester_name: sem.semester_name });
+    if (!existing) {
+      uniqueSemesters.push(sem);
+    }
+  }
 
-  if (uniqueSemester.length === 0)
+  if (uniqueSemesters.length === 0)
     throw new ApiError(400, "All semesters already exist in the database");
 
-  uniqueSemester.map((sem) => {
-    sem.semester_name % 2 === 0 ? (sem.isEven = true) : (sem.isEven = false);
-    return sem;
+  // Set isEven based on number extracted from semester_id (e.g., "SEM1" -> 1, "SEM2" -> 2)
+  uniqueSemesters.forEach((sem) => {
+    // Extract number from semester_id (handles formats like "SEM1", "S1", "1", etc.)
+    const match = sem.semester_id.match(/\d+/);
+    const semNumber = match ? parseInt(match[0]) : NaN;
+    sem.isEven = !isNaN(semNumber) ? semNumber % 2 === 0 : false;
   });
 
-  const createdSemester = await Semester.insertMany(uniqueSemester);
+  const createdSemester = await Semester.insertMany(uniqueSemesters);
 
   if (createdSemester.length === 0)
     throw new ApiError(400, "Failed to add semesters");

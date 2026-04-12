@@ -10,7 +10,7 @@ import Student from './pages/dashboard/Student';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Admin from './pages/dashboard/Admin';
-import { verifySession } from './store/auth/authSlice';
+import { verifySession, logout } from './store/auth/authSlice';
 
 //* Loading spinner component
 const LoadingSpinner = () => (
@@ -56,6 +56,17 @@ function App() {
   // Verify session on app load
   useEffect(() => {
     dispatch(verifySession());
+  }, [dispatch]);
+
+  //* Listen for session expiration
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      console.log('[App] Session expired');
+      dispatch(logout());
+    };
+
+    window.addEventListener('auth:sessionExpired', handleSessionExpired);
+    return () => window.removeEventListener('auth:sessionExpired', handleSessionExpired);
   }, [dispatch]);
 
   useEffect(() => {
