@@ -22,66 +22,66 @@ export const registerUser = asyncHandler(async (req, res) => {
   console.log("Body -->", req.body);
   console.log("Users -->", req.user);
 
-  // //! Handle single user registration
-  // if (!Array.isArray(users)) {
-  //   const { password, role, student_id, faculty_id, created_by } = users;
+  //! Handle single user registration
+  if (!Array.isArray(users)) {
+    const { password, role, student_id, faculty_id, created_by } = users;
 
-  //   //* Validate required fields
-  //   if (!password || !role || (!student_id && !faculty_id)) {
-  //     throw ApiError.badRequest(
-  //       "Password, role, and student_id or faculty_id are required",
-  //     );
-  //   }
+    //* Validate required fields
+    if (!password || !role || (!student_id && !faculty_id)) {
+      throw ApiError.badRequest(
+        "Password, role, and student_id or faculty_id are required",
+      );
+    }
 
-  //   //! Check for existing user
-  //   const existingUser = await User.findOne({
-  //     $or: [
-  //       { student_id: student_id || null },
-  //       { faculty_id: faculty_id || null },
-  //     ],
-  //   });
+    //! Check for existing user
+    const existingUser = await User.findOne({
+      $or: [
+        { student_id: student_id || null },
+        { faculty_id: faculty_id || null },
+      ],
+    });
 
-  //   if (existingUser) {
-  //     throw ApiError.conflict(
-  //       "User with this student_id or faculty_id already exists",
-  //     );
-  //   }
+    if (existingUser) {
+      throw ApiError.conflict(
+        "User with this student_id or faculty_id already exists",
+      );
+    }
 
-  //   //! Check for existing student or faculty
-  //   const existingStudent = await Student.findOne({
-  //     student_id: student_id || null,
-  //   });
-  //   const existingFaculty = await Faculty.findOne({
-  //     faculty_id: faculty_id || null,
-  //   });
+    //! Check for existing student or faculty
+    const existingStudent = await Student.findOne({
+      student_id: student_id || null,
+    });
+    const existingFaculty = await Faculty.findOne({
+      faculty_id: faculty_id || null,
+    });
 
-  //   //! Check if student or faculty exists
-  //   if (!existingStudent && !existingFaculty) {
-  //     throw ApiError.badRequest(
-  //       "Student or Faculty with this student_id or faculty_id does not exist",
-  //     );
-  //   }
+    //! Check if student or faculty exists
+    if (!existingStudent && !existingFaculty) {
+      throw ApiError.badRequest(
+        "Student or Faculty with this student_id or faculty_id does not exist",
+      );
+    }
 
-  //   const hashedPassword = await User.hashPassword(password);
+    const hashedPassword = await User.hashPassword(password);
 
-  //   //! Create user
-  //   const newUser = await User.create({
-  //     password: hashedPassword,
-  //     role: role.toLowerCase(),
-  //     student_id: student_id || null,
-  //     faculty_id: faculty_id || null,
-  //     created_by: created_by || null,
-  //   });
+    //! Create user
+    const newUser = await User.create({
+      password: hashedPassword,
+      role: role.toLowerCase(),
+      student_id: student_id || null,
+      faculty_id: faculty_id || null,
+      created_by: created_by || null,
+    });
 
-  //   const createdUser = await User.findById(newUser._id).select(
-  //     "-password -refreshToken",
-  //   );
+    const createdUser = await User.findById(newUser._id).select(
+      "-password -refreshToken",
+    );
 
-  //   return ApiResponse.created(
-  //     createdUser,
-  //     "User registered successfully",
-  //   ).send(res);
-  // }
+    return ApiResponse.created(
+      createdUser,
+      "User registered successfully",
+    ).send(res);
+  }
 
   //! Handle multiple user registration (bulk)
   if (users.length === 0) {
@@ -89,14 +89,14 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
 
   //* Validate each user
-  users.forEach((user) => {
-    if (!user.password) {
+  users.forEach((u) => {
+    if (!u.password) {
       throw ApiError.badRequest("Password is required");
     }
-    if (!user.role) {
+    if (!u.role) {
       throw ApiError.badRequest("Role is required");
     }
-    if (!user.student_id && !user.faculty_id) {
+    if (!u.student_id && !u.faculty_id) {
       throw ApiError.badRequest("Student ID or Faculty ID is required");
     }
   });
@@ -123,11 +123,11 @@ export const registerUser = asyncHandler(async (req, res) => {
       .map((u) => u.faculty_id.toString()),
   );
 
-  const uniqueUserRecords = users.filter((user) => {
-    if (user.student_id && existingStudentIds.has(user.student_id.toString())) {
+  const uniqueUserRecords = users.filter((u) => {
+    if (u.student_id && existingStudentIds.has(u.student_id.toString())) {
       return false;
     }
-    if (user.faculty_id && existingFacultyIds.has(user.faculty_id.toString())) {
+    if (u.faculty_id && existingFacultyIds.has(u.faculty_id.toString())) {
       return false;
     }
     return true;
@@ -142,34 +142,46 @@ export const registerUser = asyncHandler(async (req, res) => {
   //* Process each user: generate user_id and hash password
   const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
   const processedUsers = await Promise.all(
-    uniqueUserRecords.map(async (user) => {
-      const prefix = user.role ? user.role.substring(0, 3).toUpperCase() : "USR";
+    uniqueUserRecords.map(async (u) => {
+      const prefix = u.role ? u.role.substring(0, 3).toUpperCase() : "USR";
 
       // * Generate user_id based on role
-      switch (user.role) {
+
+      switch (u.role) {
         case "admin":
+          u.user_id = u.student_id ? `${prefix}${u.student_id}` : u.faculty_id ? `${prefix}${u.faculty_id}` : null;
+          break;
+
         case "coordinator":
-          user.user_id = user.student_id ? `${prefix}${user.student_id}` : null;
+          u.user_id = u.student_id ? `${prefix}${u.student_id}` : u.faculty_id ? `${prefix}${u.faculty_id}` : null;
           break;
+
         case "faculty":
-          user.user_id = user.faculty_id ? `${prefix}${user.faculty_id}` : null;
+          u.user_id = u.student_id ? `${prefix}${u.student_id}` : u.faculty_id ? `${prefix}${u.faculty_id}` : null;
           break;
+
         case "student":
-          user.user_id = user.student_id ? `${prefix}${user.student_id}` : null;
+          u.user_id = u.student_id ? `${prefix}${u.student_id}` : u.faculty_id ? `${prefix}${u.faculty_id}` : null;
           break;
+
         case "hod":
-          user.user_id = user.faculty_id ? `${prefix}${user.faculty_id}` : null;
+          u.user_id = u.student_id ? `${prefix}${u.student_id}` : u.faculty_id ? `${prefix}${u.faculty_id}` : null;
+          console.log("HOD User ID -->", u.user_id);
           break;
+
         default:
           const timestamp = Date.now().toString(36).toUpperCase();
           const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-          user.user_id = `${prefix}${timestamp}${random}`;
+          u.user_id = `${prefix}${timestamp}${random}`;
       }
 
-      // * Hash password
-      user.password = await bcrypt.hash(user.password, saltRounds);
 
-      return user;
+      // * Hash password
+      u.password = await bcrypt.hash(u.password, saltRounds);
+
+      // * created by
+      u.created_by = `${req.user.user_name} - ${req.user.role}` || null;
+      return u;
     }),
   );
 
