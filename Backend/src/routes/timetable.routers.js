@@ -6,10 +6,12 @@ import {
   getTimetableById,
   updateTimetable,
 } from "../controllers/timetable.controllers.js";
+import { generateTimetable } from "../controllers/timetableGeneration.controllers.js";
 
 const router = Router();
 
 router.route("/").post(addTimetables).get(getAllTimetables);
+router.route("/generate").post(generateTimetable);
 
 router
   .route("/:id")
@@ -18,3 +20,4 @@ router
   .delete(deleteTimetable);
 
 export default router;
+

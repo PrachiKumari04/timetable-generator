@@ -145,7 +145,7 @@ const TimetableHeader = ({ collegeInfo, onPrint, onExport, onRefresh }) => (
 );
 
 // Action Buttons Component
-const ActionButtons = ({ onPrint, onExport, onRefresh, viewMode, setViewMode, isRefreshing, isExporting }) => (
+const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, setViewMode, isRefreshing, isExporting }) => (
   <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface border-b border-border">
     <div className="flex items-center gap-2">
       <button
@@ -171,6 +171,15 @@ const ActionButtons = ({ onPrint, onExport, onRefresh, viewMode, setViewMode, is
     </div>
     
     <div className="flex items-center gap-2">
+      <button
+        onClick={onGenerate}
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+        </svg>
+        Generate Timetable
+      </button>
       <button
         onClick={onRefresh}
         disabled={isRefreshing}
@@ -475,6 +484,11 @@ const TimeTable = ({ onClose }) => {
   const [timetableData, setTimetableData] = useState(SAMPLE_TIMETABLE_DATA);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [genSemester, setGenSemester] = useState("SEM2");
+  const [genAcademicYear, setGenAcademicYear] = useState("2025-2026");
+  const [genBy, setGenBy] = useState("ADMIN");
+  const [isGenerating, setIsGenerating] = useState(false);
   const timetableRef = useRef(null);
   
   //* College information (can be fetched from API)
@@ -667,23 +681,71 @@ const TimeTable = ({ onClose }) => {
     setIsRefreshing(true);
     try {
       //* Try to fetch fresh data from API
-      const response = await apiClient.get('/timetable/current');
-      if (response.data?.data) {
-        setTimetableData(response.data.data);
+      const response = await apiClient.get('/timetables');
+      if (response.data?.data?.result?.length > 0) {
+        // Map backend timetable format to frontend grid format
+        const lastTimetable = response.data.data.result[response.data.data.result.length - 1];
+        const formattedData = {
+          monday: new Array(10).fill(null),
+          tuesday: new Array(10).fill(null),
+          wednesday: new Array(10).fill(null),
+          thursday: new Array(10).fill(null),
+          friday: new Array(10).fill(null),
+          saturday: new Array(10).fill(null)
+        };
+
+        const entries = lastTimetable.entries || [];
+        entries.forEach(entry => {
+          const day = entry.day_of_week.toLowerCase();
+          // Find index matching the slot ID (e.g. MON_1 -> 0, etc.)
+          const slotNum = parseInt(entry.slot_id.split('_')[1]) || 1;
+          // Compensate for short break after slot 2, lunch after slot 4, short break after slot 6
+          let index = slotNum - 1;
+          if (slotNum > 6) index += 3;
+          else if (slotNum > 4) index += 2;
+          else if (slotNum > 2) index += 1;
+
+          if (formattedData[day]) {
+            formattedData[day][index] = {
+              subject: entry.course_id,
+              faculty: entry.faculty_id,
+              room: entry.room_no
+            };
+          }
+        });
+        setTimetableData(formattedData);
       } else {
-        //* If API returns no data, keep sample data but show message
         console.log('No timetable data from API, using sample data');
       }
     } catch (error) {
       console.error('Failed to refresh timetable:', error);
-      // Don't show error to user, just keep the sample data
     } finally {
       setIsRefreshing(false);
     }
   }, []);
 
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    try {
+      await apiClient.post('/timetables/generate', {
+        semester_id: genSemester,
+        academicYear: genAcademicYear,
+        generatedBy: genBy
+      });
+      alert('Timetable generated successfully!');
+      setShowGenerateModal(false);
+      handleRefresh();
+    } catch (error) {
+      console.error('Failed to generate timetable:', error);
+      alert(error.response?.data?.message || 'Failed to generate timetable.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background relative">
       {/* Header */}
       <TimetableHeader collegeInfo={collegeInfo} />
       
@@ -692,6 +754,7 @@ const TimeTable = ({ onClose }) => {
         onPrint={handlePrint}
         onExport={handleExport}
         onRefresh={handleRefresh}
+        onGenerate={() => setShowGenerateModal(true)}
         viewMode={viewMode}
         setViewMode={setViewMode}
         isRefreshing={isRefreshing}
@@ -714,8 +777,66 @@ const TimeTable = ({ onClose }) => {
       
       {/* Legend */}
       <Legend />
+
+      {/* Generation Modal */}
+      {showGenerateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-surface border border-border p-6 rounded-lg shadow-xl w-96 text-text">
+            <h3 className="text-lg font-bold mb-4">Generate Timetable</h3>
+            <form onSubmit={handleGenerate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Semester ID</label>
+                <input
+                  type="text"
+                  value={genSemester}
+                  onChange={(e) => setGenSemester(e.target.value)}
+                  className="w-full px-3 py-2 border border-border bg-background rounded-md text-text"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Academic Year</label>
+                <input
+                  type="text"
+                  value={genAcademicYear}
+                  onChange={(e) => setGenAcademicYear(e.target.value)}
+                  className="w-full px-3 py-2 border border-border bg-background rounded-md text-text"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Generated By</label>
+                <input
+                  type="text"
+                  value={genBy}
+                  onChange={(e) => setGenBy(e.target.value)}
+                  className="w-full px-3 py-2 border border-border bg-background rounded-md text-text"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowGenerateModal(false)}
+                  className="px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface hover:bg-surface-hover"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGenerating}
+                  className="px-4 py-2 text-sm font-medium rounded-md bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                >
+                  {isGenerating ? "Generating..." : "Generate"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default TimeTable;
+
