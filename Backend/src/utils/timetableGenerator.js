@@ -112,7 +112,7 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
         const hasSlotOverlap = assign.slots.some(as => slots.some(s => s.slot_id === as.slot_id));
         if (hasSlotOverlap) {
           // Conflict 1: Same Room
-          if (assign.room.room_no === room.room_no) return true;
+          if (assign.room.room_no === room.room_no && assign.room.block === room.block) return true;
           // Conflict 2: Same Faculty
           if (assign.session.faculty_id === session.faculty_id) return true;
           // Conflict 3: Same Division
@@ -162,7 +162,8 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
       isLab: assign.session.type === "LAB",
       status: "scheduled",
       slot_id: slot.slot_id,
-      room_no: assign.room.room_no
+      room_no: assign.room.room_no,
+      block: assign.room.block
     }));
   });
 };

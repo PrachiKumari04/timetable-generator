@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import TimeTable from "../../components/deshboard/TimeTable";
 
 export default function Faculty() {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -35,9 +36,14 @@ export default function Faculty() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-text mb-4">Faculty Dashboard</h1>
-      <p className="text-text/70">Welcome, {userData.user_name || userData.user_id}!</p>
+    <div className="p-8 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-text mb-2">Faculty Dashboard</h1>
+        <p className="text-text/70">Welcome, {userData.user_name || userData.user_id}!</p>
+      </div>
+      <div className="border border-border rounded-lg bg-surface overflow-hidden shadow-sm">
+        <TimeTable />
+      </div>
     </div>
   );
 }

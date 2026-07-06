@@ -708,6 +708,13 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
           },
         },
         email: "$user_data.email",
+        class_group: {
+          $cond: {
+            if: { $ne: ["$student_id", null] },
+            then: "$user_data.class",
+            else: null,
+          }
+        },
       },
     },
   ]);

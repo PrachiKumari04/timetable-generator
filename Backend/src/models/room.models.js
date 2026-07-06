@@ -5,7 +5,6 @@ const roomSchema = new Schema(
     room_no: {
       type: String,
       required: true,
-      unique: true,
       uppercase: true,
       trim: true,
     },
@@ -27,5 +26,7 @@ const roomSchema = new Schema(
   },
   { timestamps: true },
 );
+
+roomSchema.index({ room_no: 1, block: 1 }, { unique: true });
 
 export const Room = model("Room", roomSchema);

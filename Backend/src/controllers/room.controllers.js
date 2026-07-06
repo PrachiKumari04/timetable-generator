@@ -18,32 +18,44 @@ export const addRoom = asyncHandler(async (req, res) => {
   });
 
   //find unique records
-  const roomNos = room.map((r) => r.room_no);
-  const uniqueRoomNos = [...new Set(roomNos)];
+  const roomKeys = room.map((r) => `${r.room_no.toString().trim().toUpperCase()}@${r.block.toString().trim().toUpperCase()}`);
+  const uniqueRoomKeys = [...new Set(roomKeys)];
 
-  if (uniqueRoomNos.length !== roomNos.length) {
-    throw new ApiError(400, "Duplicate room numbers found in the input");
+  if (uniqueRoomKeys.length !== room.length) {
+    throw new ApiError(400, "Duplicate room numbers in the same block found in the input");
   }
 
   //! Check if any room already exists in the database
+  const queryConditions = room.map((r) => ({
+    room_no: r.room_no.toString().trim().toUpperCase(),
+    block: r.block.toString().trim().toUpperCase(),
+  }));
+
   const existingRooms = await Room.find({
-    room_no: { $in: uniqueRoomNos },
+    $or: queryConditions,
   });
 
-  if (existingRooms.length > 0) {
-    const existingRoomNos = existingRooms.map((r) => r.room_no);
-    throw new ApiError(
-      400,
-      `Rooms already exist: ${existingRoomNos.join(", ")}`,
-    );
+  const existingKeys = new Set(
+    existingRooms.map((r) => `${r.room_no.toString().trim().toUpperCase()}@${r.block.toString().trim().toUpperCase()}`)
+  );
+
+  const newRooms = room.filter((r) => {
+    const key = `${r.room_no.toString().trim().toUpperCase()}@${r.block.toString().trim().toUpperCase()}`;
+    return !existingKeys.has(key);
+  });
+
+  if (newRooms.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "All rooms already exist"));
   }
 
   //* Insert rooms into the database
-  const createdRooms = await Room.insertMany(room);
+  const createdRooms = await Room.insertMany(newRooms);
 
   res
     .status(201)
-    .json(new ApiResponse(201, createdRooms, "Rooms added successfully"));
+    .json(new ApiResponse(201, createdRooms, `${createdRooms.length} new rooms added successfully`));
 });
 
 //! Get all rooms with pagination and filtering

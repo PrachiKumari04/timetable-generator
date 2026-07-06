@@ -145,7 +145,7 @@ const TimetableHeader = ({ collegeInfo, onPrint, onExport, onRefresh }) => (
 );
 
 // Action Buttons Component
-const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, setViewMode, isRefreshing, isExporting }) => (
+const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, setViewMode, isRefreshing, isExporting, isAdmin, selectedDivision, setSelectedDivision, role }) => (
   <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface border-b border-border">
     <div className="flex items-center gap-2">
       <button
@@ -168,18 +168,39 @@ const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, set
       >
         Day View
       </button>
+
+      {role !== "student" && (
+        <div className="flex items-center gap-2 ml-4">
+          <span className="text-sm font-medium text-text/80">Division:</span>
+          <select
+            value={selectedDivision}
+            onChange={(e) => setSelectedDivision(e.target.value)}
+            className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-sm focus:outline-none focus:border-primary"
+          >
+            <option value="D001">A</option>
+            <option value="D002">B</option>
+            <option value="D003">C</option>
+            <option value="D004">D</option>
+            <option value="D005">E</option>
+            <option value="D006">F</option>
+            <option value="D007">G</option>
+          </select>
+        </div>
+      )}
     </div>
     
     <div className="flex items-center gap-2">
-      <button
-        onClick={onGenerate}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-purple-600 hover:bg-purple-700 text-white transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-        </svg>
-        Generate Timetable
-      </button>
+      {isAdmin && (
+        <button
+          onClick={onGenerate}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+          Generate Timetable
+        </button>
+      )}
       <button
         onClick={onRefresh}
         disabled={isRefreshing}
@@ -479,9 +500,14 @@ const Legend = () => (
 
 // Main TimeTable Component
 const TimeTable = ({ onClose }) => {
+  const { userData } = useSelector((state) => state.auth || {});
+  const isAdmin = userData?.role === "admin";
+
   const [viewMode, setViewMode] = useState("week");
   const [selectedDay, setSelectedDay] = useState("monday");
   const [timetableData, setTimetableData] = useState(SAMPLE_TIMETABLE_DATA);
+  const [rawEntries, setRawEntries] = useState([]);
+  const [selectedDivision, setSelectedDivision] = useState("D001");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -490,14 +516,50 @@ const TimeTable = ({ onClose }) => {
   const [genBy, setGenBy] = useState("ADMIN");
   const [isGenerating, setIsGenerating] = useState(false);
   const timetableRef = useRef(null);
+
+  // Map student class to division ID
+  const getDivisionIdFromClass = (classStr) => {
+    if (!classStr) return "D001";
+    const parts = classStr.trim().split(/\s+/);
+    const lastPart = parts[parts.length - 1].toUpperCase();
+    const mapping = {
+      "A": "D001",
+      "B": "D002",
+      "C": "D003",
+      "D": "D004",
+      "E": "D005",
+      "F": "D006",
+      "G": "D007"
+    };
+    return mapping[lastPart] || "D001";
+  };
+
+  const activeDivisionId = userData?.role === "student"
+    ? getDivisionIdFromClass(userData?.class_group)
+    : selectedDivision;
   
+  const getDivisionName = (id) => {
+    const mapping = {
+      "D001": "Div A",
+      "D002": "Div B",
+      "D003": "Div C",
+      "D004": "Div D",
+      "D005": "Div E",
+      "D006": "Div F",
+      "D007": "Div G"
+    };
+    return mapping[id] || "Div A";
+  };
+
   //* College information (can be fetched from API)
   const collegeInfo = {
     name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
     batch: "BATCH 2025 ( A. Y. - 2025-26)",
     semester: "SEM - II",
     effectiveDate: "5 January 2026",
-    classInfo: "MCA - II Div D (Data Science & Cyber Security )",
+    classInfo: userData?.role === "student" && userData?.class_group 
+      ? userData.class_group 
+      : `MCA - II ${getDivisionName(activeDivisionId)}`,
     classTeacher: "Prof. Harshit Kumar",
     roomNo: "N 715",
   };
@@ -683,37 +745,9 @@ const TimeTable = ({ onClose }) => {
       //* Try to fetch fresh data from API
       const response = await apiClient.get('/timetables');
       if (response.data?.data?.result?.length > 0) {
-        // Map backend timetable format to frontend grid format
         const lastTimetable = response.data.data.result[response.data.data.result.length - 1];
-        const formattedData = {
-          monday: new Array(10).fill(null),
-          tuesday: new Array(10).fill(null),
-          wednesday: new Array(10).fill(null),
-          thursday: new Array(10).fill(null),
-          friday: new Array(10).fill(null),
-          saturday: new Array(10).fill(null)
-        };
-
         const entries = lastTimetable.entries || [];
-        entries.forEach(entry => {
-          const day = entry.day_of_week.toLowerCase();
-          // Find index matching the slot ID (e.g. MON_1 -> 0, etc.)
-          const slotNum = parseInt(entry.slot_id.split('_')[1]) || 1;
-          // Compensate for short break after slot 2, lunch after slot 4, short break after slot 6
-          let index = slotNum - 1;
-          if (slotNum > 6) index += 3;
-          else if (slotNum > 4) index += 2;
-          else if (slotNum > 2) index += 1;
-
-          if (formattedData[day]) {
-            formattedData[day][index] = {
-              subject: entry.course_id,
-              faculty: entry.faculty_id,
-              room: entry.room_no
-            };
-          }
-        });
-        setTimetableData(formattedData);
+        setRawEntries(entries);
       } else {
         console.log('No timetable data from API, using sample data');
       }
@@ -723,6 +757,42 @@ const TimeTable = ({ onClose }) => {
       setIsRefreshing(false);
     }
   }, []);
+
+  React.useEffect(() => {
+    if (rawEntries.length === 0) return;
+
+    const formattedData = {
+      monday: new Array(10).fill(null),
+      tuesday: new Array(10).fill(null),
+      wednesday: new Array(10).fill(null),
+      thursday: new Array(10).fill(null),
+      friday: new Array(10).fill(null),
+      saturday: new Array(10).fill(null)
+    };
+
+    const filtered = rawEntries.filter(entry => entry.class_group === activeDivisionId);
+
+    filtered.forEach(entry => {
+      const day = entry.day_of_week.toLowerCase();
+      // Find index matching the slot ID (e.g. MON_1 -> 0, etc.)
+      const slotNum = parseInt(entry.slot_id.split('_')[1]) || 1;
+      // Compensate for short break after slot 2, lunch after slot 4, short break after slot 6
+      let index = slotNum - 1;
+      if (slotNum > 6) index += 3;
+      else if (slotNum > 4) index += 2;
+      else if (slotNum > 2) index += 1;
+
+      if (formattedData[day]) {
+        formattedData[day][index] = {
+          subject: entry.course_id,
+          faculty: entry.faculty_id,
+          room: entry.block ? `${entry.room_no} (${entry.block})` : entry.room_no
+        };
+      }
+    });
+
+    setTimetableData(formattedData);
+  }, [rawEntries, activeDivisionId]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -759,6 +829,10 @@ const TimeTable = ({ onClose }) => {
         setViewMode={setViewMode}
         isRefreshing={isRefreshing}
         isExporting={isExporting}
+        isAdmin={isAdmin}
+        selectedDivision={selectedDivision}
+        setSelectedDivision={setSelectedDivision}
+        role={userData?.role}
       />
       
       {/* Timetable Content */}

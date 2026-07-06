@@ -28,7 +28,6 @@ const facultySchema = new Schema(
     },
     phone: {
       type: String,
-      required: [true, "Phone number is required"],
       trim: true,
     },
     specialization: {

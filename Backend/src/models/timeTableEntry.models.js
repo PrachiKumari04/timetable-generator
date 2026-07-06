@@ -55,6 +55,11 @@ const timeTableEntrySchema = new Schema(
       uppercase: true,
       trim: true,
     },
+    block: {
+      type: String,
+      uppercase: true,
+      trim: true,
+    },
   },
   { timestamps: true },
 );
