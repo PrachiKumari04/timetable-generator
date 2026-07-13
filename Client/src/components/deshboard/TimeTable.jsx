@@ -122,7 +122,20 @@ const getSubjectColor = (subject) => {
       return color;
     }
   }
-  return SUBJECT_COLORS.default;
+  
+  // Consistent color generation using hash of subject name
+  let hash = 0;
+  for (let i = 0; i < subject.length; i++) {
+    hash = subject.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // Choose beautiful, professional dark-toned HSL values
+  const h = Math.abs(hash) % 360;
+  return {
+    bg: `hsl(${h}, 55%, 35%)`,
+    text: "text-white",
+    isCustomHSL: true
+  };
 };
 
 // Timetable Header Component
@@ -256,6 +269,7 @@ const isLabSession = (subject) => {
 };
 
 //* Process timetable data to handle lab sessions spanning 2 consecutive periods
+//* Process timetable data to handle lab sessions spanning 2 consecutive periods
 const processTimetableData = (timetableData, timeSlots) => {
   const processed = {};
   
@@ -264,10 +278,10 @@ const processTimetableData = (timetableData, timeSlots) => {
     const dayData = timetableData[dayKey] || [];
     processed[dayKey] = [];
     
-    let skipNext = false;
+    const skipIndices = new Set();
+    
     dayData.forEach((cell, index) => {
-      if (skipNext) {
-        skipNext = false;
+      if (skipIndices.has(index)) {
         processed[dayKey].push({ isContinued: true, parentIndex: index - 1 });
         return;
       }
@@ -280,9 +294,23 @@ const processTimetableData = (timetableData, timeSlots) => {
       
       //! Check if this is a lab session
       if (cell && isLabSession(cell.subject)) {
-        //* Mark this as a lab that spans 2 periods
-        processed[dayKey].push({ ...cell, isLab: true, spansTwoPeriods: true });
-        skipNext = true;
+        // Look ahead for the second slot of this lab
+        let nextClassIdx = index + 1;
+        while (nextClassIdx < dayData.length && timeSlots[nextClassIdx]?.isBreak) {
+          nextClassIdx++;
+        }
+        
+        const nextCell = dayData[nextClassIdx];
+        if (nextCell && nextCell.subject === cell.subject) {
+          // Mark all intermediate break slots and the next class slot as continued
+          for (let i = index + 1; i <= nextClassIdx; i++) {
+            skipIndices.add(i);
+          }
+          const rowSpan = nextClassIdx - index + 1;
+          processed[dayKey].push({ ...cell, isLab: true, spansTwoPeriods: true, customRowSpan: rowSpan });
+        } else {
+          processed[dayKey].push(cell);
+        }
       } else {
         processed[dayKey].push(cell);
       }
@@ -322,12 +350,23 @@ const WeekView = ({ timetableData, timeSlots }) => {
                 {!slot.isBreak && <div className="text-text/60 mt-1">{slot.time}</div>}
               </td>
               {slot.isBreak ? (
-                <td
-                  colSpan={6}
-                  className="border border-border bg-yellow-100 dark:bg-yellow-900/30 p-2 text-center text-sm font-bold text-yellow-800 dark:text-yellow-200"
-                >
-                  {slot.label}
-                </td>
+                DAYS.map((day) => {
+                  const dayKey = day.toLowerCase();
+                  const cellData = processedData[dayKey]?.[slotIndex];
+                  
+                  if (cellData?.isContinued) {
+                    return null;
+                  }
+                  
+                  return (
+                    <td
+                      key={`${day}-${slotIndex}`}
+                      className="border border-border bg-yellow-100 dark:bg-yellow-900/30 p-2 text-center text-xs font-bold text-yellow-800 dark:text-yellow-200"
+                    >
+                      {slot.label}
+                    </td>
+                  );
+                })
               ) : (
                 DAYS.map((day) => {
                   const dayKey = day.toLowerCase();
@@ -339,18 +378,21 @@ const WeekView = ({ timetableData, timeSlots }) => {
                   }
                   
                   const color = getSubjectColor(cellData?.subject);
-                  const rowSpan = cellData?.spansTwoPeriods ? 2 : 1;
+                  const rowSpan = cellData?.customRowSpan || 1;
                   
                   return (
                     <td
                       key={`${day}-${slotIndex}`}
                       rowSpan={rowSpan}
                       className={`border border-border p-1 text-xs ${
-                        cellData ? color.bg : "bg-transparent"
+                        cellData ? (color.isCustomHSL ? "" : color.bg) : "bg-transparent"
                       } ${cellData ? color.text : "text-text"} ${
                         cellData?.spansTwoPeriods ? "align-middle" : ""
                       }`}
-                      style={{ minHeight: cellData?.spansTwoPeriods ? '120px' : '60px' }}
+                      style={{ 
+                        minHeight: cellData?.spansTwoPeriods ? '120px' : '60px',
+                        backgroundColor: cellData && color.isCustomHSL ? color.bg : undefined
+                      }}
                     >
                       {cellData && !cellData.isContinued && (
                         <div className="p-1">
@@ -433,10 +475,13 @@ const DayView = ({ timetableData, timeSlots, selectedDay, setSelectedDay }) => {
             <div
               key={slotIndex}
               className={`flex items-center gap-4 p-3 rounded-md border border-border ${
-                cellData ? color.bg : "bg-surface"
+                cellData ? (color.isCustomHSL ? "" : color.bg) : "bg-surface"
               } ${cellData ? color.text : "text-text"} ${
                 isLab ? "min-h-[100px]" : ""
               }`}
+              style={{
+                backgroundColor: cellData && color.isCustomHSL ? color.bg : undefined
+              }}
             >
               <div className="w-40 shrink-0 text-sm font-semibold">
                 {timeDisplay}
@@ -508,10 +553,12 @@ const TimeTable = ({ onClose }) => {
   const [timetableData, setTimetableData] = useState(SAMPLE_TIMETABLE_DATA);
   const [rawEntries, setRawEntries] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("D001");
+  const [courses, setCourses] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [genSemester, setGenSemester] = useState("SEM2");
+  const [genSemester, setGenSemester] = useState("S002");
   const [genAcademicYear, setGenAcademicYear] = useState("2025-2026");
   const [genBy, setGenBy] = useState("ADMIN");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -551,6 +598,17 @@ const TimeTable = ({ onClose }) => {
     return mapping[id] || "Div A";
   };
 
+  const DIVISION_DETAILS = {
+    "D001": { teacher: "Prof. Vinod Charawande", room: "N 709" },
+    "D002": { teacher: "Dr. Rahul Satyakam", room: "N 710" },
+    "D003": { teacher: "Dr. Pradnya Mulye", room: "S 703" },
+    "D004": { teacher: "Prof. Harshit Kumar", room: "N 715" },
+  };
+
+  const getDivisionDetails = (id) => {
+    return DIVISION_DETAILS[id] || { teacher: "Prof. Harshit Kumar", room: "N 715" };
+  };
+
   //* College information (can be fetched from API)
   const collegeInfo = {
     name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
@@ -560,8 +618,8 @@ const TimeTable = ({ onClose }) => {
     classInfo: userData?.role === "student" && userData?.class_group 
       ? userData.class_group 
       : `MCA - II ${getDivisionName(activeDivisionId)}`,
-    classTeacher: "Prof. Harshit Kumar",
-    roomNo: "N 715",
+    classTeacher: getDivisionDetails(activeDivisionId).teacher,
+    roomNo: getDivisionDetails(activeDivisionId).room,
   };
 
   //! Handle Print functionality
@@ -738,18 +796,27 @@ const TimeTable = ({ onClose }) => {
     }
   }, [collegeInfo, timetableData]);
 
-  //! Handle Refresh functionality
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      //* Try to fetch fresh data from API
-      const response = await apiClient.get('/timetables');
-      if (response.data?.data?.result?.length > 0) {
-        const lastTimetable = response.data.data.result[response.data.data.result.length - 1];
+      //* Try to fetch fresh data from API (bypass cache)
+      const response = await apiClient.get('/timetables', { cache: false });
+      if (response.data?.data?.data?.length > 0) {
+        const lastTimetable = response.data.data.data[response.data.data.data.length - 1];
         const entries = lastTimetable.entries || [];
         setRawEntries(entries);
       } else {
         console.log('No timetable data from API, using sample data');
+      }
+
+      // Fetch all courses and faculties to map names
+      const coursesRes = await apiClient.get('/courses', { params: { limit: 1000 }, cache: false });
+      const facultiesRes = await apiClient.get('/faculties', { params: { limit: 1000 }, cache: false });
+      if (coursesRes.data?.data?.data) {
+        setCourses(coursesRes.data.data.data);
+      }
+      if (facultiesRes.data?.data?.data) {
+        setFaculties(facultiesRes.data.data.data);
       }
     } catch (error) {
       console.error('Failed to refresh timetable:', error);
@@ -759,7 +826,22 @@ const TimeTable = ({ onClose }) => {
   }, []);
 
   React.useEffect(() => {
+    handleRefresh();
+  }, [handleRefresh]);
+
+  React.useEffect(() => {
     if (rawEntries.length === 0) return;
+
+    // Create lookup maps for actual names
+    const courseMap = {};
+    courses.forEach(c => {
+      courseMap[c.course_id] = c.course_name;
+    });
+
+    const facultyMap = {};
+    faculties.forEach(f => {
+      facultyMap[f.faculty_id] = f.faculty_name;
+    });
 
     const formattedData = {
       monday: new Array(10).fill(null),
@@ -774,35 +856,44 @@ const TimeTable = ({ onClose }) => {
 
     filtered.forEach(entry => {
       const day = entry.day_of_week.toLowerCase();
-      // Find index matching the slot ID (e.g. MON_1 -> 0, etc.)
-      const slotNum = parseInt(entry.slot_id.split('_')[1]) || 1;
-      // Compensate for short break after slot 2, lunch after slot 4, short break after slot 6
-      let index = slotNum - 1;
-      if (slotNum > 6) index += 3;
-      else if (slotNum > 4) index += 2;
-      else if (slotNum > 2) index += 1;
+      
+      // Parse database slot ID (e.g. TS001 -> 1, TS008 -> 8 -> slotNum 1)
+      const num = parseInt(entry.slot_id.replace("TS", "")) || 1;
+      const slotNum = (num - 1) % 7 + 1; // 1 to 7
+
+      // Map daily slot number to the 10-period React layout (including breaks)
+      let index = 0;
+      if (slotNum === 1) index = 0;
+      else if (slotNum === 2) index = 1;
+      else if (slotNum === 3) index = 3;
+      else if (slotNum === 4) index = 5; // Lunch break
+      else if (slotNum === 5) index = 6;
+      else if (slotNum === 6) index = 7;
+      else if (slotNum === 7) index = 9;
 
       if (formattedData[day]) {
         formattedData[day][index] = {
-          subject: entry.course_id,
-          faculty: entry.faculty_id,
-          room: entry.block ? `${entry.room_no} (${entry.block})` : entry.room_no
+          subject: courseMap[entry.course_id] || entry.course_id,
+          faculty: facultyMap[entry.faculty_id] || entry.faculty_id,
+          room: entry.block ? `${entry.room_no} (${entry.block})` : entry.room_no,
+          isLab: entry.isLab
         };
       }
     });
 
     setTimetableData(formattedData);
-  }, [rawEntries, activeDivisionId]);
+  }, [rawEntries, activeDivisionId, courses, faculties]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
     setIsGenerating(true);
     try {
+      // Invalidate cache on generate
       await apiClient.post('/timetables/generate', {
         semester_id: genSemester,
         academicYear: genAcademicYear,
         generatedBy: genBy
-      });
+      }, { invalidateCache: "timetables" });
       alert('Timetable generated successfully!');
       setShowGenerateModal(false);
       handleRefresh();

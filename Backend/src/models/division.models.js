@@ -20,6 +20,16 @@ const divisionSchema = new Schema({
     type: String,
     trim: true,
   },
+  classTeacher_id: {
+    type: String,
+    uppercase: true,
+    trim: true,
+  },
+  specialization_id: {
+    type: String,
+    uppercase: true,
+    trim: true,
+  }
 
 },{timestamps:true});
 

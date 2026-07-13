@@ -39,19 +39,11 @@ export const generateTimetable = asyncHandler(async (req, res) => {
   }
 
   // 3. Clear existing draft or published timetables and their entries for the same semester and academic year
-  const existingTimetables = await Timetable.find({ semester_id, academicYear });
-  const existingTimetableIds = existingTimetables.map(t => t.timetable_id);
-  
-  // Delete related entries
-  if (existingTimetableIds.length > 0) {
-    // Delete entries that belong to class groups within this semester/academic year
-    const classGroups = [...new Set(allocations.map(a => a.division_id))];
-    await TimeTableEntry.deleteMany({
-      class_group: { $in: classGroups }
-    });
-    // Delete timetables
-    await Timetable.deleteMany({ semester_id, academicYear });
-  }
+  const classGroups = [...new Set(allocations.map(a => a.division_id))];
+  await TimeTableEntry.deleteMany({
+    class_group: { $in: classGroups }
+  });
+  await Timetable.deleteMany({ semester_id, academicYear });
 
   // 4. Save the new TimeTableEntry documents
   const savedEntries = await TimeTableEntry.insertMany(generatedEntries);

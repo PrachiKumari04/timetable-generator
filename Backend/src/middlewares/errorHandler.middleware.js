@@ -27,7 +27,7 @@ const errorHandler = (err, req, res, next) => {
       error = ApiError.badRequest(`Invalid ${error.path}: ${error.value}`);
     } else if (error.code === 11000) {
       //* MongoDB duplicate key error
-      const field = Object.keys(error.keyValue)[0];
+      const field = error.keyValue ? Object.keys(error.keyValue)[0] : "field";
       error = ApiError.conflict(
         `${field} already exists. Please use a different value.`
       );

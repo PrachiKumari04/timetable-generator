@@ -63,7 +63,7 @@ export const paginate = (data, page = 1, limit = 20, options = {}) => {
  */
 export const parsePaginationParams = (
   query,
-  defaults = { page: 1, limit: 20, maxLimit: 100 }
+  defaults = { page: 1, limit: 20, maxLimit: 1000 }
 ) => {
   let page = parseInt(query.page, 10) || defaults.page;
   let limit = parseInt(query.limit, 10) || defaults.limit;

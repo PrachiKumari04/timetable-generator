@@ -46,6 +46,7 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
   const slotsByDay = {};
   timeSlots.forEach(slot => {
     const day = slot.day_of_week.toLowerCase();
+    if (day === "saturday") return; // Do not schedule anything on Saturday
     if (!slotsByDay[day]) slotsByDay[day] = [];
     slotsByDay[day].push(slot);
   });
@@ -85,14 +86,31 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
         slots: [slot1]
       });
 
-      // Lab candidate (must be consecutive and no break in between)
+      // Lab candidate (must be consecutive and no break in between in the layout)
       if (i + 1 < daySlots.length) {
         const slot2 = daySlots[i + 1];
         if (!slot2.isBreak && slot2.slot_type !== "BREAK" && slot2.slot_type !== "LUNCH") {
-          possibleSlots.LAB.push({
-            day,
-            slots: [slot1, slot2]
-          });
+          const num1 = parseInt(slot1.slot_id.replace("TS", ""));
+          const num2 = parseInt(slot2.slot_id.replace("TS", ""));
+          
+          let isConsecutiveWithoutBreak = false;
+          if (isNaN(num1) || isNaN(num2)) {
+            // Fallback for mock/test data: consecutive if they are adjacent in daySlots
+            isConsecutiveWithoutBreak = true;
+          } else {
+            const slotNum1 = (num1 - 1) % 7 + 1; // 1 to 7
+            const slotNum2 = (num2 - 1) % 7 + 1; // 1 to 7
+            isConsecutiveWithoutBreak = 
+              (slotNum1 === 1 && slotNum2 === 2) || 
+              (slotNum1 === 5 && slotNum2 === 6);
+          }
+          
+          if (isConsecutiveWithoutBreak) {
+            possibleSlots.LAB.push({
+              day,
+              slots: [slot1, slot2]
+            });
+          }
         }
       }
     }
@@ -103,8 +121,9 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
   
   // Conflict checker
   const isConflict = (session, day, slots, room) => {
-    // Room type constraint
-    if (session.type === "LAB" && !room.isLab) return true;
+    // Room type constraint (bypass if no lab rooms exist in database)
+    const hasLabRooms = rooms.some(r => r.isLab);
+    if (session.type === "LAB" && hasLabRooms && !room.isLab) return true;
     
     // Overlap checks
     for (const assign of assignments) {
@@ -130,8 +149,34 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
     const session = sessions[sessionIdx];
     const candidateSlots = session.type === "LAB" ? possibleSlots.LAB : possibleSlots.LECTURE;
 
-    for (const cand of candidateSlots) {
-      for (const room of rooms) {
+    // Restrict rooms to avoid massive search space (54 rooms ^ 48 sessions)
+    let validRooms = [];
+    if (session.type === "LAB") {
+      validRooms = rooms.filter(r => r.isLab);
+    } else {
+      // Map division to its specific classroom
+      const divisionClassrooms = {
+        "D001": { room_no: "709", block: "NORTH" },
+        "D002": { room_no: "710", block: "NORTH" },
+        "D003": { room_no: "703", block: "SOUTH" },
+        "D004": { room_no: "715", block: "NORTH" }
+      };
+      const preferred = divisionClassrooms[session.division_id];
+      if (preferred) {
+        validRooms = rooms.filter(r => r.room_no === preferred.room_no && r.block === preferred.block);
+      }
+      if (validRooms.length === 0) {
+        validRooms = rooms.filter(r => !r.isLab);
+      }
+    }
+
+    // Shuffle candidateSlots to generate different timetables for different classes
+    const shuffledCandidates = [...candidateSlots].sort(() => Math.random() - 0.5);
+
+    for (const cand of shuffledCandidates) {
+      // Shuffle rooms as well
+      const shuffledRooms = [...validRooms].sort(() => Math.random() - 0.5);
+      for (const room of shuffledRooms) {
         if (!isConflict(session, cand.day, cand.slots, room)) {
           assignments.push({ session, day: cand.day, slots: cand.slots, room });
 
