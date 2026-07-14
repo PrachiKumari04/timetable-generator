@@ -98,11 +98,11 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
             // Fallback for mock/test data: consecutive if they are adjacent in daySlots
             isConsecutiveWithoutBreak = true;
           } else {
-            const slotNum1 = (num1 - 1) % 7 + 1; // 1 to 7
-            const slotNum2 = (num2 - 1) % 7 + 1; // 1 to 7
+            const slotNum1 = (num1 - 1) % 8 + 1; // 1 to 8
+            const slotNum2 = (num2 - 1) % 8 + 1; // 1 to 8
             isConsecutiveWithoutBreak = 
               (slotNum1 === 1 && slotNum2 === 2) || 
-              (slotNum1 === 5 && slotNum2 === 6);
+              (slotNum1 === 6 && slotNum2 === 7);
           }
           
           if (isConsecutiveWithoutBreak) {
@@ -136,6 +136,16 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
           if (assign.session.faculty_id === session.faculty_id) return true;
           // Conflict 3: Same Division
           if (assign.session.division_id === session.division_id) return true;
+        }
+
+        // Conflict 4: Same Course Lecture already scheduled on this day for this division
+        if (
+          assign.session.division_id === session.division_id &&
+          assign.session.course_id === session.course_id &&
+          assign.session.type === "LECTURE" &&
+          session.type === "LECTURE"
+        ) {
+          return true;
         }
       }
     }

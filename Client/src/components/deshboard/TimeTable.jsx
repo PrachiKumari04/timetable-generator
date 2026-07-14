@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
 import apiClient from "../../services/apiClient";
+import { toPng } from "html-to-image";
 
 //* Subject color mapping for different subjects
 const SUBJECT_COLORS = {
@@ -194,9 +195,6 @@ const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, set
             <option value="D002">B</option>
             <option value="D003">C</option>
             <option value="D004">D</option>
-            <option value="D005">E</option>
-            <option value="D006">F</option>
-            <option value="D007">G</option>
           </select>
         </div>
       )}
@@ -519,29 +517,45 @@ const DayView = ({ timetableData, timeSlots, selectedDay, setSelectedDay }) => {
 };
 
 // Legend Component
-const Legend = () => (
-  <div className="p-4 bg-surface border-t border-border">
-    <h3 className="text-sm font-semibold text-text mb-3">Subject Legend</h3>
-    <div className="flex flex-wrap gap-2 mb-4">
-      {Object.entries(SUBJECT_COLORS)
-        .filter(([key]) => key !== "default")
-        .map(([subject, color]) => (
-          <div
-            key={subject}
-            className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs ${color.bg} ${color.text}`}
-          >
-            <span className="font-medium">{subject}</span>
-          </div>
-        ))}
-    </div>
-    <div className="flex items-center gap-4 text-xs text-text/70">
-      <div className="flex items-center gap-2">
-        <span className="px-2 py-0.5 bg-white/20 border border-text/30 rounded text-[10px]">LAB</span>
-        <span>Lab sessions span 2 consecutive periods</span>
+const Legend = ({ subjectsWithTeachers }) => {
+  const entries = Object.entries(subjectsWithTeachers || {});
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="p-4 bg-surface border border-border rounded-lg shadow-xs mt-4">
+      <h3 className="text-sm font-semibold text-text mb-3">Subject & Faculty Legend</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+        {entries.map(([subject, teachers]) => {
+          const color = getSubjectColor(subject);
+          const teachersStr = Array.from(teachers).join(", ");
+          return (
+            <div
+              key={subject}
+              className="flex items-start gap-2.5 p-2 rounded-lg border border-border bg-background"
+            >
+              <div
+                className={`w-3.5 h-3.5 rounded-full shrink-0 mt-0.5 ${color.isCustomHSL ? "" : color.bg}`}
+                style={{ backgroundColor: color.isCustomHSL ? color.bg : undefined }}
+              />
+              <div className="text-xs">
+                <div className="font-semibold text-text leading-tight">{subject}</div>
+                <div className="text-text/70 mt-1">
+                  Faculty: <span className="font-medium text-text">{teachersStr}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-4 text-xs text-text/70 pt-2 border-t border-border/50">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 bg-white/20 border border-text/30 rounded text-[10px]">LAB</span>
+          <span>Lab sessions span 2 consecutive periods</span>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Main TimeTable Component
 const TimeTable = ({ onClose }) => {
@@ -563,6 +577,7 @@ const TimeTable = ({ onClose }) => {
   const [genBy, setGenBy] = useState("ADMIN");
   const [isGenerating, setIsGenerating] = useState(false);
   const timetableRef = useRef(null);
+  const exportRef = useRef(null);
 
   // Map student class to division ID
   const getDivisionIdFromClass = (classStr) => {
@@ -573,10 +588,7 @@ const TimeTable = ({ onClose }) => {
       "A": "D001",
       "B": "D002",
       "C": "D003",
-      "D": "D004",
-      "E": "D005",
-      "F": "D006",
-      "G": "D007"
+      "D": "D004"
     };
     return mapping[lastPart] || "D001";
   };
@@ -584,16 +596,62 @@ const TimeTable = ({ onClose }) => {
   const activeDivisionId = userData?.role === "student"
     ? getDivisionIdFromClass(userData?.class_group)
     : selectedDivision;
+
+  // Compute subjects and their teachers for the active division
+  const subjectsWithTeachers = React.useMemo(() => {
+    const courseMap = {};
+    courses.forEach(c => {
+      courseMap[c.course_id] = c.course_name;
+    });
+
+    const facultyMap = {};
+    faculties.forEach(f => {
+      facultyMap[f.faculty_id] = f.faculty_name;
+    });
+
+    const filtered = rawEntries.filter(entry => entry.class_group === activeDivisionId);
+
+    const mapping = {};
+    filtered.forEach(entry => {
+      const subjectName = courseMap[entry.course_id] || entry.course_id;
+      const facultyName = facultyMap[entry.faculty_id] || entry.faculty_id;
+      if (subjectName && facultyName) {
+        if (!mapping[subjectName]) {
+          mapping[subjectName] = new Set();
+        }
+        mapping[subjectName].add(facultyName);
+      }
+    });
+
+    // Fallback to SAMPLE_TIMETABLE_DATA subjects if no database allocations exist
+    if (Object.keys(mapping).length === 0) {
+      Object.values(SAMPLE_TIMETABLE_DATA).forEach(dayList => {
+        dayList.forEach(cell => {
+          if (cell && cell.subject) {
+            const names = cell.subject.split('/');
+            names.forEach(name => {
+              const cleaned = name.trim();
+              if (cleaned) {
+                if (!mapping[cleaned]) {
+                  mapping[cleaned] = new Set();
+                }
+                mapping[cleaned].add("Sample Faculty");
+              }
+            });
+          }
+        });
+      });
+    }
+
+    return mapping;
+  }, [rawEntries, activeDivisionId, courses, faculties]);
   
   const getDivisionName = (id) => {
     const mapping = {
       "D001": "Div A",
       "D002": "Div B",
       "D003": "Div C",
-      "D004": "Div D",
-      "D005": "Div E",
-      "D006": "Div F",
-      "D007": "Div G"
+      "D004": "Div D"
     };
     return mapping[id] || "Div A";
   };
@@ -714,87 +772,31 @@ const TimeTable = ({ onClose }) => {
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     try {
-      //! Create a canvas from the timetable
-      const element = timetableRef.current;
+      const element = exportRef.current;
       if (!element) {
-        throw new Error('Timetable element not found');
+        throw new Error('Export container element not found');
       }
 
-      //* Use html2canvas approach by creating a data URL
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      //* Set canvas dimensions
-      canvas.width = 1200;
-      canvas.height = 800;
-      
-      //* Fill white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      //* Draw header
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, 100);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 20px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(collegeInfo.name, canvas.width / 2, 35);
-      
-      ctx.font = '14px Arial';
-      ctx.fillText(`${collegeInfo.batch}    ${collegeInfo.semester}    Effective From ${collegeInfo.effectiveDate}`, canvas.width / 2, 60);
-      ctx.fillText(`${collegeInfo.classInfo}    Class Teacher - ${collegeInfo.classTeacher}    Room - ${collegeInfo.roomNo}`, canvas.width / 2, 85);
-      
-      //* Draw simplified timetable representation
-      ctx.fillStyle = '#000000';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'left';
-      
-      let y = 130;
-      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      
-      days.forEach((day, index) => {
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(20, y + index * 100, 1160, 25);
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 14px Arial';
-        ctx.fillText(day, 30, y + index * 100 + 18);
-        
-        //* Draw time slots
-        ctx.font = '11px Arial';
-        const dayData = timetableData[day.toLowerCase()];
-        if (dayData) {
-          let x = 150;
-          TIME_SLOTS.forEach((slot, slotIndex) => {
-            if (!slot.isBreak && dayData[slotIndex]) {
-              const subject = dayData[slotIndex].subject;
-              if (subject && subject.length > 20) {
-                ctx.fillText(subject.substring(0, 20) + '...', x, y + index * 100 + 60);
-              } else if (subject) {
-                ctx.fillText(subject, x, y + index * 100 + 60);
-              }
-            }
-            x += 180;
-          });
-        }
+      // Render the element as a PNG data URL using html-to-image
+      const dataUrl = await toPng(element, {
+        cacheBust: true,
+        quality: 0.95,
+        backgroundColor: window.getComputedStyle(element).backgroundColor || '#ffffff',
       });
-      
-      //* Convert to image and download
-      const dataUrl = canvas.toDataURL('image/png');
+
       const link = document.createElement('a');
       link.download = `Timetable_${collegeInfo.classInfo.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.png`;
       link.href = dataUrl;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
     } catch (error) {
       console.error('Export failed:', error);
       alert('Failed to export timetable. Please try again.');
     } finally {
       setIsExporting(false);
     }
-  }, [collegeInfo, timetableData]);
+  }, [collegeInfo]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -857,19 +859,20 @@ const TimeTable = ({ onClose }) => {
     filtered.forEach(entry => {
       const day = entry.day_of_week.toLowerCase();
       
-      // Parse database slot ID (e.g. TS001 -> 1, TS008 -> 8 -> slotNum 1)
+      // Parse database slot ID (e.g. TS001 -> 1, TS009 -> 9 -> slotNum 1)
       const num = parseInt(entry.slot_id.replace("TS", "")) || 1;
-      const slotNum = (num - 1) % 7 + 1; // 1 to 7
+      const slotNum = (num - 1) % 8 + 1; // 1 to 8
 
       // Map daily slot number to the 10-period React layout (including breaks)
       let index = 0;
       if (slotNum === 1) index = 0;
       else if (slotNum === 2) index = 1;
       else if (slotNum === 3) index = 3;
-      else if (slotNum === 4) index = 5; // Lunch break
-      else if (slotNum === 5) index = 6;
-      else if (slotNum === 6) index = 7;
-      else if (slotNum === 7) index = 9;
+      else if (slotNum === 4) index = 4; // Period 4
+      else if (slotNum === 5) index = 5; // Lunch break
+      else if (slotNum === 6) index = 6;
+      else if (slotNum === 7) index = 7;
+      else if (slotNum === 8) index = 9;
 
       if (formattedData[day]) {
         formattedData[day][index] = {
@@ -879,6 +882,41 @@ const TimeTable = ({ onClose }) => {
           isLab: entry.isLab
         };
       }
+    });
+
+    // Fill remaining empty spots with Mentoring, Library, and Self Study sessions
+    let emptyCount = 0;
+    const lectureIndices = [0, 1, 3, 4, 6, 7, 9];
+    const weekdayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+
+    weekdayKeys.forEach(day => {
+      lectureIndices.forEach(idx => {
+        if (!formattedData[day][idx]) {
+          emptyCount++;
+          if (emptyCount === 1 || emptyCount === 2) {
+            formattedData[day][idx] = {
+              subject: "Mentoring Session",
+              faculty: getDivisionDetails(activeDivisionId).teacher || "Class Teacher",
+              room: getDivisionDetails(activeDivisionId).room || "Class Room",
+              isLab: false
+            };
+          } else if (emptyCount === 3) {
+            formattedData[day][idx] = {
+              subject: "Library Session",
+              faculty: "Librarian",
+              room: "Library",
+              isLab: false
+            };
+          } else {
+            formattedData[day][idx] = {
+              subject: "Self Study",
+              faculty: "",
+              room: getDivisionDetails(activeDivisionId).room || "Class Room",
+              isLab: false
+            };
+          }
+        }
+      });
     });
 
     setTimetableData(formattedData);
@@ -907,9 +945,6 @@ const TimeTable = ({ onClose }) => {
 
   return (
     <div className="flex flex-col h-full bg-background relative">
-      {/* Header */}
-      <TimetableHeader collegeInfo={collegeInfo} />
-      
       {/* Action Buttons */}
       <ActionButtons
         onPrint={handlePrint}
@@ -926,22 +961,28 @@ const TimeTable = ({ onClose }) => {
         role={userData?.role}
       />
       
-      {/* Timetable Content */}
-      <div ref={timetableRef} className="flex-1 overflow-auto p-4">
-        {viewMode === "week" ? (
-          <WeekView timetableData={timetableData} timeSlots={TIME_SLOTS} />
-        ) : (
-          <DayView
-            timetableData={timetableData}
-            timeSlots={TIME_SLOTS}
-            selectedDay={selectedDay}
-            setSelectedDay={setSelectedDay}
-          />
-        )}
+      {/* Export Container wrapping Header, Content Grid, and Legend */}
+      <div ref={exportRef} className="flex-1 overflow-auto p-6 bg-background space-y-6">
+        {/* Header */}
+        <TimetableHeader collegeInfo={collegeInfo} />
+        
+        {/* Timetable Content */}
+        <div ref={timetableRef}>
+          {viewMode === "week" ? (
+            <WeekView timetableData={timetableData} timeSlots={TIME_SLOTS} />
+          ) : (
+            <DayView
+              timetableData={timetableData}
+              timeSlots={TIME_SLOTS}
+              selectedDay={selectedDay}
+              setSelectedDay={setSelectedDay}
+            />
+          )}
+        </div>
+        
+        {/* Legend */}
+        <Legend subjectsWithTeachers={subjectsWithTeachers} />
       </div>
-      
-      {/* Legend */}
-      <Legend />
 
       {/* Generation Modal */}
       {showGenerateModal && (
