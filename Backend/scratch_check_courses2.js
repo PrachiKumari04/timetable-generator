@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+dotenv.config();
 
 const run = async () => {
     try {
-        await mongoose.connect("mongodb+srv://REMOVED_CREDENTIALS@timetable.u4ag3ve.mongodb.net/timetable");
+        const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/timetable";
+        await mongoose.connect(uri);
         
         const courses = await mongoose.connection.db.collection("courses").find({}).toArray();
         

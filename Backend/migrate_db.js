@@ -1,7 +1,9 @@
 import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const oldUri = "mongodb+srv://REMOVED_CREDENTIALS@cluster0.4euf3xe.mongodb.net/";
-const newUri = "mongodb+srv://REMOVED_CREDENTIALS@timetable.u4ag3ve.mongodb.net/";
+const oldUri = process.env.OLD_MONGODB_URI || "mongodb://localhost:27017/";
+const newUri = process.env.MONGODB_URI || "mongodb://localhost:27017/";
 
 async function migrate() {
     const oldClient = new MongoClient(oldUri);
