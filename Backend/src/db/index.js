@@ -5,7 +5,7 @@ import { DB_NAME } from "../constenets.js";
 const connectDB = async () => {
   try {
     const connectionInstance = await mongoose.connect(
-      `${process.env.MONGODB_URI}${DB_NAME}`,
+      `${process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/"}${DB_NAME}`,
     );
     console.log(
       `\n MongoDB connected !! DB HOST: ${connectionInstance.connection.host}`,
