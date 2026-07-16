@@ -13,6 +13,7 @@ import {
 } from "../../store/admin/adminSlice";
 import ExcelHendelButton from "../../components/ExcelHendelButton";
 import TimeTable from "../../components/deshboard/TimeTable";
+import Analytics from "../../components/deshboard/Analytics";
 
 function Admin() {
   const dispatch = useDispatch();
@@ -21,6 +22,7 @@ function Admin() {
   const authLoading = useSelector((state) => state.auth.loading);
   const navigate = useNavigate();
   const [showTimetable, setShowTimetable] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const { activeEntity, masterData, loading, error } = useSelector(
     (state) => state.admin,
@@ -218,6 +220,20 @@ function Admin() {
           name: "description",
           label: "Description",
           placeholder: "e.g. Morning batch division",
+          type: "text",
+          required: false,
+        },
+        {
+          name: "preferredRoom_no",
+          label: "Preferred Room Number",
+          placeholder: "e.g. 709",
+          type: "text",
+          required: false,
+        },
+        {
+          name: "preferredRoom_block",
+          label: "Preferred Room Block",
+          placeholder: "e.g. NORTH",
           type: "text",
           required: false,
         },
@@ -835,6 +851,10 @@ function Admin() {
       return <TimeTable onClose={() => setShowTimetable(false)} />;
     }
 
+    if (showAnalytics) {
+      return <Analytics />;
+    }
+
     if (!activeEntity) {
       return (
         <div className="flex-1 p-8 flex flex-col items-center justify-center text-center text-slate-500 h-full">
@@ -951,7 +971,10 @@ function Admin() {
         <div className="flex items-center gap-4">
           {/* Timetable Toggle Button */}
           <button
-            onClick={() => setShowTimetable(!showTimetable)}
+            onClick={() => {
+              setShowTimetable(!showTimetable);
+              setShowAnalytics(false);
+            }}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               showTimetable
                 ? "bg-primary text-white hover:bg-secondary"
@@ -975,7 +998,36 @@ function Admin() {
             {showTimetable ? "Back to Master Data" : "View Timetable"}
           </button>
 
-          {activeEntity && !showTimetable && (
+          {/* Analytics Toggle Button */}
+          <button
+            onClick={() => {
+              setShowAnalytics(!showAnalytics);
+              setShowTimetable(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              showAnalytics
+                ? "bg-primary text-white hover:bg-secondary"
+                : "bg-surface-hover border border-border text-text hover:bg-border"
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"
+              />
+            </svg>
+            {showAnalytics ? "Back to Master Data" : "View Analytics"}
+          </button>
+
+          {activeEntity && !showTimetable && !showAnalytics && (
             <ExcelHendelButton
               fileName={activeEntity}
               formet={[
@@ -991,7 +1043,7 @@ function Admin() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {!showTimetable && (
+        {!showTimetable && !showAnalytics && (
           <aside className="w-72 border-r border-slate-200 px-4 py-6 overflow-y-auto hidden md:block bg-surface">
             <SideBar
               ENTITY_CONFIG={ENTITY_CONFIG}

@@ -3,6 +3,7 @@ import { Room } from "../models/room.models.js";
 import { TimeSlot } from "../models/timeSlot.models.js";
 import { Timetable } from "../models/timetable.models.js";
 import { TimeTableEntry } from "../models/timeTableEntry.models.js";
+import { Division } from "../models/division.models.js";
 import { generateSchedule } from "../utils/timetableGenerator.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -26,13 +27,15 @@ export const generateTimetable = asyncHandler(async (req, res) => {
     throw new ApiError(400, "No rooms configured in the database. Please add classrooms/labs first.");
   }
 
+  const divisions = await Division.find();
+
   const timeSlots = await TimeSlot.find();
   if (timeSlots.length === 0) {
     throw new ApiError(400, "No time slots defined in the database. Please configure weekly time slots first.");
   }
 
   // 2. Run the generative scheduling solver
-  const generatedEntries = generateSchedule(allocations, rooms, timeSlots);
+  const generatedEntries = generateSchedule(allocations, rooms, timeSlots, divisions);
 
   if (!generatedEntries) {
     throw new ApiError(422, "Conflict-free schedule could not be generated with the current constraints (rooms, slots, or faculty allocations). Try increasing availability or reducing allocated hours.");

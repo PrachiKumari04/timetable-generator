@@ -3,7 +3,7 @@
  * Uses Constraint Satisfaction Problem (CSP) formulation with Backtracking
  */
 
-export const generateSchedule = (allocations, rooms, timeSlots) => {
+export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) => {
   // 1. Parse allocations into sessions
   const sessions = [];
   allocations.forEach(alloc => {
@@ -164,17 +164,16 @@ export const generateSchedule = (allocations, rooms, timeSlots) => {
     if (session.type === "LAB") {
       validRooms = rooms.filter(r => r.isLab);
     } else {
-      // Map division to its specific classroom
-      const divisionClassrooms = {
-        "D001": { room_no: "709", block: "NORTH" },
-        "D002": { room_no: "710", block: "NORTH" },
-        "D003": { room_no: "703", block: "SOUTH" },
-        "D004": { room_no: "715", block: "NORTH" }
-      };
-      const preferred = divisionClassrooms[session.division_id];
-      if (preferred) {
-        validRooms = rooms.filter(r => r.room_no === preferred.room_no && r.block === preferred.block);
+      // Map division to preferred classroom from database dynamically
+      const divisionObj = divisions.find(d => d.division_id === session.division_id);
+      if (divisionObj && divisionObj.preferredRoom_no) {
+        const prefRoomNo = divisionObj.preferredRoom_no;
+        const prefBlock = divisionObj.preferredRoom_block;
+        validRooms = rooms.filter(
+          r => r.room_no === prefRoomNo && (!prefBlock || r.block.toUpperCase() === prefBlock.toUpperCase())
+        );
       }
+      // Fallback if no preferred room is configured or matching room not found
       if (validRooms.length === 0) {
         validRooms = rooms.filter(r => !r.isLab);
       }

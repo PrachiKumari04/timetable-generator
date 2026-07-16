@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
 import apiClient from "../../services/apiClient";
 import { toPng } from "html-to-image";
+import { exportToICS } from "../../utils/calendarExport";
 
 //* Subject color mapping for different subjects
 const SUBJECT_COLORS = {
@@ -159,7 +160,7 @@ const TimetableHeader = ({ collegeInfo, onPrint, onExport, onRefresh }) => (
 );
 
 // Action Buttons Component
-const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, setViewMode, isRefreshing, isExporting, isAdmin, selectedDivision, setSelectedDivision, role }) => (
+const ActionButtons = ({ onPrint, onExport, onExportCalendar, onRefresh, onGenerate, viewMode, setViewMode, isRefreshing, isExporting, isAdmin, selectedDivision, setSelectedDivision, role }) => (
   <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface border-b border-border">
     <div className="flex items-center gap-2">
       <button
@@ -228,6 +229,15 @@ const ActionButtons = ({ onPrint, onExport, onRefresh, onGenerate, viewMode, set
           </svg>
         )}
         {isRefreshing ? "Refreshing..." : "Refresh"}
+      </button>
+      <button
+        onClick={onExportCalendar}
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Calendar
       </button>
       <button
         onClick={onExport}
@@ -798,6 +808,15 @@ const TimeTable = ({ onClose }) => {
     }
   }, [collegeInfo]);
 
+  const handleExportCalendar = useCallback(() => {
+    try {
+      exportToICS(timetableData, TIME_SLOTS, collegeInfo);
+    } catch (error) {
+      console.error('Calendar export failed:', error);
+      alert('Failed to export calendar. Please try again.');
+    }
+  }, [timetableData, collegeInfo]);
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
@@ -949,6 +968,7 @@ const TimeTable = ({ onClose }) => {
       <ActionButtons
         onPrint={handlePrint}
         onExport={handleExport}
+        onExportCalendar={handleExportCalendar}
         onRefresh={handleRefresh}
         onGenerate={() => setShowGenerateModal(true)}
         viewMode={viewMode}

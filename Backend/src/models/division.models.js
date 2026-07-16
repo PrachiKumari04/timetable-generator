@@ -29,6 +29,16 @@ const divisionSchema = new Schema({
     type: String,
     uppercase: true,
     trim: true,
+  },
+  preferredRoom_no: {
+    type: String,
+    uppercase: true,
+    trim: true,
+  },
+  preferredRoom_block: {
+    type: String,
+    uppercase: true,
+    trim: true,
   }
 
 },{timestamps:true});
