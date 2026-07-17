@@ -45,15 +45,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         }
     }, [dispatch, activeEntity, page, limit, searchQuery, sortField, sortOrder, activeFilters]);
 
-    //* Reset to page 1 when entity changes
-    useEffect(() => {
-        setPage(1);
-        setSearchQuery('');
-        setSortField(null);
-        setSortOrder('asc');
-        setActiveFilters({});
-        setShowFilters(false);
-    }, [activeEntity]);
+
 
     //! Get filterable fields (boolean and select fields)
     const filterableFields = currentEntityConfig?.fields?.filter(field => 
@@ -153,7 +145,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
         if (newPage >= 1 && newPage <= currentPagination.totalPages) {
             setPage(newPage);
         }
-    }, [currentPagination.totalPages]);
+    }, [currentPagination.totalPages, setPage]);
 
     //! Handle sort
     const handleSort = useCallback((fieldName) => {
@@ -164,7 +156,7 @@ function DataTable({ currentEntityConfig, activeEntity }) {
             setSortOrder('asc');
         }
         setPage(1);
-    }, [sortField]);
+    }, [sortField, setSortField, setSortOrder, setPage]);
 
     //! Generate page numbers for display
     const getPageNumbers = () => {

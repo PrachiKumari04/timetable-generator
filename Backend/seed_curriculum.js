@@ -39,14 +39,24 @@ const run = async () => {
         // class d has harshit sir (F008) -> Ethical Hacking (C007 / SP003)
 
         const divs = [
-            { div: "D001", teacher: "F003", spec: "SP001" }, // Div A
-            { div: "D002", teacher: "F004", spec: "SP002" }, // Div B
-            { div: "D003", teacher: "F007", spec: "SP002" }, // Div C
-            { div: "D004", teacher: "F008", spec: "SP003" }, // Div D
+            { div: "D001", teacher: "F003", spec: "SP001", room: "705", block: "NORTH" }, // Div A
+            { div: "D002", teacher: "F004", spec: "SP002", room: "707", block: "NORTH" }, // Div B
+            { div: "D003", teacher: "F007", spec: "SP002", room: "709", block: "NORTH" }, // Div C
+            { div: "D004", teacher: "F008", spec: "SP003", room: "715", block: "NORTH" }, // Div D
         ];
 
         for (const d of divs) {
-            await Division.updateOne({ division_id: d.div }, { $set: { classTeacher_id: d.teacher, specialization_id: d.spec } });
+            await Division.updateOne(
+                { division_id: d.div },
+                { 
+                    $set: { 
+                        classTeacher_id: d.teacher, 
+                        specialization_id: d.spec,
+                        preferredRoom_no: d.room,
+                        preferredRoom_block: d.block
+                    } 
+                }
+            );
         }
         console.log("Divisions updated with class teachers and specializations.");
 

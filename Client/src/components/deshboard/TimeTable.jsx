@@ -141,7 +141,7 @@ const getSubjectColor = (subject) => {
 };
 
 // Timetable Header Component
-const TimetableHeader = ({ collegeInfo, onPrint, onExport, onRefresh }) => (
+const TimetableHeader = ({ collegeInfo }) => (
   <div className="bg-black text-white p-4">
     <div className="text-center space-y-1">
       <h1 className="text-xl font-bold tracking-wide">{collegeInfo.name}</h1>
@@ -567,8 +567,29 @@ const Legend = ({ subjectsWithTeachers }) => {
   );
 };
 
+const getDivisionName = (id) => {
+  const mapping = {
+    "D001": "Div A",
+    "D002": "Div B",
+    "D003": "Div C",
+    "D004": "Div D"
+  };
+  return mapping[id] || "Div A";
+};
+
+const DIVISION_DETAILS = {
+  "D001": { teacher: "Prof. Vinod Charawande", room: "N 709" },
+  "D002": { teacher: "Dr. Rahul Satyakam", room: "N 710" },
+  "D003": { teacher: "Dr. Pradnya Mulye", room: "S 703" },
+  "D004": { teacher: "Prof. Harshit Kumar", room: "N 715" },
+};
+
+const getDivisionDetails = (id) => {
+  return DIVISION_DETAILS[id] || { teacher: "Prof. Harshit Kumar", room: "N 715" };
+};
+
 // Main TimeTable Component
-const TimeTable = ({ onClose }) => {
+const TimeTable = () => {
   const { userData } = useSelector((state) => state.auth || {});
   const isAdmin = userData?.role === "admin";
 
@@ -656,29 +677,10 @@ const TimeTable = ({ onClose }) => {
     return mapping;
   }, [rawEntries, activeDivisionId, courses, faculties]);
   
-  const getDivisionName = (id) => {
-    const mapping = {
-      "D001": "Div A",
-      "D002": "Div B",
-      "D003": "Div C",
-      "D004": "Div D"
-    };
-    return mapping[id] || "Div A";
-  };
 
-  const DIVISION_DETAILS = {
-    "D001": { teacher: "Prof. Vinod Charawande", room: "N 709" },
-    "D002": { teacher: "Dr. Rahul Satyakam", room: "N 710" },
-    "D003": { teacher: "Dr. Pradnya Mulye", room: "S 703" },
-    "D004": { teacher: "Prof. Harshit Kumar", room: "N 715" },
-  };
-
-  const getDivisionDetails = (id) => {
-    return DIVISION_DETAILS[id] || { teacher: "Prof. Harshit Kumar", room: "N 715" };
-  };
 
   //* College information (can be fetched from API)
-  const collegeInfo = {
+  const collegeInfo = React.useMemo(() => ({
     name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
     batch: "BATCH 2025 ( A. Y. - 2025-26)",
     semester: "SEM - II",
@@ -688,7 +690,7 @@ const TimeTable = ({ onClose }) => {
       : `MCA - II ${getDivisionName(activeDivisionId)}`,
     classTeacher: getDivisionDetails(activeDivisionId).teacher,
     roomNo: getDivisionDetails(activeDivisionId).room,
-  };
+  }), [userData, activeDivisionId]);
 
   //! Handle Print functionality
   const handlePrint = useCallback(() => {
@@ -894,12 +896,26 @@ const TimeTable = ({ onClose }) => {
       else if (slotNum === 8) index = 9;
 
       if (formattedData[day]) {
-        formattedData[day][index] = {
-          subject: courseMap[entry.course_id] || entry.course_id,
-          faculty: facultyMap[entry.faculty_id] || entry.faculty_id,
-          room: entry.block ? `${entry.room_no} (${entry.block})` : entry.room_no,
-          isLab: entry.isLab
-        };
+        const existing = formattedData[day][index];
+        const newSubject = courseMap[entry.course_id] || entry.course_id;
+        const newFaculty = facultyMap[entry.faculty_id] || entry.faculty_id;
+        const newRoom = entry.block ? `${entry.room_no} (${entry.block})` : entry.room_no;
+        
+        if (existing) {
+          formattedData[day][index] = {
+            subject: `${existing.subject} / ${newSubject}`,
+            faculty: `${existing.faculty} / ${newFaculty}`,
+            room: `${existing.room} / ${newRoom}`,
+            isLab: existing.isLab || entry.isLab
+          };
+        } else {
+          formattedData[day][index] = {
+            subject: newSubject,
+            faculty: newFaculty,
+            room: newRoom,
+            isLab: entry.isLab
+          };
+        }
       }
     });
 

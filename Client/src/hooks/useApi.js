@@ -13,7 +13,7 @@ export const useApi = (url, options = {}) => {
     params = {},
     body = null,
     immediate = true,
-    cacheDuration = 5 * 60 * 1000, //5 minutes
+    cacheDuration: _cacheDuration = 5 * 60 * 1000, //5 minutes
     onSuccess,
     onError,
     dependencies = [],
@@ -154,7 +154,6 @@ export const usePaginatedApi = (url, options = {}) => {
 
   const [page, setPage] = useState(initialPage);
   const [limit, setLimit] = useState(initialLimit);
-  const [pagination, setPagination] = useState(null);
 
   const params = {
     page,
@@ -167,12 +166,8 @@ export const usePaginatedApi = (url, options = {}) => {
     params,
   });
 
-  //* Update pagination when data changes
-  useEffect(() => {
-    if (data?.pagination) {
-      setPagination(data.pagination);
-    }
-  }, [data]);
+  //* Derive pagination directly from data
+  const pagination = data?.pagination || null;
 
   const goToPage = useCallback(
     (newPage) => {

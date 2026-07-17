@@ -15,7 +15,7 @@ const DAYS_MAP = {
 // Parse time slot format like "8:40 am to 9:40 am" or "11.50 am to 12.50 pm"
 const parseTimeRange = (timeStr) => {
   try {
-    const cleaned = timeStr.toLowerCase().replace(/[\s\.]/g, ''); // e.g., "8:40amto9:40am"
+    const cleaned = timeStr.toLowerCase().replace(/[\s.]/g, ''); // e.g., "8:40amto9:40am"
     const parts = cleaned.split('to');
     if (parts.length !== 2) return null;
 
@@ -69,7 +69,7 @@ export const exportToICS = (timetableData, timeSlots, collegeInfo) => {
       const diff = semStartDate.getDate() - day + (day === 0 ? -6 : 1);
       semStartDate = new Date(semStartDate.setDate(diff));
     }
-  } catch (e) {
+  } catch {
     const day = semStartDate.getDay();
     const diff = semStartDate.getDate() - day + (day === 0 ? -6 : 1);
     semStartDate = new Date(semStartDate.setDate(diff));

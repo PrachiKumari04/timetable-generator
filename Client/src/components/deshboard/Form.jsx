@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addMasterData, updateMasterData, setEditingEntityId, clearError } from '../../store/admin/adminSlice';
 
@@ -7,11 +7,8 @@ function Form({ currentEntityConfig, activeEntity }) {
     const editingEntityId = useSelector((state) => state.admin.editingEntityId);
     const masterData = useSelector((state) => state.admin.masterData);
 
-    const [entityForm, setEntityForm] = useState({});
-
-    //! useEffect to populate entityForm state when editing an entity
-    useEffect(() => {
-        if (editingEntityId && activeEntity && masterData[activeEntity]) {
+    const [entityForm, setEntityForm] = useState(() => {
+        if (editingEntityId && activeEntity && masterData[activeEntity] && currentEntityConfig) {
             const entityToEdit = masterData[activeEntity].find(e => e._id === editingEntityId || e.id === editingEntityId);
             if (entityToEdit) {
                 //* Format date fields for input type="date"
@@ -24,12 +21,11 @@ function Form({ currentEntityConfig, activeEntity }) {
                         }
                     }
                 });
-                setEntityForm(formattedData);
+                return formattedData;
             }
-        } else {
-            setEntityForm({});
         }
-    }, [editingEntityId, activeEntity, masterData, currentEntityConfig]);
+        return {};
+    });
 
     //! Handle entity input change
     const handleEntityInputChange = (e) => {

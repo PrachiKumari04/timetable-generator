@@ -4,12 +4,6 @@ function SideBar({ ENTITY_CONFIG, masterData, activeEntity, setActiveEntity, set
 
     const MASTER_ENTITY_KEYS = Object.keys(ENTITY_CONFIG);
 
-    const createEmptyMasterData = () =>
-        MASTER_ENTITY_KEYS.reduce((acc, key) => {
-            acc[key] = [];
-            return acc;
-        }, {});
-
 
 
     return (

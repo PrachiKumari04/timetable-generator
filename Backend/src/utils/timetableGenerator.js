@@ -3,16 +3,37 @@
  * Uses Constraint Satisfaction Problem (CSP) formulation with Backtracking
  */
 
-export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) => {
+export const generateSchedule = (allocations, rooms, timeSlots, divisions = [], curriculum = null) => {
+  // Map course_id to its specialization_id (if any) from curriculum
+  const courseSpecializations = {};
+  if (curriculum && curriculum.subjects) {
+    curriculum.subjects.forEach(sub => {
+      if (sub.isSpecialization && sub.specialization_id) {
+        courseSpecializations[sub.course_id] = sub.specialization_id;
+      }
+    });
+  }
+
   // 1. Parse allocations into sessions
   const sessions = [];
+  const specCounters = {}; // Key: division_id:specialization_id
+  
+  const getNextSpecIndex = (divisionId, specializationId) => {
+    if (!specializationId) return null;
+    const key = `${divisionId}:${specializationId}`;
+    if (specCounters[key] === undefined) specCounters[key] = 0;
+    return specCounters[key]++;
+  };
+
   allocations.forEach(alloc => {
     const lectureCount = parseInt(alloc.l) || 0;
     const tutorialCount = parseInt(alloc.t) || 0;
     const practicalCount = parseInt(alloc.p) || 0;
+    const specId = courseSpecializations[alloc.course_id];
     
     // Add lecture and tutorial sessions
     for (let i = 0; i < (lectureCount + tutorialCount); i++) {
+      const specIndex = getNextSpecIndex(alloc.division_id, specId);
       sessions.push({
         id: `${alloc.subjectAllocation_id}-L-${i}`,
         allocation: alloc,
@@ -20,13 +41,16 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) 
         faculty_id: alloc.faculty_id,
         division_id: alloc.division_id,
         type: "LECTURE",
-        duration: 1
+        duration: 1,
+        specialization_id: specId,
+        spec_index: specIndex
       });
     }
     
     // Add practical/lab sessions (each lab spans 2 periods back-to-back)
     const labSessionsCount = Math.floor(practicalCount / 2);
     for (let i = 0; i < labSessionsCount; i++) {
+      const specIndex = getNextSpecIndex(alloc.division_id, specId);
       sessions.push({
         id: `${alloc.subjectAllocation_id}-P-${i}`,
         allocation: alloc,
@@ -34,7 +58,9 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) 
         faculty_id: alloc.faculty_id,
         division_id: alloc.division_id,
         type: "LAB",
-        duration: 2
+        duration: 2,
+        specialization_id: specId,
+        spec_index: specIndex
       });
     }
   });
@@ -125,6 +151,25 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) 
     const hasLabRooms = rooms.some(r => r.isLab);
     if (session.type === "LAB" && hasLabRooms && !room.isLab) return true;
     
+    // Force parallel electives to be scheduled in the same slots
+    if (session.specialization_id) {
+      for (const assign of assignments) {
+        if (
+          assign.session.division_id === session.division_id &&
+          assign.session.specialization_id &&
+          assign.session.specialization_id !== session.specialization_id &&
+          assign.session.spec_index === session.spec_index
+        ) {
+          const sameDay = assign.day === day;
+          const sameSlots = assign.slots.length === slots.length && 
+                            assign.slots.every((as, idx) => slots[idx] && slots[idx].slot_id === as.slot_id);
+          if (!sameDay || !sameSlots) {
+            return true; // Conflict: They must be scheduled simultaneously!
+          }
+        }
+      }
+    }
+
     // Overlap checks
     for (const assign of assignments) {
       if (assign.day === day) {
@@ -135,7 +180,17 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) 
           // Conflict 2: Same Faculty
           if (assign.session.faculty_id === session.faculty_id) return true;
           // Conflict 3: Same Division
-          if (assign.session.division_id === session.division_id) return true;
+          if (assign.session.division_id === session.division_id) {
+            // Check if both are specialization subjects of DIFFERENT specializations (Parallel Electives)
+            const spec1 = assign.session.specialization_id;
+            const spec2 = session.specialization_id;
+            
+            const isParallelElective = spec1 && spec2 && spec1 !== spec2;
+            
+            if (!isParallelElective) {
+              return true;
+            }
+          }
         }
 
         // Conflict 4: Same Course Lecture already scheduled on this day for this division
@@ -159,33 +214,49 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = []) 
     const session = sessions[sessionIdx];
     const candidateSlots = session.type === "LAB" ? possibleSlots.LAB : possibleSlots.LECTURE;
 
-    // Restrict rooms to avoid massive search space (54 rooms ^ 48 sessions)
+    let preferredRoom = null;
     let validRooms = [];
+    
     if (session.type === "LAB") {
       validRooms = rooms.filter(r => r.isLab);
     } else {
       // Map division to preferred classroom from database dynamically
       const divisionObj = divisions.find(d => d.division_id === session.division_id);
       if (divisionObj && divisionObj.preferredRoom_no) {
-        const prefRoomNo = divisionObj.preferredRoom_no;
-        const prefBlock = divisionObj.preferredRoom_block;
-        validRooms = rooms.filter(
-          r => r.room_no === prefRoomNo && (!prefBlock || r.block.toUpperCase() === prefBlock.toUpperCase())
-        );
+        // If it's a specialization session, only the division's default specialization stays in the preferred room.
+        // Guest specializations leave and use fallback rooms.
+        const isGuestSpecialization = session.specialization_id && 
+                                      divisionObj.specialization_id && 
+                                      session.specialization_id !== divisionObj.specialization_id;
+        
+        if (!isGuestSpecialization) {
+          const prefRoomNo = divisionObj.preferredRoom_no;
+          const prefBlock = divisionObj.preferredRoom_block;
+          preferredRoom = rooms.find(
+            r => r.room_no === prefRoomNo && (!prefBlock || r.block.toUpperCase() === prefBlock.toUpperCase())
+          );
+        }
       }
-      // Fallback if no preferred room is configured or matching room not found
-      if (validRooms.length === 0) {
-        validRooms = rooms.filter(r => !r.isLab);
-      }
+      validRooms = rooms.filter(r => !r.isLab);
     }
 
     // Shuffle candidateSlots to generate different timetables for different classes
     const shuffledCandidates = [...candidateSlots].sort(() => Math.random() - 0.5);
 
     for (const cand of shuffledCandidates) {
-      // Shuffle rooms as well
-      const shuffledRooms = [...validRooms].sort(() => Math.random() - 0.5);
-      for (const room of shuffledRooms) {
+      let roomsToTry = [];
+      if (session.type === "LAB") {
+        roomsToTry = [...validRooms].sort(() => Math.random() - 0.5);
+      } else if (preferredRoom) {
+        // Try the preferred room first, then shuffle and try fallbacks
+        const fallbacks = validRooms.filter(r => r.room_no !== preferredRoom.room_no || r.block !== preferredRoom.block);
+        const shuffledFallbacks = fallbacks.sort(() => Math.random() - 0.5);
+        roomsToTry = [preferredRoom, ...shuffledFallbacks];
+      } else {
+        roomsToTry = [...validRooms].sort(() => Math.random() - 0.5);
+      }
+
+      for (const room of roomsToTry) {
         if (!isConflict(session, cand.day, cand.slots, room)) {
           assignments.push({ session, day: cand.day, slots: cand.slots, room });
 

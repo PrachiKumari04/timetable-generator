@@ -4,6 +4,7 @@ import { TimeSlot } from "../models/timeSlot.models.js";
 import { Timetable } from "../models/timetable.models.js";
 import { TimeTableEntry } from "../models/timeTableEntry.models.js";
 import { Division } from "../models/division.models.js";
+import { Curriculum } from "../models/curriculum.models.js";
 import { generateSchedule } from "../utils/timetableGenerator.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -35,7 +36,8 @@ export const generateTimetable = asyncHandler(async (req, res) => {
   }
 
   // 2. Run the generative scheduling solver
-  const generatedEntries = generateSchedule(allocations, rooms, timeSlots, divisions);
+  const curriculum = await Curriculum.findOne({ semester_id });
+  const generatedEntries = generateSchedule(allocations, rooms, timeSlots, divisions, curriculum);
 
   if (!generatedEntries) {
     throw new ApiError(422, "Conflict-free schedule could not be generated with the current constraints (rooms, slots, or faculty allocations). Try increasing availability or reducing allocated hours.");

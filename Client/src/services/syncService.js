@@ -269,7 +269,7 @@ export const useSyncStatus = () => {
   const [status, setStatus] = useState(syncService.getStatus());
 
   useEffect(() => {
-    return syncService.subscribe((update) => {
+    return syncService.subscribe(() => {
       setStatus(syncService.getStatus());
     });
   }, []);

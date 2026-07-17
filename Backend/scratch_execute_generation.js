@@ -6,6 +6,8 @@ import { Timetable } from "./src/models/timetable.models.js";
 import { SubjectAllocation } from "./src/models/subjectAllocation.models.js";
 import { Room } from "./src/models/room.models.js";
 import { TimeSlot } from "./src/models/timeSlot.models.js";
+import { Division } from "./src/models/division.models.js";
+import { Curriculum } from "./src/models/curriculum.models.js";
 
 dotenv.config();
 
@@ -17,13 +19,15 @@ const run = async () => {
   const academicYear = "2025-2026";
   const generatedBy = "ADMIN";
 
-  console.log("Fetching allocations, rooms, and time slots...");
+  console.log("Fetching allocations, rooms, divisions, curriculum, and time slots...");
   const allocations = await SubjectAllocation.find({ semester_id, academicYear });
   const rooms = await Room.find();
   const timeSlots = await TimeSlot.find();
+  const divisions = await Division.find();
+  const curriculum = await Curriculum.findOne({ semester_id });
 
   console.log(`Generating schedule for ${allocations.length} allocations...`);
-  const generatedEntries = generateSchedule(allocations, rooms, timeSlots);
+  const generatedEntries = generateSchedule(allocations, rooms, timeSlots, divisions, curriculum);
 
   if (!generatedEntries) {
     console.error("Generator failed! Constraints conflict.");

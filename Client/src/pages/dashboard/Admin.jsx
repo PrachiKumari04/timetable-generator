@@ -24,7 +24,7 @@ function Admin() {
   const [showTimetable, setShowTimetable] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-  const { activeEntity, masterData, loading, error } = useSelector(
+  const { activeEntity, masterData, loading, error, editingEntityId } = useSelector(
     (state) => state.admin,
   );
 
@@ -64,6 +64,17 @@ function Admin() {
       navigate("/");
     }
   }, [authLoading, isAuthenticated, userData, navigate]);
+
+  useEffect(() => {
+    if (activeEntity && !masterData[activeEntity]) {
+      dispatch(
+        fetchMasterData({
+          entityKey: activeEntity,
+          params: { page: 1, limit: 10 },
+        }),
+      );
+    }
+  }, [activeEntity, dispatch, masterData]);
 
   //* Show loading while verifying session
   if (authLoading) {
@@ -812,17 +823,6 @@ function Admin() {
     },
   };
 
-  useEffect(() => {
-    if (activeEntity && !masterData[activeEntity]) {
-      dispatch(
-        fetchMasterData({
-          entityKey: activeEntity,
-          params: { page: 1, limit: 10 },
-        }),
-      );
-    }
-  }, [activeEntity, dispatch, masterData]);
-
   const handleSetActiveEntity = (entityKey) => {
     dispatch(setActiveEntity(entityKey));
   };
@@ -833,18 +833,6 @@ function Admin() {
   const handleUplode = (data) => {
     dispatch(addMasterData({ entityKey: activeEntity, data }));
   };
-
-  const headerActions = [
-    {
-      label: "Master Data",
-      className: "bg-primary hover:bg-secondary text-white border-transparent",
-    },
-    {
-      label: "Timetables",
-      className:
-        "bg-background border border-text/20 hover:bg-text/10 text-text",
-    },
-  ];
 
   const renderContent = () => {
     if (showTimetable) {
@@ -949,12 +937,14 @@ function Admin() {
 
         <div className=" p-6 rounded-lg shadow-md">
           <Form
+            key={`${activeEntity}-${editingEntityId || 'new'}`}
             currentEntityConfig={currentEntityConfig}
             activeEntity={activeEntity}
           />
         </div>
         <div className=" p-6 rounded-lg shadow-md">
           <DataTable
+            key={activeEntity}
             currentEntityConfig={currentEntityConfig}
             activeEntity={activeEntity}
           />
