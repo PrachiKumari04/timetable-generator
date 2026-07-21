@@ -511,7 +511,7 @@ export const userLogin = async (req, res) => {
 
   // * Get user details with student/faculty info
   const userWithDetails = await User.aggregate([
-    { $match: { _id: user._id } },
+    { $match: { _id: new mongoose.Types.ObjectId(user._id) } },
     {
       $lookup: {
         from: "students",
@@ -555,6 +555,16 @@ export const userLogin = async (req, res) => {
           },
         },
         email: "$user_data.email",
+        class_group: {
+          $cond: {
+            if: { $ne: ["$student_id", null] },
+            then: "$user_data.class",
+            else: null,
+          },
+        },
+        class: "$user_data.class",
+        specialization: "$user_data.specialization",
+        batch: "$user_data.batch",
       },
     },
   ]);
