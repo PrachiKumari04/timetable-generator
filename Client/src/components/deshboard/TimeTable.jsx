@@ -160,42 +160,95 @@ const TimetableHeader = ({ collegeInfo }) => (
 );
 
 // Action Buttons Component
-const ActionButtons = ({ onPrint, onExport, onExportCalendar, onRefresh, onGenerate, viewMode, setViewMode, isRefreshing, isExporting, isAdmin, selectedDivision, setSelectedDivision, role }) => (
+const ActionButtons = ({
+  onPrint,
+  onExport,
+  onExportCalendar,
+  onRefresh,
+  onGenerate,
+  viewMode,
+  setViewMode,
+  isRefreshing,
+  isExporting,
+  isAdmin,
+  selectedDivision,
+  setSelectedDivision,
+  role,
+  facultyViewMode,
+  setFacultyViewMode,
+  facultyTaughtDivisions = []
+}) => (
   <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-surface border-b border-border">
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => setViewMode("week")}
-        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-          viewMode === "week"
-            ? "bg-primary text-white"
-            : "bg-surface-hover border border-border text-text hover:bg-border"
-        }`}
-      >
-        Week View
-      </button>
-      <button
-        onClick={() => setViewMode("day")}
-        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-          viewMode === "day"
-            ? "bg-primary text-white"
-            : "bg-surface-hover border border-border text-text hover:bg-border"
-        }`}
-      >
-        Day View
-      </button>
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-1 bg-background border border-border rounded-md p-1">
+        <button
+          onClick={() => setViewMode("week")}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+            viewMode === "week"
+              ? "bg-primary text-white"
+              : "text-text/70 hover:text-text hover:bg-surface-hover"
+          }`}
+        >
+          Week View
+        </button>
+        <button
+          onClick={() => setViewMode("day")}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+            viewMode === "day"
+              ? "bg-primary text-white"
+              : "text-text/70 hover:text-text hover:bg-surface-hover"
+          }`}
+        >
+          Day View
+        </button>
+      </div>
 
-      {role !== "student" && (
-        <div className="flex items-center gap-2 ml-4">
-          <span className="text-sm font-medium text-text/80">Division:</span>
+      {role === "faculty" && (
+        <div className="flex items-center gap-1 bg-background border border-border rounded-md p-1">
+          <button
+            onClick={() => setFacultyViewMode("my_schedule")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              facultyViewMode === "my_schedule"
+                ? "bg-purple-600 text-white shadow-xs font-bold"
+                : "text-text/70 hover:text-text hover:bg-surface-hover"
+            }`}
+          >
+            👤 My Personal Schedule
+          </button>
+          <button
+            onClick={() => setFacultyViewMode("class_timetable")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              facultyViewMode === "class_timetable"
+                ? "bg-purple-600 text-white shadow-xs font-bold"
+                : "text-text/70 hover:text-text hover:bg-surface-hover"
+            }`}
+          >
+            🏫 Class Timetables
+          </button>
+        </div>
+      )}
+
+      {role !== "student" && (role !== "faculty" || facultyViewMode === "class_timetable") && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-text/80">Division:</span>
           <select
             value={selectedDivision}
             onChange={(e) => setSelectedDivision(e.target.value)}
-            className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-sm focus:outline-none focus:border-primary"
+            className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-xs font-medium focus:outline-none focus:border-primary"
           >
-            <option value="D001">A</option>
-            <option value="D002">B</option>
-            <option value="D003">C</option>
-            <option value="D004">D</option>
+            {[
+              { id: "D001", name: "Div A" },
+              { id: "D002", name: "Div B" },
+              { id: "D003", name: "Div C" },
+              { id: "D004", name: "Div D" },
+            ].map((div) => {
+              const isTaught = facultyTaughtDivisions.includes(div.id);
+              return (
+                <option key={div.id} value={div.id}>
+                  {div.name} {isTaught ? " (Teaches)" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
       )}
@@ -595,6 +648,7 @@ const TimeTable = () => {
 
   const [viewMode, setViewMode] = useState("week");
   const [selectedDay, setSelectedDay] = useState("monday");
+  const [facultyViewMode, setFacultyViewMode] = useState("my_schedule");
   const [timetableData, setTimetableData] = useState(SAMPLE_TIMETABLE_DATA);
   const [rawEntries, setRawEntries] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("D001");
@@ -609,6 +663,34 @@ const TimeTable = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const timetableRef = useRef(null);
   const exportRef = useRef(null);
+
+  // Derive current faculty ID & Name
+  const currentFacultyId = React.useMemo(() => {
+    if (userData?.role !== "faculty") return null;
+    if (userData?.faculty_id) return userData.faculty_id;
+    if (userData?.user_id && userData.user_id.startsWith("FAC")) {
+      return userData.user_id.replace(/^FAC/, "");
+    }
+    return null;
+  }, [userData]);
+
+  const currentFacultyName = React.useMemo(() => {
+    if (userData?.user_name) return userData.user_name;
+    const found = faculties.find(f => f.faculty_id === currentFacultyId);
+    return found ? found.faculty_name : (userData?.user_id || "Faculty");
+  }, [userData, currentFacultyId, faculties]);
+
+  // Find all divisions taught by this faculty member
+  const facultyTaughtDivisions = React.useMemo(() => {
+    if (!currentFacultyId || rawEntries.length === 0) return [];
+    const set = new Set();
+    rawEntries.forEach(entry => {
+      if (entry.faculty_id === currentFacultyId) {
+        set.add(entry.class_group);
+      }
+    });
+    return Array.from(set);
+  }, [currentFacultyId, rawEntries]);
 
   // Map student class to division ID
   const getDivisionIdFromClass = (classStr) => {
@@ -640,12 +722,19 @@ const TimeTable = () => {
       facultyMap[f.faculty_id] = f.faculty_name;
     });
 
-    const filtered = rawEntries.filter(entry => entry.class_group === activeDivisionId);
+    const isFacultyMySchedule = userData?.role === "faculty" && facultyViewMode === "my_schedule";
+
+    const filtered = isFacultyMySchedule
+      ? rawEntries.filter(entry => entry.faculty_id === currentFacultyId)
+      : rawEntries.filter(entry => entry.class_group === activeDivisionId);
 
     const mapping = {};
     filtered.forEach(entry => {
       const subjectName = courseMap[entry.course_id] || entry.course_id;
-      const facultyName = facultyMap[entry.faculty_id] || entry.faculty_id;
+      const facultyName = isFacultyMySchedule
+        ? `Class: ${getDivisionName(entry.class_group)}`
+        : (facultyMap[entry.faculty_id] || entry.faculty_id);
+
       if (subjectName && facultyName) {
         if (!mapping[subjectName]) {
           mapping[subjectName] = new Set();
@@ -666,7 +755,7 @@ const TimeTable = () => {
                 if (!mapping[cleaned]) {
                   mapping[cleaned] = new Set();
                 }
-                mapping[cleaned].add("Sample Faculty");
+                mapping[cleaned].add(isFacultyMySchedule ? "Your Assigned Classes" : "Sample Faculty");
               }
             });
           }
@@ -675,22 +764,35 @@ const TimeTable = () => {
     }
 
     return mapping;
-  }, [rawEntries, activeDivisionId, courses, faculties]);
-  
-
+  }, [rawEntries, activeDivisionId, courses, faculties, userData, facultyViewMode, currentFacultyId]);
 
   //* College information (can be fetched from API)
-  const collegeInfo = React.useMemo(() => ({
-    name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
-    batch: "BATCH 2025 ( A. Y. - 2025-26)",
-    semester: "SEM - II",
-    effectiveDate: "5 January 2026",
-    classInfo: userData?.role === "student" && userData?.class_group 
-      ? userData.class_group 
-      : `MCA - II ${getDivisionName(activeDivisionId)}`,
-    classTeacher: getDivisionDetails(activeDivisionId).teacher,
-    roomNo: getDivisionDetails(activeDivisionId).room,
-  }), [userData, activeDivisionId]);
+  const collegeInfo = React.useMemo(() => {
+    if (userData?.role === "faculty" && facultyViewMode === "my_schedule") {
+      const taughtNames = facultyTaughtDivisions.map(getDivisionName).join(", ");
+      return {
+        name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
+        batch: "BATCH 2025 ( A. Y. - 2025-26)",
+        semester: "SEM - II",
+        effectiveDate: "5 January 2026",
+        classInfo: `Personal Teaching Schedule - ${currentFacultyName}`,
+        classTeacher: `Faculty ID: ${currentFacultyId || "F001"}`,
+        roomNo: taughtNames ? `Assigned Classes: ${taughtNames}` : "All Classes",
+      };
+    }
+
+    return {
+      name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
+      batch: "BATCH 2025 ( A. Y. - 2025-26)",
+      semester: "SEM - II",
+      effectiveDate: "5 January 2026",
+      classInfo: userData?.role === "student" && userData?.class_group 
+        ? userData.class_group 
+        : `MCA - II ${getDivisionName(activeDivisionId)}`,
+      classTeacher: getDivisionDetails(activeDivisionId).teacher,
+      roomNo: getDivisionDetails(activeDivisionId).room,
+    };
+  }, [userData, facultyViewMode, activeDivisionId, currentFacultyName, currentFacultyId, facultyTaughtDivisions]);
 
   //! Handle Print functionality
   const handlePrint = useCallback(() => {
@@ -875,7 +977,11 @@ const TimeTable = () => {
       saturday: new Array(10).fill(null)
     };
 
-    const filtered = rawEntries.filter(entry => entry.class_group === activeDivisionId);
+    const isFacultyMySchedule = userData?.role === "faculty" && facultyViewMode === "my_schedule";
+
+    const filtered = isFacultyMySchedule
+      ? rawEntries.filter(entry => entry.faculty_id === currentFacultyId)
+      : rawEntries.filter(entry => entry.class_group === activeDivisionId);
 
     filtered.forEach(entry => {
       const day = entry.day_of_week.toLowerCase();
@@ -898,64 +1004,71 @@ const TimeTable = () => {
       if (formattedData[day]) {
         const existing = formattedData[day][index];
         const newSubject = courseMap[entry.course_id] || entry.course_id;
-        const newFaculty = facultyMap[entry.faculty_id] || entry.faculty_id;
+        const newFaculty = isFacultyMySchedule
+          ? `Class: ${getDivisionName(entry.class_group)}`
+          : (facultyMap[entry.faculty_id] || entry.faculty_id);
         const newRoom = entry.block ? `${entry.room_no} (${entry.block})` : entry.room_no;
+        const isMyClass = entry.faculty_id === currentFacultyId;
         
         if (existing) {
           formattedData[day][index] = {
             subject: `${existing.subject} / ${newSubject}`,
             faculty: `${existing.faculty} / ${newFaculty}`,
             room: `${existing.room} / ${newRoom}`,
-            isLab: existing.isLab || entry.isLab
+            isLab: existing.isLab || entry.isLab,
+            isMyClass: existing.isMyClass || isMyClass
           };
         } else {
           formattedData[day][index] = {
             subject: newSubject,
             faculty: newFaculty,
             room: newRoom,
-            isLab: entry.isLab
+            isLab: entry.isLab,
+            isMyClass: isMyClass
           };
         }
       }
     });
 
-    // Fill remaining empty spots with Mentoring, Library, and Self Study sessions
-    let emptyCount = 0;
-    const lectureIndices = [0, 1, 3, 4, 6, 7, 9];
-    const weekdayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+    // In Class View (non-MySchedule), fill empty spots with Mentoring, Library, Self Study
+    if (!isFacultyMySchedule) {
+      let emptyCount = 0;
+      const lectureIndices = [0, 1, 3, 4, 6, 7, 9];
+      const weekdayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
-    weekdayKeys.forEach(day => {
-      lectureIndices.forEach(idx => {
-        if (!formattedData[day][idx]) {
-          emptyCount++;
-          if (emptyCount === 1 || emptyCount === 2) {
-            formattedData[day][idx] = {
-              subject: "Mentoring Session",
-              faculty: getDivisionDetails(activeDivisionId).teacher || "Class Teacher",
-              room: getDivisionDetails(activeDivisionId).room || "Class Room",
-              isLab: false
-            };
-          } else if (emptyCount === 3) {
-            formattedData[day][idx] = {
-              subject: "Library Session",
-              faculty: "Librarian",
-              room: "Library",
-              isLab: false
-            };
-          } else {
-            formattedData[day][idx] = {
-              subject: "Self Study",
-              faculty: "",
-              room: getDivisionDetails(activeDivisionId).room || "Class Room",
-              isLab: false
-            };
+      weekdayKeys.forEach(day => {
+        lectureIndices.forEach(idx => {
+          if (!formattedData[day][idx]) {
+            emptyCount++;
+            if (emptyCount === 1 || emptyCount === 2) {
+              formattedData[day][idx] = {
+                subject: "Mentoring Session",
+                faculty: getDivisionDetails(activeDivisionId).teacher || "Class Teacher",
+                room: getDivisionDetails(activeDivisionId).room || "Class Room",
+                isLab: false
+              };
+            } else if (emptyCount === 3) {
+              formattedData[day][idx] = {
+                subject: "Library Session",
+                faculty: "Librarian",
+                room: "Library",
+                isLab: false
+              };
+            } else {
+              formattedData[day][idx] = {
+                subject: "Self Study",
+                faculty: "",
+                room: getDivisionDetails(activeDivisionId).room || "Class Room",
+                isLab: false
+              };
+            }
           }
-        }
+        });
       });
-    });
+    }
 
     setTimetableData(formattedData);
-  }, [rawEntries, activeDivisionId, courses, faculties]);
+  }, [rawEntries, activeDivisionId, courses, faculties, userData, facultyViewMode, currentFacultyId]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -995,6 +1108,9 @@ const TimeTable = () => {
         selectedDivision={selectedDivision}
         setSelectedDivision={setSelectedDivision}
         role={userData?.role}
+        facultyViewMode={facultyViewMode}
+        setFacultyViewMode={setFacultyViewMode}
+        facultyTaughtDivisions={facultyTaughtDivisions}
       />
       
       {/* Export Container wrapping Header, Content Grid, and Legend */}
