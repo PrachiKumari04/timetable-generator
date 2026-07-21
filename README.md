@@ -1,47 +1,35 @@
-# 📅 Intelligent University Timetable Generator & Management System
+# 📅 Timetable Generator Platform
 
-[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green.svg)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-v19-blue.svg)](https://react.dev/)
-[![Express](https://img.shields.io/badge/Express-v5-black.svg)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-brightgreen.svg)](https://www.mongodb.com/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-ISC-orange.svg)](#license)
-
-An end-to-end, full-stack automated timetable generation and academic scheduling platform. Designed for universities and educational institutions, it uses a constraint solver engine to generate conflict-free schedules for lectures, labs, electives, and faculty workloads while providing real-time analytics and calendar integrations.
+A full-stack, automated Timetable Generation platform designed for educational institutions to manage their academic schedules seamlessly. It features a modern **React 19** Admin & User dashboard and an **Express + MongoDB** backend that intelligently groups Classes, Sections, Faculties, Rooms, and Subjects to assemble collision-free schedules.
 
 ---
 
-## 🌟 Key Features
+## 🚀 Key Features
 
-### 🤖 1. Automated Constraint Solver Engine
-- **Clash-Free Scheduling**: Prevents overlapping slots for teachers, classrooms, and student divisions.
-- **8-Slot Daily Schedule**: Structured schedule supporting 8 daily operational periods and mandatory lunch breaks.
-- **Auto-Fill Idle Slots**: Automatically schedules constructive periods (Mentoring, Library, Self-Study) during open student slots.
-- **Lab & Consecutive Period Handling**: Multi-period lab allocations with dedicated lab-room constraint checks.
-
-### 🏫 2. Smart Room Allocation & Parallel Electives
-- **Home & Guest Classroom Routing**: Handles simultaneous parallel elective courses by assigning home classrooms to main cohorts and guest rooms to elective divisions.
-- **Capacity & Facility Match**: Matches batch sizes and practical requirements with room capacities and specialized lab features.
-
-### 🔐 3. Multi-Role Access Control (RBAC)
-- **Admin Portal**: Complete control over master data, curriculum rules, room allocations, and timetable generation.
-- **Faculty Portal**: Personalized schedule view, assigned subject load tracking, and calendar exports.
-- **Student Portal**: Division-wise timetable, elective slot tracking, and personal calendar sync.
-
-### 📊 4. Interactive Dashboards & Analytics
-- **Visual Analytics**: Interactive charts detailing room occupancy rates, faculty workload distributions, and slot usage.
-- **iCalendar (.ics) Sync**: Export personalized schedules directly to Google Calendar, Apple Calendar, or Outlook.
-- **Export & Print**: Download timetables as PNG images or Excel spreadsheets (`.xlsx`).
+- **🤖 Automated Constraint Engine:** Constraint-based solver that automatically slots Faculty and Subjects into Rooms without overlaps, enforcing same-day lecture limits and lab blocks.
+- **⏱️ 8-Slot Daily Schedule & Auto-Fill:** Manages 8 daily operational periods, mandatory lunch breaks, and auto-fills idle windows with Mentoring, Library, and Self-Study sessions.
+- **🏫 Smart Room Allocation:** Dynamic Home vs. Guest classroom routing to handle parallel elective courses for division sub-groups without room conflicts.
+- **📊 Analytics Dashboard:** Interactive visual breakdown of room occupancy rates, faculty workloads, and daily slot distributions.
+- **📅 iCal Sync & Multi-Format Export:** Export personalized schedules in `.ics` calendar format (Google/Apple Calendar), Excel (`.xlsx`), or PNG image files.
+- **🔐 Multi-Role JWT Security:** Role-Based Access Control (Admin, Faculty, Student) secured with JWT access/refresh tokens and `bcryptjs` password hashing.
+- **🛠️ Master Data Management:** Complete CRUD interface for university data (Programs, Courses, Semesters, Specializations, Subjects, Rooms, Faculty, and Students).
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technologies Used |
-| :--- | :--- |
-| **Frontend** | React 19, Vite, Redux Toolkit, Tailwind CSS v4, React Router DOM v7, React Hot Toast, Lucide Icons |
-| **Backend** | Node.js, Express.js (v5), Mongoose (v9), MongoDB, JWT (JSON Web Tokens), Bcryptjs |
-| **Utilities** | iCalendar Export, `xlsx` Excel Generator, `html-to-image` / `html2canvas` |
+### Frontend (`Client/`)
+- **React 19** with **Vite**
+- **Tailwind CSS v4** for modern responsive styling
+- **Redux Toolkit** & **React Router v7** for application state and routing
+- **React Hot Toast** for notifications
+- **html-to-image** & **xlsx** for schedule exporting
+
+### Backend (`Backend/`)
+- **Node.js** with **Express.js (v5)**
+- **MongoDB** featuring structured **Mongoose (v9)** schemas with relational references (`ref`)
+- **JWT & Bcryptjs** for authentication and password encryption
+- **Helmet, Cors & Cookie-Parser** for production security
 
 ---
 
@@ -49,160 +37,76 @@ An end-to-end, full-stack automated timetable generation and academic scheduling
 
 ```
 TimeTable/
-├── Backend/                      # Node.js & Express API Server
-│   ├── src/
-│   │   ├── config/               # Database connection setup
-│   │   ├── controllers/          # Request handlers (Auth, Master Data, Timetable)
-│   │   ├── models/               # Mongoose schemas (User, Room, Course, TimeTableEntry, etc.)
-│   │   ├── routes/               # Express API endpoints
-│   │   ├── utils/                # Timetable generator solver & algorithm logic
-│   │   ├── app.js                # Express app initialization & middleware
-│   │   └── index.js              # Server entry point
-│   ├── seed.js                   # Master data seeding script
-│   ├── seed_allocations.js       # Curriculum allocation seeder
-│   ├── seed_curriculum.js        # Course & Subject rules seeder
-│   └── testGenerator.js          # Solver standalone benchmark script
-│
-├── Client/                       # React + Vite Frontend Application
-│   ├── public/                   # Static assets
-│   ├── src/
-│   │   ├── assets/               # Branding & media assets
-│   │   ├── components/           # UI components (Admin, Faculty, Student dashboards, Timetable Grid)
-│   │   ├── context/              # Authentication & App state context
-│   │   ├── store/                # Redux store slices
-│   │   ├── App.jsx               # Root component & Route setup
-│   │   └── main.jsx              # Entry point
-│   ├── index.html
-│   └── vite.config.js
-└── README.md                     # Project documentation
+├── Backend/               # Express API & Constraint Engine (Port 4000)
+│   ├── src/               # Controllers, Models, Routes, & Generator logic
+│   ├── seed.js            # Master data seed script
+│   └── testGenerator.js   # Standalone solver test script
+├── Client/                # React 19 + Vite Frontend (Port 5173)
+│   ├── src/               # UI Components, Redux store, Dashboards
+│   └── index.html
+└── README.md              # Project documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## 💻 Installation & Setup
 
-### Prerequisites
-- **Node.js** (v18.x or higher)
-- **MongoDB** (Local instance running on `mongodb://localhost:27017` or MongoDB Atlas URI)
-- **npm** or **yarn**
+Before starting, ensure you have **Node.js** (v18+) and **MongoDB** installed and running on your machine.
 
----
-
-### 📥 1. Clone the Repository
+### 1. Clone the repository
 ```bash
 git clone https://github.com/PrachiKumari04/timetable-generator.git
 cd timetable-generator
 ```
 
----
-
-### ⚙️ 2. Backend Setup
-
-1. Navigate to the backend directory:
-   ```bash
-   cd Backend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Configure environment variables:
-   Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   *Example `.env` configuration:*
-   ```env
-   PORT=4000
-   MONGODB_URI=mongodb://localhost:27017/
-   ACCESS_TOKEN_SECRET=your-super-secret-access-token-key
-   ACCESS_TOKEN_EXPIRY=1d
-   REFRESH_TOKEN_SECRET=your-super-secret-refresh-token-key
-   REFRESH_TOKEN_EXPIRY=7d
-   SALT_ROUNDS=10
-   NODE_ENV=development
-   ```
-
-4. Seed initial database records (Optional but recommended):
-   ```bash
-   node seed.js
-   node seed_curriculum.js
-   node seed_allocations.js
-   ```
-
-5. Start the backend development server:
-   ```bash
-   npm run dev
-   ```
-   The backend API will run at `http://localhost:4000`.
-
----
-
-### 💻 3. Frontend Setup
-
-1. Open a new terminal and navigate to the client directory:
-   ```bash
-   cd Client
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   The application will be accessible at `http://localhost:5173`.
-
----
-
-## 🔑 Default Seeded Accounts
-
-For testing after running the seed scripts:
-
-| Role | Username / User ID | Password | Access Rights |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `admin123` | Full System & Data Management |
-| **Faculty** | `FACF001` | `faculty123` | Personal Timetable & Class Schedules |
-| **Student** | `STUADT25COMM0873` | `student123` | Division Schedule & iCal Export |
-
----
-
-## 📡 API Overview
-
-### Authentication & Users
-- `POST /api/v1/users/login` - User authentication & JWT token generation.
-- `POST /api/v1/users/logout` - Invalidate user session.
-- `GET /api/v1/users/current-user` - Fetch current authenticated profile.
-
-### Master Data Management
-- `GET / POST / PUT / DELETE /api/v1/courses` - Managing courses.
-- `GET / POST / PUT / DELETE /api/v1/rooms` - Classroom & lab management.
-- `GET / POST / PUT / DELETE /api/v1/subjects` - Subject curriculum configuration.
-- `GET / POST / PUT / DELETE /api/v1/semesters` - Academic semesters.
-
-### Timetable Engine
-- `POST /api/v1/timetable/generate` - Trigger full automated schedule generation.
-- `GET /api/v1/timetable/view` - Retrieve generated entries with filters (division, room, faculty).
-
----
-
-## 🧪 Testing the Generator Engine
-
-You can test the constraint solver independently from the backend CLI:
-
+### 2. Setup the Backend
+Navigate to the `Backend/` directory and install dependencies:
 ```bash
 cd Backend
-npm test
+npm install
 ```
-This executes `testGenerator.js` to log generation statistics, slot assignment efficiency, and conflict checks directly in the terminal.
+
+Create a `.env` file in the `Backend/` directory:
+```env
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/timetable
+ACCESS_TOKEN_SECRET=your-access-token-secret
+REFRESH_TOKEN_SECRET=your-refresh-token-secret
+SALT_ROUNDS=10
+```
+
+Start the backend development server:
+```bash
+npm run dev
+```
+The server will run on `http://localhost:4000`.
+
+### 3. Setup the Frontend
+Open a **new** terminal, navigate to the `Client/` directory, and install dependencies:
+```bash
+cd Client
+npm install
+```
+
+Start the Vite development server:
+```bash
+npm run dev
+```
+The application will be live at `http://localhost:5173`.
+
+---
+
+## 🔐 Seed Accounts & Logins
+
+After running the database seed scripts (`node seed.js` in `Backend/`), you can log in with:
+
+| Role | User ID / Username | Password | Dashboard Access |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `admin123` | Full Master Data & Timetable Generator |
+| **Faculty** | `FACF001` | `faculty123` | Personal Teaching Schedule & iCal Export |
+| **Student** | `STUADT25COMM0873` | `student123` | Class Division Timetable & Calendar Sync |
 
 ---
 
 ## 📄 License
-
-This project is licensed under the [ISC License](LICENSE).
+Licensed under the [ISC License](LICENSE).
