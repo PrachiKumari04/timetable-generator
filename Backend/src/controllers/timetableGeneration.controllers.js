@@ -37,11 +37,17 @@ export const generateTimetable = asyncHandler(async (req, res) => {
 
   // 2. Run the generative scheduling solver
   const curriculum = await Curriculum.findOne({ semester_id });
-  const generatedEntries = generateSchedule(allocations, rooms, timeSlots, divisions, curriculum);
+  const scheduleResult = generateSchedule(allocations, rooms, timeSlots, divisions, curriculum);
 
-  if (!generatedEntries) {
+  if (!scheduleResult) {
     throw new ApiError(422, "Conflict-free schedule could not be generated with the current constraints (rooms, slots, or faculty allocations). Try increasing availability or reducing allocated hours.");
   }
+
+  if (scheduleResult.error) {
+    throw new ApiError(400, scheduleResult.error);
+  }
+
+  const generatedEntries = Array.isArray(scheduleResult) ? scheduleResult : scheduleResult.entries;
 
   // 3. Clear existing draft or published timetables and their entries for the same semester and academic year
   const classGroups = [...new Set(allocations.map(a => a.division_id))];

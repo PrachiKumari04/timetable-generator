@@ -4,23 +4,58 @@ import apiClient from "../../services/apiClient";
 import { toPng } from "html-to-image";
 import { exportToICS } from "../../utils/calendarExport";
 
-//* Subject color mapping for different subjects
+//* Subject color mapping for different subjects across MCA, MBA, and MTech
 const SUBJECT_COLORS = {
-  "Data Analytics & Visualization": { bg: "bg-green-700", text: "text-white" },
-  "Ethical Hacking & security operations": { bg: "bg-green-700", text: "text-white" },
+  // MCA Subjects
+  "Data Analytics & Visualization": { bg: "bg-emerald-800", text: "text-white" },
+  "Ethical Hacking & security operations": { bg: "bg-emerald-800", text: "text-white" },
+  "Cyber Security Analytics": { bg: "bg-emerald-800", text: "text-white" },
   "Operating System": { bg: "bg-red-900", text: "text-white" },
-  "Accounting & Financial Management": { bg: "bg-yellow-600", text: "text-white" },
-  "Core Java Programming": { bg: "bg-orange-500", text: "text-white" },
-  "Web Technologies": { bg: "bg-green-500", text: "text-white" },
-  "ADBM": { bg: "bg-yellow-700", text: "text-white" },
+  "Core Java Programming": { bg: "bg-orange-600", text: "text-white" },
+  "Advance Java Programming": { bg: "bg-orange-600", text: "text-white" },
+  "Web Technologies": { bg: "bg-cyan-700", text: "text-white" },
+  "Advanced Web Technology": { bg: "bg-cyan-700", text: "text-white" },
+  "ADBMS": { bg: "bg-amber-800", text: "text-white" },
+  "Advanced Database Management System": { bg: "bg-amber-800", text: "text-white" },
   "DAA": { bg: "bg-blue-900", text: "text-white" },
-  "Advanced Database Management System": { bg: "bg-yellow-800", text: "text-white" },
+  "Design & Analysis of Algorithms": { bg: "bg-blue-900", text: "text-white" },
+  "Cloud Computing Integrated with AI": { bg: "bg-sky-800", text: "text-white" },
+  "Cloud Architecture": { bg: "bg-sky-800", text: "text-white" },
+  "Data Structures using Python": { bg: "bg-teal-700", text: "text-white" },
+  "Software Engineering & OOAD": { bg: "bg-purple-800", text: "text-white" },
+  "Optimization Techniques": { bg: "bg-blue-800", text: "text-white" },
+
+  // MBA Subjects
+  "Financial Accounting & Costing with AI Tools": { bg: "bg-amber-700", text: "text-white" },
+  "Managerial Economics in Digital Age": { bg: "bg-indigo-900", text: "text-white" },
+  "Marketing in Digital Age": { bg: "bg-pink-700", text: "text-white" },
+  "Business Statistics & Data Interpretation": { bg: "bg-blue-700", text: "text-white" },
+  "Corporate Ethics & Responsible AI": { bg: "bg-purple-900", text: "text-white" },
+  "Consumer Behaviour": { bg: "bg-rose-800", text: "text-white" },
+  "Financial Services & Markets": { bg: "bg-yellow-700", text: "text-white" },
+  "Introduction to Human Resource Management": { bg: "bg-violet-800", text: "text-white" },
+  "Introduction to Logistics & Supply Chain Management": { bg: "bg-blue-900", text: "text-white" },
+  "Data Interpretation & Social Media Lab": { bg: "bg-green-700", text: "text-white" },
+
+  // MTech Subjects
+  "Construction Techniques": { bg: "bg-amber-900", text: "text-white" },
+  "Estimation, Tendering & Contracting": { bg: "bg-stone-800", text: "text-white" },
+  "Project Resource Management": { bg: "bg-slate-800", text: "text-white" },
+  "Real Estate Project Development": { bg: "bg-amber-800", text: "text-white" },
+  "Infrastructure Project Development": { bg: "bg-blue-900", text: "text-white" },
+  "Computer Lab - I (MSP & Primavera)": { bg: "bg-teal-800", text: "text-white" },
+  "AutoCAD Lab": { bg: "bg-red-700", text: "text-white" },
+  "Computer Lab - II (R & Python)": { bg: "bg-teal-700", text: "text-white" },
+  "Field Work & Site Inspection": { bg: "bg-green-800", text: "text-white" },
+
+  // Common / General
   "Logical Aptitude": { bg: "bg-gray-700", text: "text-white" },
   "Mentorship": { bg: "bg-gray-600", text: "text-white" },
-  "Guest Lecture": { bg: "bg-cyan-400", text: "text-black" },
-  "Lab": { bg: "bg-green-600", text: "text-white" },
-  "Business Essentials": { bg: "bg-green-600", text: "text-white" },
-  default: { bg: "bg-gray-500", text: "text-white" },
+  "Mentoring Session": { bg: "bg-gray-600", text: "text-white" },
+  "Guest Lecture": { bg: "bg-cyan-600", text: "text-white" },
+  "Library Session": { bg: "bg-gray-600", text: "text-white" },
+  "Self Study": { bg: "bg-gray-700", text: "text-white" },
+  default: { bg: "bg-gray-600", text: "text-white" },
 };
 
 //* Time slots configuration
@@ -39,80 +74,312 @@ const TIME_SLOTS = [
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-//* Sample timetable data based on the image
-const SAMPLE_TIMETABLE_DATA = {
+//* Sample timetable datasets for MCA, MBA, and MTech
+//* Sample timetable datasets for MCA, MBA, and MTech across Sem 1 and Sem 3
+const MCA_SEM1_SAMPLE_DATA = {
   monday: [
-    { subject: "Data Analytics & Visualization/Ethical Hacking & security operations", faculty: "", room: "" },
-    { subject: "Operating System", faculty: "", room: "" },
+    { subject: "Organization Design and Emotional Intelligence", faculty: "Prof. Vinod Charawande", room: "N 709" },
+    { subject: "Data Structure using Python", faculty: "Prof. Pallavi Gaikwad", room: "N 709" },
     null,
-    { subject: "ADBMS", faculty: "", room: "" },
-    { subject: "Accounting & Financial Management", faculty: "", room: "" },
+    { subject: "Business Statistics using Python", faculty: "Prof. Namrata Soni Valecha", room: "N 709" },
+    { subject: "Quantum Aware- Computer Organization & Design", faculty: "Prof. Harshitkumar", room: "N 709" },
     null,
-    { subject: "Lab - I Business Essentials & Java Programming Lab Div C (WT) DS", faculty: "", room: "" },
-    null,
-    null,
-    { subject: "Logical Aptitude -Prof.Kemachndra", faculty: "", room: "" },
+    { subject: "Lab - Business Statistics using Python", faculty: "Prof. Namrata Soni Valecha", room: "Lab C" },
+    null, null,
+    { subject: "Computer Networks and Management", faculty: "Prof. Vinod Charawande", room: "N 709" },
   ],
   tuesday: [
-    { subject: "Accounting & Financial Management", faculty: "", room: "" },
-    { subject: "Data Analytics & Visualization/Ethical Hacking & security operations", faculty: "", room: "" },
+    { subject: "Business Communication in Digital Age", faculty: "Prof. Anjali Sharma", room: "N 709" },
+    { subject: "Cloud Computing Integrated with AI", faculty: "Prof. Pratibha Tiwari", room: "N 709" },
     null,
-    { subject: "Web Technologies", faculty: "", room: "" },
-    { subject: "ADBMS", faculty: "", room: "" },
+    { subject: "Organization Design and Emotional Intelligence", faculty: "Prof. Vinod Charawande", room: "N 709" },
+    { subject: "Data Structure using Python", faculty: "Prof. Pallavi Gaikwad", room: "N 709" },
     null,
-    { subject: "Advanced Database Management System & Operating System( Linux) Div B (HP)", faculty: "", room: "" },
-    null,
-    null,
-    { subject: "Accounting & Financial Management Excel", faculty: "", room: "" },
+    { subject: "Lab - Data Structure using Python", faculty: "Prof. Pallavi Gaikwad", room: "Lab B" },
+    null, null,
+    { subject: "Business Statistics using Python", faculty: "Prof. Namrata Soni Valecha", room: "N 709" },
   ],
   wednesday: [
-    { subject: "Core Java Programming", faculty: "", room: "" },
-    { subject: "Operating System", faculty: "", room: "" },
+    { subject: "Quantum Aware- Computer Organization & Design", faculty: "Prof. Harshitkumar", room: "N 709" },
+    { subject: "Computer Networks and Management", faculty: "Prof. Vinod Charawande", room: "N 709" },
     null,
-    { subject: "DAA", faculty: "", room: "" },
-    { subject: "ADBMS", faculty: "", room: "" },
+    { subject: "Introduction to Data Science & AI", faculty: "Prof. Dr. Satyakam Rahul", room: "N 709" },
+    { subject: "Business Communication in Digital Age", faculty: "Prof. Anjali Sharma", room: "N 709" },
     null,
-    { subject: "Data Analytics & Visualization/Ethical Hacking & security operations", faculty: "", room: "" },
-    { subject: "Logical Aptitude -Prof.Kemachndra", faculty: "", room: "" },
+    { subject: "Introduction to Cyber Security & Defense", faculty: "Prof. Pratibha Upadhye", room: "N 709" },
+    { subject: "Mentoring Session", faculty: "Prof. Vinod Charawande", room: "N 709" },
     null,
-    { subject: "Accounting & Financial Management", faculty: "", room: "" },
+    { subject: "Self Study", faculty: "", room: "N 709" },
   ],
   thursday: [
-    { subject: "Lab - I Business Essentials & Java Programming Lab C", faculty: "", room: "" },
+    { subject: "Lab - Business Statistics using Python", faculty: "Prof. Namrata Soni Valecha", room: "Lab C" },
+    null, null,
+    { subject: "Data Structure using Python", faculty: "Prof. Pallavi Gaikwad", room: "N 709" },
+    { subject: "Organization Design and Emotional Intelligence", faculty: "Prof. Vinod Charawande", room: "N 709" },
     null,
+    { subject: "Business Statistics using Python", faculty: "Prof. Namrata Soni Valecha", room: "N 709" },
+    { subject: "Quantum Aware- Computer Organization & Design", faculty: "Prof. Harshitkumar", room: "N 709" },
     null,
-    { subject: "DAA", faculty: "", room: "" },
-    { subject: "Web Technologies", faculty: "", room: "" },
-    null,
-    { subject: "Core Java Programming", faculty: "", room: "" },
-    { subject: "Logical Aptitude -Prof.Kemachndra", faculty: "", room: "" },
-    null,
-    { subject: "Logical Aptitude -Prof.Kemachndra", faculty: "", room: "" },
+    { subject: "Library Session", faculty: "Librarian", room: "Library" },
   ],
   friday: [
-    { subject: "Core Java Programming", faculty: "", room: "" },
-    { subject: "Web Technologies", faculty: "", room: "" },
+    { subject: "Computer Networks and Management", faculty: "Prof. Vinod Charawande", room: "N 709" },
+    { subject: "Business Communication in Digital Age", faculty: "Prof. Anjali Sharma", room: "N 709" },
     null,
-    { subject: "Advanced Database Management System & Operating System( Linux) Div D(VC)", faculty: "", room: "" },
+    { subject: "Lab - Data Structure using Python", faculty: "Prof. Pallavi Gaikwad", room: "Lab B" },
+    null, null,
+    { subject: "Cloud Computing Integrated with AI", faculty: "Prof. Pratibha Tiwari", room: "N 709" },
+    { subject: "Introduction to Data Science & AI", faculty: "Prof. Dr. Satyakam Rahul", room: "N 709" },
     null,
-    null,
-    { subject: "Operating System", faculty: "", room: "" },
-    { subject: "DAA", faculty: "", room: "" },
-    null,
-    { subject: "Mentorship", faculty: "", room: "" },
+    { subject: "Mentorship", faculty: "Prof. Vinod Charawande", room: "N 709" },
   ],
   saturday: [
+    null, null, null,
+    { subject: "Guest Lecture / Workshop", faculty: "Guest Speaker", room: "Auditorium" },
+    { subject: "Guest Lecture / Workshop", faculty: "Guest Speaker", room: "Auditorium" },
+    null, null, null, null, null
+  ]
+};
+
+const MCA_SEM3_SAMPLE_DATA = {
+  monday: [
+    { subject: "Software Engineering & Object Oriented Analysis Design", faculty: "Prof. Hanifkhan Pathan", room: "N 709" },
+    { subject: "Advance Java Programming", faculty: "Dr. Alkawati Magadum", room: "N 709" },
     null,
+    { subject: "Optimization Techniques", faculty: "Prof. Jagruti Kambari", room: "N 709" },
+    { subject: "Advanced Web Technology", faculty: "Prof. Dharmendra Singh", room: "N 709" },
     null,
-    null,
-    { subject: "Guest Lecture / Library", faculty: "", room: "" },
-    { subject: "Guest Lecture / Library", faculty: "", room: "" },
-    null,
-    null,
-    null,
-    null,
-    null,
+    { subject: "Lab - Advance Java Programming", faculty: "Dr. Alkawati Magadum", room: "Lab C" },
+    null, null,
+    { subject: "Research Methodology & Research Tools", faculty: "Dr. Pradnya Muley", room: "N 709" },
   ],
+  tuesday: [
+    { subject: "Cloud Architecture", faculty: "Prof. Hanifkhan Pathan", room: "N 709" },
+    { subject: "Cloud Economics, Security with Data Visualization", faculty: "Prof. Dr. Satyakam Rahul", room: "N 709" },
+    null,
+    { subject: "Software Engineering & Object Oriented Analysis Design", faculty: "Prof. Hanifkhan Pathan", room: "N 709" },
+    { subject: "Advance Java Programming", faculty: "Dr. Alkawati Magadum", room: "N 709" },
+    null,
+    { subject: "Lab - Advanced Web Technology & OOAD Lab", faculty: "Prof. Dharmendra Singh", room: "Lab B" },
+    null, null,
+    { subject: "Optimization Techniques", faculty: "Prof. Jagruti Kambari", room: "N 709" },
+  ],
+  wednesday: [
+    { subject: "Advanced Web Technology", faculty: "Prof. Dharmendra Singh", room: "N 709" },
+    { subject: "Research Methodology & Research Tools", faculty: "Dr. Pradnya Muley", room: "N 709" },
+    null,
+    { subject: "Data Analytics Application using AI & ML", faculty: "Prof. Deepak V Ulape", room: "N 709" },
+    { subject: "Data Handling & Preprocessing", faculty: "Prof. Pratibha Tiwari", room: "N 709" },
+    null,
+    { subject: "Summer Internship Program", faculty: "Prof. Deepak V Ulape", room: "N 709" },
+    { subject: "Cyber Security Analytics", faculty: "Prof. Pallavi Gaikwad", room: "N 709" },
+    null,
+    { subject: "Mentorship", faculty: "Prof. Dr. Satyakam Rahul", room: "N 709" },
+  ],
+  thursday: [
+    { subject: "Lab - Cloud Architecture / Data Analytics Lab", faculty: "Prof. Hanifkhan Pathan", room: "Lab C" },
+    null, null,
+    { subject: "Advance Java Programming", faculty: "Dr. Alkawati Magadum", room: "N 709" },
+    { subject: "Software Engineering & Object Oriented Analysis Design", faculty: "Prof. Hanifkhan Pathan", room: "N 709" },
+    null,
+    { subject: "Optimization Techniques", faculty: "Prof. Jagruti Kambari", room: "N 709" },
+    { subject: "Advanced Web Technology", faculty: "Prof. Dharmendra Singh", room: "N 709" },
+    null,
+    { subject: "Library Session", faculty: "Librarian", room: "Library" },
+  ],
+  friday: [
+    { subject: "Research Methodology & Research Tools", faculty: "Dr. Pradnya Muley", room: "N 709" },
+    { subject: "Cloud Architecture", faculty: "Prof. Hanifkhan Pathan", room: "N 709" },
+    null,
+    { subject: "Data Mining and Data Warehousing", faculty: "Prof. Rahul Sharma", room: "N 709" },
+    null, null,
+    { subject: "Cyber Threat Analytics", faculty: "Prof. Harshit Kumar", room: "N 709" },
+    { subject: "Summer Internship Program", faculty: "Prof. Deepak V Ulape", room: "N 709" },
+    null,
+    { subject: "Self Study", faculty: "", room: "N 709" },
+  ],
+  saturday: [
+    null, null, null,
+    { subject: "Guest Lecture / Tech Seminar", faculty: "Guest Speaker", room: "Auditorium" },
+    { subject: "Guest Lecture / Tech Seminar", faculty: "Guest Speaker", room: "Auditorium" },
+    null, null, null, null, null
+  ]
+};
+
+const MBA_SAMPLE_DATA = {
+  monday: [
+    { subject: "Financial Accounting & Costing with AI Tools", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+    { subject: "Managerial Economics in Digital Age", faculty: "Prof. Anand Bhaskar", room: "M 101" },
+    null,
+    { subject: "Marketing in Digital Age", faculty: "Prof. Hanifkhan Pathan", room: "M 101" },
+    { subject: "Business Statistics & Data Interpretation", faculty: "Dr. Chandresh Chakraborty", room: "M 101" },
+    null,
+    { subject: "Corporate Ethics & Responsible AI", faculty: "Prof. Snehal Belkhode", room: "M 101" },
+    null, null,
+    { subject: "Introduction to Human Resource Management", faculty: "Prof. Swati Sayankar", room: "M 101" },
+  ],
+  tuesday: [
+    { subject: "Consumer Behaviour", faculty: "Prof. Snehal Patil", room: "M 101" },
+    { subject: "Financial Services & Markets", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+    null,
+    { subject: "Introduction to Logistics & Supply Chain Management", faculty: "Prof. Dharmendra", room: "M 101" },
+    { subject: "Financial Accounting & Costing with AI Tools", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+    null,
+    { subject: "Managerial Economics in Digital Age", faculty: "Prof. Anand Bhaskar", room: "M 101" },
+    null, null,
+    { subject: "Marketing in Digital Age", faculty: "Prof. Hanifkhan Pathan", room: "M 101" },
+  ],
+  wednesday: [
+    { subject: "Business Statistics & Data Interpretation", faculty: "Dr. Chandresh Chakraborty", room: "M 101" },
+    { subject: "Corporate Ethics & Responsible AI", faculty: "Prof. Snehal Belkhode", room: "M 101" },
+    null,
+    { subject: "Lab - Data Interpretation & Social Media Lab", faculty: "Prof. Dharmendra", room: "Computer Center 1" },
+    { subject: "Lab - Data Interpretation & Social Media Lab", faculty: "Prof. Dharmendra", room: "Computer Center 1" },
+    null,
+    { subject: "Introduction to Human Resource Management", faculty: "Prof. Swati Sayankar", room: "M 101" },
+    { subject: "Consumer Behaviour", faculty: "Prof. Snehal Patil", room: "M 101" },
+    null,
+    { subject: "Financial Services & Markets", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+  ],
+  thursday: [
+    { subject: "Managerial Economics in Digital Age", faculty: "Prof. Anand Bhaskar", room: "M 101" },
+    { subject: "Financial Services & Markets", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+    null,
+    { subject: "Marketing in Digital Age", faculty: "Prof. Hanifkhan Pathan", room: "M 101" },
+    { subject: "Introduction to Logistics & Supply Chain Management", faculty: "Prof. Dharmendra", room: "M 101" },
+    null,
+    { subject: "Business Statistics & Data Interpretation", faculty: "Dr. Chandresh Chakraborty", room: "M 101" },
+    { subject: "Financial Accounting & Costing with AI Tools", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+    null,
+    { subject: "Corporate Ethics & Responsible AI", faculty: "Prof. Snehal Belkhode", room: "M 101" },
+  ],
+  friday: [
+    { subject: "Corporate Ethics & Responsible AI", faculty: "Prof. Snehal Belkhode", room: "M 101" },
+    { subject: "Consumer Behaviour", faculty: "Prof. Snehal Patil", room: "M 101" },
+    null,
+    { subject: "Introduction to Human Resource Management", faculty: "Prof. Swati Sayankar", room: "M 101" },
+    { subject: "Introduction to Logistics & Supply Chain Management", faculty: "Prof. Dharmendra", room: "M 101" },
+    null,
+    { subject: "Managerial Economics in Digital Age", faculty: "Prof. Anand Bhaskar", room: "M 101" },
+    { subject: "Financial Accounting & Costing with AI Tools", faculty: "Dr. Laveena Bhatia", room: "M 101" },
+    null,
+    { subject: "Mentorship", faculty: "Class Teacher", room: "M 101" },
+  ],
+  saturday: [
+    null, null, null,
+    { subject: "Guest Lecture / Industry Seminar", faculty: "Corporate Guest", room: "Seminar Hall" },
+    { subject: "Guest Lecture / Industry Seminar", faculty: "Corporate Guest", room: "Seminar Hall" },
+    null, null, null, null, null
+  ]
+};
+
+const MTECH_SAMPLE_DATA = {
+  monday: [
+    { subject: "Construction Techniques", faculty: "Dr. Rahul Satyakam", room: "T 302" },
+    { subject: "Estimation, Tendering & Contracting", faculty: "Prof. Vinod Charawande", room: "T 302" },
+    null,
+    { subject: "Project Resource Management", faculty: "Dr. Netra Patil", room: "T 302" },
+    { subject: "Infrastructure Project Development", faculty: "Prof. Harshit Kumar", room: "T 302" },
+    null,
+    { subject: "Computer Lab - I (MSP & Primavera)", faculty: "Prof. Dharmendra", room: "CAD Lab" },
+    null, null,
+    { subject: "Computer Lab - I (MSP & Primavera)", faculty: "Prof. Dharmendra", room: "CAD Lab" },
+  ],
+  tuesday: [
+    { subject: "Real Estate Project Development", faculty: "Prof. Anand Bhaskar", room: "T 302" },
+    { subject: "Construction Techniques", faculty: "Dr. Rahul Satyakam", room: "T 302" },
+    null,
+    { subject: "Estimation, Tendering & Contracting", faculty: "Prof. Vinod Charawande", room: "T 302" },
+    { subject: "AutoCAD Lab", faculty: "Prof. Harshit Kumar", room: "CAD Lab" },
+    null,
+    { subject: "AutoCAD Lab", faculty: "Prof. Harshit Kumar", room: "CAD Lab" },
+    null, null,
+    { subject: "Project Resource Management", faculty: "Dr. Netra Patil", room: "T 302" },
+  ],
+  wednesday: [
+    { subject: "Infrastructure Project Development", faculty: "Prof. Harshit Kumar", room: "T 302" },
+    { subject: "Real Estate Project Development", faculty: "Prof. Anand Bhaskar", room: "T 302" },
+    null,
+    { subject: "Construction Techniques", faculty: "Dr. Rahul Satyakam", room: "T 302" },
+    { subject: "Estimation, Tendering & Contracting", faculty: "Prof. Vinod Charawande", room: "T 302" },
+    null,
+    { subject: "Field Work & Site Inspection", faculty: "Site Supervisor", room: "Construction Site" },
+    { subject: "Field Work & Site Inspection", faculty: "Site Supervisor", room: "Construction Site" },
+    null,
+    { subject: "Project Resource Management", faculty: "Dr. Netra Patil", room: "T 302" },
+  ],
+  thursday: [
+    { subject: "Project Resource Management", faculty: "Dr. Netra Patil", room: "T 302" },
+    { subject: "Computer Lab - II (R & Python)", faculty: "Dr. Pradnya Mulye", room: "Computing Center" },
+    null,
+    { subject: "Computer Lab - II (R & Python)", faculty: "Dr. Pradnya Mulye", room: "Computing Center" },
+    { subject: "Infrastructure Project Development", faculty: "Prof. Harshit Kumar", room: "T 302" },
+    null,
+    { subject: "Real Estate Project Development", faculty: "Prof. Anand Bhaskar", room: "T 302" },
+    { subject: "Construction Techniques", faculty: "Dr. Rahul Satyakam", room: "T 302" },
+    null,
+    { subject: "Estimation, Tendering & Contracting", faculty: "Prof. Vinod Charawande", room: "T 302" },
+  ],
+  friday: [
+    { subject: "Estimation, Tendering & Contracting", faculty: "Prof. Vinod Charawande", room: "T 302" },
+    { subject: "Infrastructure Project Development", faculty: "Prof. Harshit Kumar", room: "T 302" },
+    null,
+    { subject: "Real Estate Project Development", faculty: "Prof. Anand Bhaskar", room: "T 302" },
+    { subject: "Construction Techniques", faculty: "Dr. Rahul Satyakam", room: "T 302" },
+    null,
+    { subject: "Computer Lab - I (MSP & Primavera)", faculty: "Prof. Dharmendra", room: "CAD Lab" },
+    { subject: "Computer Lab - I (MSP & Primavera)", faculty: "Prof. Dharmendra", room: "CAD Lab" },
+    null,
+    { subject: "Mentorship / Site Seminar", faculty: "Faculty Advisor", room: "T 302" },
+  ],
+  saturday: [
+    null, null, null,
+    { subject: "Technical Seminar / Workshop", faculty: "Industry Expert", room: "Seminar Room 2" },
+    { subject: "Technical Seminar / Workshop", faculty: "Industry Expert", room: "Seminar Room 2" },
+    null, null, null, null, null
+  ]
+};
+
+const SAMPLE_TIMETABLE_BY_CLASS = {
+  MCA_S001: MCA_SEM1_SAMPLE_DATA,
+  MCA_S003: MCA_SEM3_SAMPLE_DATA,
+  MBA_S001: MBA_SAMPLE_DATA,
+  MBA_S003: MBA_SAMPLE_DATA,
+  MTech_S001: MTECH_SAMPLE_DATA,
+  MTech_S003: MTECH_SAMPLE_DATA,
+};
+
+const getSampleTimetable = (targetClass = "MCA", semId = "S001") => {
+  const key = `${targetClass}_${semId}`;
+  return SAMPLE_TIMETABLE_BY_CLASS[key] || SAMPLE_TIMETABLE_BY_CLASS[`${targetClass}_S001`] || MCA_SEM1_SAMPLE_DATA;
+};
+
+const MCA_SAMPLE_DATA = MCA_SEM1_SAMPLE_DATA;
+
+const isCourseForClass = (courseId, courseName = "", targetClass = "MCA") => {
+  if (!courseId) return true;
+  const idStr = String(courseId).toUpperCase();
+  const nameStr = String(courseName || "").toUpperCase();
+
+  if (targetClass === "MCA") {
+    if (idStr.includes("MCA") || idStr.startsWith("26MCA") || idStr.startsWith("25MCA") || idStr.startsWith("26MCC") || idStr.startsWith("25MCC") || idStr.startsWith("26MCD") || idStr.startsWith("25MCD")) return true;
+    if (nameStr.includes("JAVA") || nameStr.includes("PYTHON") || nameStr.includes("DATA STRUCTURE") || nameStr.includes("WEB TECH") || nameStr.includes("QUANTUM") || nameStr.includes("CYBER") || nameStr.includes("OPTIMIZATION") || nameStr.includes("OOAD") || nameStr.includes("CLOUD") || nameStr.includes("SOFTWARE ENGINEERING") || nameStr.includes("COMPUTER") || nameStr.includes("STATISTICS") || nameStr.includes("ORGANIZATION DESIGN")) return true;
+    if (/^C1[0-9]{2}/.test(idStr) || /^C2[0-9]{2}/.test(idStr)) return true;
+    return false;
+  }
+  if (targetClass === "MBA") {
+    if (idStr.includes("MBA") || idStr.startsWith("26MBA") || idStr.startsWith("25MBA")) return true;
+    if (/^C0[0-9]{2}/.test(idStr) || /^C1[0-4][0-9]/.test(idStr)) return true;
+    if (nameStr.includes("MANAGEMENT") || nameStr.includes("MARKETING") || nameStr.includes("FINANCE") || nameStr.includes("ECONOMICS") || nameStr.includes("BUSINESS") || nameStr.includes("ACCOUNTING") || nameStr.includes("ORGANIZATIONAL") || nameStr.includes("CONSUMER") || nameStr.includes("LOGISTICS") || nameStr.includes("HR") || nameStr.includes("AGRI") || nameStr.includes("PROJECT")) return true;
+    return false;
+  }
+  if (targetClass === "MTech") {
+    if (idStr.includes("MTECH") || idStr.startsWith("26MTECH") || idStr.startsWith("25MTECH")) return true;
+    if (/^C2[0-9]{2}/.test(idStr)) return true;
+    if (nameStr.includes("ENGINEERING") || nameStr.includes("ADVANCED") || nameStr.includes("MTECH") || nameStr.includes("VLSI") || nameStr.includes("SIGNAL") || nameStr.includes("AUTOCAD") || nameStr.includes("PRIMAVERA")) return true;
+    return false;
+  }
+  return true;
 };
 
 //! Get color for a subject
@@ -171,6 +438,10 @@ const ActionButtons = ({
   isRefreshing,
   isExporting,
   isAdmin,
+  selectedClass,
+  setSelectedClass,
+  selectedSemester,
+  setSelectedSemester,
   selectedDivision,
   setSelectedDivision,
   role,
@@ -229,28 +500,72 @@ const ActionButtons = ({
       )}
 
       {role !== "student" && (role !== "faculty" || facultyViewMode === "class_timetable") && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text/80">Division:</span>
-          <select
-            value={selectedDivision}
-            onChange={(e) => setSelectedDivision(e.target.value)}
-            className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-xs font-medium focus:outline-none focus:border-primary"
-          >
-            {[
-              { id: "D001", name: "Div A" },
-              { id: "D002", name: "Div B" },
-              { id: "D003", name: "Div C" },
-              { id: "D004", name: "Div D" },
-            ].map((div) => {
-              const isTaught = facultyTaughtDivisions.includes(div.id);
-              return (
-                <option key={div.id} value={div.id}>
-                  {div.name} {isTaught ? " (Teaches)" : ""}
-                </option>
-              );
-            })}
-          </select>
-        </div>
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-text/80">Class:</span>
+            <select
+              value={selectedClass}
+              onChange={(e) => {
+                const newClass = e.target.value;
+                setSelectedClass(newClass);
+                const targetSem = newClass === "TY BBA" ? "S005" : (selectedSemester === "S005" ? "S001" : selectedSemester);
+                if (newClass === "TY BBA") setSelectedSemester("S005");
+                else if (selectedSemester === "S005") setSelectedSemester("S001");
+
+                const divs = getAvailableDivisions(newClass, targetSem);
+                if (divs && divs.length > 0 && !divs.some(d => d.id === selectedDivision)) {
+                  setSelectedDivision(divs[0].id);
+                }
+              }}
+              className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-xs font-medium focus:outline-none focus:border-primary font-bold"
+            >
+              <option value="MCA">MCA</option>
+              <option value="MBA">MBA</option>
+              <option value="MTech">MTech</option>
+              <option value="TY BBA">TY BBA</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-text/80">Semester:</span>
+            <select
+              value={selectedSemester}
+              onChange={(e) => {
+                const newSem = e.target.value;
+                setSelectedSemester(newSem);
+                const divs = getAvailableDivisions(selectedClass, newSem);
+                if (divs && divs.length > 0 && !divs.some(d => d.id === selectedDivision)) {
+                  setSelectedDivision(divs[0].id);
+                }
+              }}
+              className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-xs font-medium focus:outline-none focus:border-primary"
+            >
+              <option value="S001">Sem I (Active)</option>
+              <option value="S002">Sem II (Not Available)</option>
+              <option value="S003">Sem III (Active)</option>
+              <option value="S004">Sem IV (Not Available)</option>
+              {selectedClass === "TY BBA" && <option value="S005">Sem V (Active)</option>}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-text/80">Division:</span>
+            <select
+              value={selectedDivision}
+              onChange={(e) => setSelectedDivision(e.target.value)}
+              className="px-3 py-1.5 border border-border bg-background rounded-md text-text text-xs font-medium focus:outline-none focus:border-primary"
+            >
+              {getAvailableDivisions(selectedClass, selectedSemester).map((div) => {
+                const isTaught = facultyTaughtDivisions.includes(div.id);
+                return (
+                  <option key={div.id} value={div.id}>
+                    {div.name} {isTaught ? " (Teaches)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        </>
       )}
     </div>
     
@@ -630,15 +945,114 @@ const getDivisionName = (id) => {
   return mapping[id] || "Div A";
 };
 
-const DIVISION_DETAILS = {
-  "D001": { teacher: "Prof. Vinod Charawande", room: "N 709" },
-  "D002": { teacher: "Dr. Rahul Satyakam", room: "N 710" },
-  "D003": { teacher: "Dr. Pradnya Mulye", room: "S 703" },
-  "D004": { teacher: "Prof. Harshit Kumar", room: "N 715" },
+const DIVISIONS_BY_CLASS_AND_SEM = {
+  // MCA Sem 1 (Div A, B, C)
+  "MCA_S001": [
+    { id: "D001", name: "Div A (Cloud Computing)" },
+    { id: "D002", name: "Div B (Data Science)" },
+    { id: "D003", name: "Div C (Data Science)" },
+  ],
+  // MCA Sem 3 (Div A, B, C, D)
+  "MCA_S003": [
+    { id: "D001", name: "Div A (Cloud Computing)" },
+    { id: "D002", name: "Div B (Data Science)" },
+    { id: "D003", name: "Div C (Data Science)" },
+    { id: "D004", name: "Div D (Cyber Security & Data Science)" },
+  ],
+
+  // MBA Sem 1 & Sem 3 (Div A - H)
+  "MBA_S001": [
+    { id: "D001", name: "Div A (Marketing Management)" },
+    { id: "D002", name: "Div B (Finance Management)" },
+    { id: "D003", name: "Div C (Finance Technology)" },
+    { id: "D004", name: "Div D (HR / Logistics & SCM)" },
+    { id: "D005", name: "Div E (IB / Healthcare / Port / Banking)" },
+    { id: "D006", name: "Div F (Digital Mkt / BA / Media / Event)" },
+    { id: "D007", name: "Div G (Agri & Food Business)" },
+    { id: "D008", name: "Div H (Project & Construction)" },
+  ],
+  "MBA_S003": [
+    { id: "D001", name: "Div A (Marketing Management)" },
+    { id: "D002", name: "Div B (Finance Management)" },
+    { id: "D003", name: "Div C (Finance Technology)" },
+    { id: "D004", name: "Div D (HR / Logistics & SCM)" },
+    { id: "D005", name: "Div E (IB / Healthcare)" },
+    { id: "D006", name: "Div F (Digital Mkt / BA)" },
+    { id: "D007", name: "Div G (Agri & Food Business)" },
+    { id: "D008", name: "Div H (Project & Construction)" },
+  ],
+
+  // MTech Sem 1 & Sem 3 (Div H)
+  "MTech_S001": [
+    { id: "D008", name: "Div H (Construction Management)" },
+  ],
+  "MTech_S003": [
+    { id: "D008", name: "Div H (Construction Management)" },
+  ],
+
+  // TY BBA Sem 5 (Div C)
+  "TY BBA_S005": [
+    { id: "D003", name: "Div C (Data Science & Business Analytics)" },
+  ]
 };
 
-const getDivisionDetails = (id) => {
-  return DIVISION_DETAILS[id] || { teacher: "Prof. Harshit Kumar", room: "N 715" };
+const getAvailableDivisions = (targetClass = "MCA", semId = "S001") => {
+  const key = `${targetClass}_${semId}`;
+  return DIVISIONS_BY_CLASS_AND_SEM[key] || 
+         DIVISIONS_BY_CLASS_AND_SEM[`${targetClass}_S001`] || 
+         DIVISIONS_BY_CLASS_AND_SEM["MCA_S001"];
+};
+
+//* Master mapping table for Class + Semester + Division -> Class Teacher & Classroom
+const CLASS_TEACHER_ROOM_TABLE = {
+  // MCA Sem 1 (S001)
+  "MCA_S001_D001": { teacher: "Prof. Vinod Charawande", room: "N 709" },
+  "MCA_S001_D002": { teacher: "Prof. Pallavi Gaikwad", room: "N 710" },
+  "MCA_S001_D003": { teacher: "Dr. Pradnya Mulye", room: "S 703" },
+  "MCA_S001_D004": { teacher: "Prof. Harshitkumar", room: "N 715" },
+
+  // MCA Sem 3 (S003)
+  "MCA_S003_D001": { teacher: "Prof. Dr. Satyakam Rahul", room: "N 709" },
+  "MCA_S003_D002": { teacher: "Prof. Hanifkha Pathan", room: "N 710" },
+  "MCA_S003_D003": { teacher: "Prof. Deepak Ulape", room: "S 703" },
+  "MCA_S003_D004": { teacher: "Prof. Harshitkumar", room: "N 715" },
+
+  // MBA Sem 1 (S001)
+  "MBA_S001_D001": { teacher: "Dr. Manju Rughwani", room: "M 101" },
+  "MBA_S001_D002": { teacher: "Dr. Dipak Sahoo", room: "M 102" },
+  "MBA_S001_D003": { teacher: "Dr. Dipak Sahoo", room: "M 103" },
+  "MBA_S001_D004": { teacher: "Prof. Supriya Bhagat", room: "M 104" },
+  "MBA_S001_D005": { teacher: "Dr. Amol Gajdhane", room: "M 105" },
+  "MBA_S001_D006": { teacher: "Dr. Ravindra Khedkar", room: "M 106" },
+  "MBA_S001_D007": { teacher: "Dr. Ritesh Watharkar", room: "M 107" },
+  "MBA_S001_D008": { teacher: "Prof. Priyanka S. Patil", room: "M 108" },
+
+  // MBA Sem 3 (S003)
+  "MBA_S003_D001": { teacher: "Dr. Ganesh Waghmare", room: "M 201" },
+  "MBA_S003_D002": { teacher: "Prof. Rajesh Sasane", room: "M 202" },
+  "MBA_S003_D003": { teacher: "Dr. Sachin Lad", room: "M 203" },
+  "MBA_S003_D004": { teacher: "Dr. Twinkle Choudhary", room: "M 204" },
+  "MBA_S003_D005": { teacher: "Dr. Priyanka Pradhan / Prof. Chandresh Chakraborty", room: "M 205" },
+  "MBA_S003_D006": { teacher: "Prof. Chandresh Chakraborty", room: "M 206" },
+  "MBA_S003_D007": { teacher: "Dr. Sushma Lokhande", room: "M 207" },
+  "MBA_S003_D008": { teacher: "Prof. Aishwarya Kadoo", room: "M 208" },
+
+  // MTech Sem 1 (S001) & Sem 3 (S003)
+  "MTech_S001_D008": { teacher: "Prof. Priyanka S. Patil", room: "T 302" },
+  "MTech_S003_D008": { teacher: "Prof. Aishwarya Kadoo", room: "T 402" },
+
+  // TY BBA Sem 5 (S005)
+  "TY BBA_S005_D003": { teacher: "Prof. Dinesh Suthar", room: "B 501" },
+  "TY BBA_S001_D003": { teacher: "Prof. Dinesh Suthar", room: "B 501" },
+};
+
+const getDivisionDetails = (divId, targetClass = "MCA", semId = "S001") => {
+  const key = `${targetClass}_${semId}_${divId}`;
+  if (CLASS_TEACHER_ROOM_TABLE[key]) {
+    return CLASS_TEACHER_ROOM_TABLE[key];
+  }
+  const fallbackKey = `${targetClass}_S001_${divId}`;
+  return CLASS_TEACHER_ROOM_TABLE[fallbackKey] || { teacher: "Class Teacher", room: "Class Room" };
 };
 
 // Main TimeTable Component
@@ -649,16 +1063,18 @@ const TimeTable = () => {
   const [viewMode, setViewMode] = useState("week");
   const [selectedDay, setSelectedDay] = useState("monday");
   const [facultyViewMode, setFacultyViewMode] = useState("my_schedule");
-  const [timetableData, setTimetableData] = useState(SAMPLE_TIMETABLE_DATA);
+  const [timetableData, setTimetableData] = useState(MCA_SAMPLE_DATA);
   const [rawEntries, setRawEntries] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("D001");
+  const [selectedClass, setSelectedClass] = useState("MCA");
+  const [selectedSemester, setSelectedSemester] = useState("S001");
   const [courses, setCourses] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [genSemester, setGenSemester] = useState("S002");
-  const [genAcademicYear, setGenAcademicYear] = useState("2025-2026");
+  const [genSemester, setGenSemester] = useState("S001");
+  const [genAcademicYear, setGenAcademicYear] = useState("2026-2027");
   const [genBy, setGenBy] = useState("ADMIN");
   const [isGenerating, setIsGenerating] = useState(false);
   const timetableRef = useRef(null);
@@ -726,7 +1142,7 @@ const TimeTable = () => {
 
     const filtered = isFacultyMySchedule
       ? rawEntries.filter(entry => entry.faculty_id === currentFacultyId)
-      : rawEntries.filter(entry => entry.class_group === activeDivisionId);
+      : rawEntries.filter(entry => entry.class_group === activeDivisionId && isCourseForClass(entry.course_id, courseMap[entry.course_id], selectedClass));
 
     const mapping = {};
     filtered.forEach(entry => {
@@ -743,9 +1159,10 @@ const TimeTable = () => {
       }
     });
 
-    // Fallback to SAMPLE_TIMETABLE_DATA subjects if no database allocations exist
+    // Fallback to class-specific sample data if no database allocations exist for this class
     if (Object.keys(mapping).length === 0) {
-      Object.values(SAMPLE_TIMETABLE_DATA).forEach(dayList => {
+      const fallbackSample = SAMPLE_TIMETABLE_BY_CLASS[selectedClass] || MCA_SAMPLE_DATA;
+      Object.values(fallbackSample).forEach(dayList => {
         dayList.forEach(cell => {
           if (cell && cell.subject) {
             const names = cell.subject.split('/');
@@ -755,7 +1172,7 @@ const TimeTable = () => {
                 if (!mapping[cleaned]) {
                   mapping[cleaned] = new Set();
                 }
-                mapping[cleaned].add(isFacultyMySchedule ? "Your Assigned Classes" : "Sample Faculty");
+                mapping[cleaned].add(isFacultyMySchedule ? "Your Assigned Classes" : "Class Faculty");
               }
             });
           }
@@ -766,15 +1183,25 @@ const TimeTable = () => {
     return mapping;
   }, [rawEntries, activeDivisionId, courses, faculties, userData, facultyViewMode, currentFacultyId]);
 
+  const getSemesterLabel = (semId) => {
+    const map = { "S001": "SEM - I", "S002": "SEM - II", "S003": "SEM - III", "S004": "SEM - IV" };
+    return map[semId] || "SEM - II";
+  };
+
+  const getSemesterRoman = (semId) => {
+    const map = { "S001": "I", "S002": "II", "S003": "III", "S004": "IV" };
+    return map[semId] || "II";
+  };
+
   //* College information (can be fetched from API)
   const collegeInfo = React.useMemo(() => {
     if (userData?.role === "faculty" && facultyViewMode === "my_schedule") {
       const taughtNames = facultyTaughtDivisions.map(getDivisionName).join(", ");
       return {
         name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
-        batch: "BATCH 2025 ( A. Y. - 2025-26)",
-        semester: "SEM - II",
-        effectiveDate: "5 January 2026",
+        batch: "BATCH 2026 ( A. Y. - 2026-27)",
+        semester: getSemesterLabel(selectedSemester),
+        effectiveDate: "1 September 2026",
         classInfo: `Personal Teaching Schedule - ${currentFacultyName}`,
         classTeacher: `Faculty ID: ${currentFacultyId || "F001"}`,
         roomNo: taughtNames ? `Assigned Classes: ${taughtNames}` : "All Classes",
@@ -783,16 +1210,16 @@ const TimeTable = () => {
 
     return {
       name: "MIT COLLEGE OF MANAGEMENT & COMPUTER APPLICATIONS",
-      batch: "BATCH 2025 ( A. Y. - 2025-26)",
-      semester: "SEM - II",
-      effectiveDate: "5 January 2026",
+      batch: "BATCH 2026 ( A. Y. - 2026-27)",
+      semester: getSemesterLabel(selectedSemester),
+      effectiveDate: "1 September 2026",
       classInfo: userData?.role === "student" && userData?.class_group 
-        ? userData.class_group 
-        : `MCA - II ${getDivisionName(activeDivisionId)}`,
-      classTeacher: getDivisionDetails(activeDivisionId).teacher,
-      roomNo: getDivisionDetails(activeDivisionId).room,
+        ? `${selectedClass} - ${userData.class_group}` 
+        : `${selectedClass} - ${getSemesterRoman(selectedSemester)} ${getDivisionName(activeDivisionId)}`,
+      classTeacher: getDivisionDetails(activeDivisionId, selectedClass, selectedSemester).teacher,
+      roomNo: getDivisionDetails(activeDivisionId, selectedClass, selectedSemester).room,
     };
-  }, [userData, facultyViewMode, activeDivisionId, currentFacultyName, currentFacultyId, facultyTaughtDivisions]);
+  }, [userData, facultyViewMode, activeDivisionId, currentFacultyName, currentFacultyId, facultyTaughtDivisions, selectedClass, selectedSemester]);
 
   //! Handle Print functionality
   const handlePrint = useCallback(() => {
@@ -924,14 +1351,12 @@ const TimeTable = () => {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      //* Try to fetch fresh data from API (bypass cache)
-      const response = await apiClient.get('/timetables', { cache: false });
-      if (response.data?.data?.data?.length > 0) {
-        const lastTimetable = response.data.data.data[response.data.data.data.length - 1];
-        const entries = lastTimetable.entries || [];
-        setRawEntries(entries);
-      } else {
-        console.log('No timetable data from API, using sample data');
+      //* Fetch fresh timetable entries from API (bypass cache)
+      const response = await apiClient.get('/timetable-entries', { params: { limit: 2000 }, cache: false });
+      if (response.data?.data?.data) {
+        setRawEntries(response.data.data.data);
+      } else if (Array.isArray(response.data?.data)) {
+        setRawEntries(response.data.data);
       }
 
       // Fetch all courses and faculties to map names
@@ -981,7 +1406,17 @@ const TimeTable = () => {
 
     const filtered = isFacultyMySchedule
       ? rawEntries.filter(entry => entry.faculty_id === currentFacultyId)
-      : rawEntries.filter(entry => entry.class_group === activeDivisionId);
+      : rawEntries.filter(entry => 
+          entry.class_group === activeDivisionId && 
+          (entry.semester_id ? entry.semester_id === selectedSemester : true) &&
+          isCourseForClass(entry.course_id, courseMap[entry.course_id], selectedClass)
+        );
+
+    if (filtered.length === 0 && !isFacultyMySchedule) {
+      const classSample = getSampleTimetable(selectedClass, selectedSemester);
+      setTimetableData(classSample);
+      return;
+    }
 
     filtered.forEach(entry => {
       const day = entry.day_of_week.toLowerCase();
@@ -1030,7 +1465,7 @@ const TimeTable = () => {
       }
     });
 
-    // In Class View (non-MySchedule), fill empty spots with Mentoring, Library, Self Study
+    // In Class View (non-MySchedule), fill all remaining empty slots so 100% of slots are filled
     if (!isFacultyMySchedule) {
       let emptyCount = 0;
       const lectureIndices = [0, 1, 3, 4, 6, 7, 9];
@@ -1040,25 +1475,25 @@ const TimeTable = () => {
         lectureIndices.forEach(idx => {
           if (!formattedData[day][idx]) {
             emptyCount++;
-            if (emptyCount === 1 || emptyCount === 2) {
+            if (emptyCount % 3 === 1) {
               formattedData[day][idx] = {
                 subject: "Mentoring Session",
-                faculty: getDivisionDetails(activeDivisionId).teacher || "Class Teacher",
-                room: getDivisionDetails(activeDivisionId).room || "Class Room",
+                faculty: getDivisionDetails(activeDivisionId, selectedClass, selectedSemester).teacher || "Class Teacher",
+                room: getDivisionDetails(activeDivisionId, selectedClass, selectedSemester).room || "Class Room",
                 isLab: false
               };
-            } else if (emptyCount === 3) {
+            } else if (emptyCount % 3 === 2) {
               formattedData[day][idx] = {
-                subject: "Library Session",
+                subject: "Library & Research Session",
                 faculty: "Librarian",
-                room: "Library",
+                room: "Library Center",
                 isLab: false
               };
             } else {
               formattedData[day][idx] = {
-                subject: "Self Study",
-                faculty: "",
-                room: getDivisionDetails(activeDivisionId).room || "Class Room",
+                subject: "Self Study & Case Prep",
+                faculty: "Faculty Advisor",
+                room: getDivisionDetails(activeDivisionId, selectedClass, selectedSemester).room || "Class Room",
                 isLab: false
               };
             }
@@ -1068,7 +1503,7 @@ const TimeTable = () => {
     }
 
     setTimetableData(formattedData);
-  }, [rawEntries, activeDivisionId, courses, faculties, userData, facultyViewMode, currentFacultyId]);
+  }, [rawEntries, activeDivisionId, courses, faculties, userData, facultyViewMode, currentFacultyId, selectedClass]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -1105,6 +1540,10 @@ const TimeTable = () => {
         isRefreshing={isRefreshing}
         isExporting={isExporting}
         isAdmin={isAdmin}
+        selectedClass={selectedClass}
+        setSelectedClass={setSelectedClass}
+        selectedSemester={selectedSemester}
+        setSelectedSemester={setSelectedSemester}
         selectedDivision={selectedDivision}
         setSelectedDivision={setSelectedDivision}
         role={userData?.role}
@@ -1119,21 +1558,50 @@ const TimeTable = () => {
         <TimetableHeader collegeInfo={collegeInfo} />
         
         {/* Timetable Content */}
-        <div ref={timetableRef}>
-          {viewMode === "week" ? (
-            <WeekView timetableData={timetableData} timeSlots={TIME_SLOTS} />
-          ) : (
-            <DayView
-              timetableData={timetableData}
-              timeSlots={TIME_SLOTS}
-              selectedDay={selectedDay}
-              setSelectedDay={setSelectedDay}
-            />
-          )}
-        </div>
-        
-        {/* Legend */}
-        <Legend subjectsWithTeachers={subjectsWithTeachers} />
+        {["S002", "S004"].includes(selectedSemester) ? (
+          <div className="bg-surface border border-border rounded-xl p-12 text-center my-6 space-y-4 shadow-sm">
+            <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl font-bold">
+              🚫
+            </div>
+            <h3 className="text-xl font-bold text-text">Semester Not Available</h3>
+            <p className="text-sm text-text/70 max-w-md mx-auto leading-relaxed">
+              The current session (Effective from 1 September 2026) is an <strong>Odd Semester Term</strong>.
+              Timetables for <strong>{selectedSemester === "S002" ? "Sem II" : "Sem IV"}</strong> (Even Semester) are currently inactive.
+            </p>
+            <div className="pt-2 flex justify-center gap-3">
+              <button
+                onClick={() => setSelectedSemester("S001")}
+                className="px-4 py-2 text-xs font-semibold rounded-md bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                Switch to Active Sem I
+              </button>
+              <button
+                onClick={() => setSelectedSemester("S003")}
+                className="px-4 py-2 text-xs font-semibold rounded-md bg-surface-hover border border-border text-text hover:bg-border transition-colors"
+              >
+                Switch to Active Sem III
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div ref={timetableRef}>
+              {viewMode === "week" ? (
+                <WeekView timetableData={timetableData} timeSlots={TIME_SLOTS} />
+              ) : (
+                <DayView
+                  timetableData={timetableData}
+                  timeSlots={TIME_SLOTS}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
+                />
+              )}
+            </div>
+            
+            {/* Legend */}
+            <Legend subjectsWithTeachers={subjectsWithTeachers} />
+          </>
+        )}
       </div>
 
       {/* Generation Modal */}

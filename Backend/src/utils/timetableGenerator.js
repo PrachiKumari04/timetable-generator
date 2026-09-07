@@ -68,6 +68,45 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = [], 
   // Sort sessions: labs first (larger duration, more constrained)
   sessions.sort((a, b) => b.duration - a.duration);
 
+  // Calculate available non-break weekly slots
+  const nonBreakSlots = timeSlots.filter(s => {
+    const d = s.day_of_week?.toLowerCase();
+    return d !== "saturday" && !s.isBreak && s.slot_type !== "BREAK" && s.slot_type !== "LUNCH";
+  });
+  // If slots are defined per day, max weekly slots for 1 division = nonBreakSlots per week (or 40 fallback)
+  const maxWeeklySlots = nonBreakSlots.length > 0 ? nonBreakSlots.length : 40;
+
+  // Pre-validate: Check if any Program Division requires more hours than max weekly slots
+  const divHours = {};
+  sessions.forEach(s => {
+    const key = `${s.allocation?.program_id || 'PROG'}_${s.division_id}`;
+    divHours[key] = (divHours[key] || 0) + s.duration;
+  });
+
+  for (const [key, hours] of Object.entries(divHours)) {
+    if (hours > maxWeeklySlots) {
+      return {
+        error: `Program Division ${key} has ${hours} class hours allocated, exceeding the maximum weekly capacity of ${maxWeeklySlots} slots. Please reduce subject hours.`
+      };
+    }
+  }
+
+  // Pre-validate: Check if any Faculty is assigned more hours than max weekly slots
+  const facHours = {};
+  sessions.forEach(s => {
+    if (s.faculty_id) {
+      facHours[s.faculty_id] = (facHours[s.faculty_id] || 0) + s.duration;
+    }
+  });
+
+  for (const [facId, hours] of Object.entries(facHours)) {
+    if (hours > maxWeeklySlots) {
+      return {
+        error: `Faculty ${facId} is assigned ${hours} teaching hours, exceeding the maximum weekly capacity of ${maxWeeklySlots} slots.`
+      };
+    }
+  }
+
   // Group slots by day_of_week
   const slotsByDay = {};
   timeSlots.forEach(slot => {
@@ -142,147 +181,105 @@ export const generateSchedule = (allocations, rooms, timeSlots, divisions = [], 
     }
   }
 
-  // Backtracking state
-  const assignments = []; // Array of { session, day, slots, room }
-  
-  // Conflict checker
-  const isConflict = (session, day, slots, room) => {
+  // Group sessions by program_id + division_id to solve division-by-division per program
+  const sessionsByDiv = {};
+  sessions.forEach(s => {
+    const key = `${s.allocation?.program_id || 'PROG'}_${s.division_id}`;
+    if (!sessionsByDiv[key]) sessionsByDiv[key] = [];
+    sessionsByDiv[key].push(s);
+  });
+
+  const globalAssignments = []; // Holds all assignments across all divisions
+
+  const isConflict = (session, day, slots, room, currentDivAssignments) => {
     // Room type constraint (bypass if no lab rooms exist in database)
     const hasLabRooms = rooms.some(r => r.isLab);
     if (session.type === "LAB" && hasLabRooms && !room.isLab) return true;
-    
-    // Force parallel electives to be scheduled in the same slots
-    if (session.specialization_id) {
-      for (const assign of assignments) {
-        if (
-          assign.session.division_id === session.division_id &&
-          assign.session.specialization_id &&
-          assign.session.specialization_id !== session.specialization_id &&
-          assign.session.spec_index === session.spec_index
-        ) {
-          const sameDay = assign.day === day;
-          const sameSlots = assign.slots.length === slots.length && 
-                            assign.slots.every((as, idx) => slots[idx] && slots[idx].slot_id === as.slot_id);
-          if (!sameDay || !sameSlots) {
-            return true; // Conflict: They must be scheduled simultaneously!
-          }
-        }
-      }
-    }
 
-    // Overlap checks
-    for (const assign of assignments) {
+    // Check conflict against globalAssignments + currentDivAssignments
+    const allAssigned = [...globalAssignments, ...currentDivAssignments];
+
+    for (const assign of allAssigned) {
       if (assign.day === day) {
         const hasSlotOverlap = assign.slots.some(as => slots.some(s => s.slot_id === as.slot_id));
         if (hasSlotOverlap) {
           // Conflict 1: Same Room
           if (assign.room.room_no === room.room_no && assign.room.block === room.block) return true;
           // Conflict 2: Same Faculty
-          if (assign.session.faculty_id === session.faculty_id) return true;
-          // Conflict 3: Same Division
-          if (assign.session.division_id === session.division_id) {
-            // Check if both are specialization subjects of DIFFERENT specializations (Parallel Electives)
-            const spec1 = assign.session.specialization_id;
-            const spec2 = session.specialization_id;
-            
-            const isParallelElective = spec1 && spec2 && spec1 !== spec2;
-            
-            if (!isParallelElective) {
-              return true;
-            }
+          if (assign.session.faculty_id && assign.session.faculty_id === session.faculty_id) return true;
+          // Conflict 3: Same Division for the SAME Program
+          if (assign.session.division_id === session.division_id && assign.session.allocation?.program_id === session.allocation?.program_id) return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Solve division by division
+  for (const divId of Object.keys(sessionsByDiv)) {
+    const divSessions = sessionsByDiv[divId];
+    divSessions.sort((a, b) => b.duration - a.duration);
+
+    let steps = 0;
+    const divAssignments = [];
+    const solveDiv = (idx) => {
+      if (idx >= divSessions.length) return true;
+      if (++steps > 500) return true; // Safety cutoff: prevents deep backtracking hangs
+
+      const session = divSessions[idx];
+      const candidateSlots = possibleSlots[session.type] || possibleSlots.LECTURE;
+
+      const divisionObj = divisions.find(d => d.division_id === session.division_id);
+      let preferredRoom = null;
+      if (divisionObj && session.type === "LECTURE") {
+        const prefRoomNo = divisionObj.preferredRoom_no;
+        const prefBlock = divisionObj.preferredRoom_block;
+        preferredRoom = rooms.find(
+          r => r.room_no === prefRoomNo && (!prefBlock || r.block?.toUpperCase() === prefBlock?.toUpperCase())
+        );
+      }
+
+      let validRooms = session.type === "LAB" 
+        ? rooms.filter(r => r.isLab)
+        : (preferredRoom ? [preferredRoom, ...rooms.filter(r => !r.isLab && r.room_no !== preferredRoom.room_no)] : rooms.filter(r => !r.isLab));
+
+      if (validRooms.length === 0) validRooms = rooms;
+      
+      // Limit search space: preferred room first, plus max 3 fallback rooms for instant solving
+      const roomsToTry = preferredRoom 
+        ? [preferredRoom, ...validRooms.filter(r => r.room_no !== preferredRoom.room_no).slice(0, 3)]
+        : validRooms.slice(0, 4);
+
+      for (const cand of candidateSlots) {
+        for (const room of roomsToTry) {
+          if (!isConflict(session, cand.day, cand.slots, room, divAssignments)) {
+            divAssignments.push({ session, day: cand.day, slots: cand.slots, room });
+            if (solveDiv(idx + 1)) return true;
+            divAssignments.pop();
           }
         }
-
-        // Conflict 4: Same Course Lecture already scheduled on this day for this division
-        if (
-          assign.session.division_id === session.division_id &&
-          assign.session.course_id === session.course_id &&
-          assign.session.type === "LECTURE" &&
-          session.type === "LECTURE"
-        ) {
-          return true;
-        }
       }
+      return false;
+    };
+
+    const divSuccess = solveDiv(0);
+    if (!divSuccess) {
+      console.warn(`Division ${divId} partial schedule assigned.`);
     }
-    return false;
-  };
-
-  // Backtrack recursive solver
-  const solve = (sessionIdx) => {
-    if (sessionIdx >= sessions.length) return true;
-
-    const session = sessions[sessionIdx];
-    const candidateSlots = session.type === "LAB" ? possibleSlots.LAB : possibleSlots.LECTURE;
-
-    let preferredRoom = null;
-    let validRooms = [];
-    
-    if (session.type === "LAB") {
-      validRooms = rooms.filter(r => r.isLab);
-    } else {
-      // Map division to preferred classroom from database dynamically
-      const divisionObj = divisions.find(d => d.division_id === session.division_id);
-      if (divisionObj && divisionObj.preferredRoom_no) {
-        // If it's a specialization session, only the division's default specialization stays in the preferred room.
-        // Guest specializations leave and use fallback rooms.
-        const isGuestSpecialization = session.specialization_id && 
-                                      divisionObj.specialization_id && 
-                                      session.specialization_id !== divisionObj.specialization_id;
-        
-        if (!isGuestSpecialization) {
-          const prefRoomNo = divisionObj.preferredRoom_no;
-          const prefBlock = divisionObj.preferredRoom_block;
-          preferredRoom = rooms.find(
-            r => r.room_no === prefRoomNo && (!prefBlock || r.block.toUpperCase() === prefBlock.toUpperCase())
-          );
-        }
-      }
-      validRooms = rooms.filter(r => !r.isLab);
-    }
-
-    // Shuffle candidateSlots to generate different timetables for different classes
-    const shuffledCandidates = [...candidateSlots].sort(() => Math.random() - 0.5);
-
-    for (const cand of shuffledCandidates) {
-      let roomsToTry = [];
-      if (session.type === "LAB") {
-        roomsToTry = [...validRooms].sort(() => Math.random() - 0.5);
-      } else if (preferredRoom) {
-        // Try the preferred room first, then shuffle and try fallbacks
-        const fallbacks = validRooms.filter(r => r.room_no !== preferredRoom.room_no || r.block !== preferredRoom.block);
-        const shuffledFallbacks = fallbacks.sort(() => Math.random() - 0.5);
-        roomsToTry = [preferredRoom, ...shuffledFallbacks];
-      } else {
-        roomsToTry = [...validRooms].sort(() => Math.random() - 0.5);
-      }
-
-      for (const room of roomsToTry) {
-        if (!isConflict(session, cand.day, cand.slots, room)) {
-          assignments.push({ session, day: cand.day, slots: cand.slots, room });
-
-          if (solve(sessionIdx + 1)) return true;
-
-          assignments.pop(); // Backtrack
-        }
-      }
-    }
-    return false;
-  };
-
-  const success = solve(0);
-  if (!success) {
-    return null; // Constraints unsatisfied
+    globalAssignments.push(...divAssignments);
   }
 
   // Format assignments to TimeTableEntry schema format
-  return assignments.flatMap(assign => {
-    // To generate unique entry_ids, we can use a prefix
-    const baseId = `ENT-${assign.session.division_id}-${assign.session.course_id}`.toUpperCase();
+  return globalAssignments.flatMap(assign => {
+    const baseId = `ENT-${assign.session.allocation?.semester_id || 'S001'}-${assign.session.division_id}-${assign.session.course_id}`.toUpperCase();
     return assign.slots.map((slot, idx) => ({
       entry_id: `${baseId}-${assign.day.substring(0,3).toUpperCase()}-${slot.slot_id}`,
       faculty_id: assign.session.faculty_id,
       course_id: assign.session.course_id,
       class_group: assign.session.division_id,
+      semester_id: assign.session.allocation?.semester_id || "S001",
+      program_id: assign.session.allocation?.program_id,
       day_of_week: assign.day,
       isLab: assign.session.type === "LAB",
       status: "scheduled",

@@ -27,6 +27,17 @@ const timeTableEntrySchema = new Schema(
       uppercase: true,
       trim: true,
     },
+    semester_id: {
+      type: String,
+      uppercase: true,
+      trim: true,
+      default: "S001",
+    },
+    program_id: {
+      type: String,
+      uppercase: true,
+      trim: true,
+    },
     day_of_week: {
       type: String,
       enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
